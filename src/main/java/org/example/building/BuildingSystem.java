@@ -24,13 +24,16 @@ import com.jme3.scene.Geometry;
 import com.jme3.scene.Node;
 import com.jme3.scene.Spatial;
 import com.jme3.scene.shape.Box;
+import com.jme3.scene.shape.Line;
 
 import org.example.inventory.Inventory;
 import org.example.inventory.ItemType;
 import org.example.ui.InventoryMenuSystem;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class BuildingSystem implements ActionListener {
 
@@ -188,6 +191,9 @@ public class BuildingSystem implements ActionListener {
 
     private final List<Node> placedStairs =
             new ArrayList<>();
+
+    private final Map<Spatial, Spatial> buildingOutlines =
+            new HashMap<>();
 
     private final List<Quaternion> doorClosedRotations =
             new ArrayList<>();
@@ -2027,6 +2033,10 @@ public class BuildingSystem implements ActionListener {
                 currentRotation
         );
 
+        syncBuildingOutline(
+                door
+        );
+
 
         RigidBodyControl physics =
                 door.getControl(
@@ -3095,6 +3105,11 @@ public class BuildingSystem implements ActionListener {
         addPhysics(collisionRamp);
 
         placedStairs.add(stairs);
+
+        attachBuildingOutline(
+                stairs
+        );
+
         nextStairsId++;
     }
 
@@ -3172,6 +3187,11 @@ public class BuildingSystem implements ActionListener {
         rootNode.attachChild(roof);
         addPhysics(roof);
         placedRoofs.add(roof);
+
+        attachBuildingOutline(
+                roof
+        );
+
         nextRoofId++;
     }
 
@@ -3188,6 +3208,11 @@ public class BuildingSystem implements ActionListener {
         rootNode.attachChild(ceiling);
         addPhysics(ceiling);
         placedCeilings.add(ceiling);
+
+        attachBuildingOutline(
+                ceiling
+        );
+
         nextCeilingId++;
     }
 
@@ -3230,6 +3255,10 @@ public class BuildingSystem implements ActionListener {
 
 
         placedFoundations.add(
+                foundation
+        );
+
+        attachBuildingOutline(
                 foundation
         );
 
@@ -3285,6 +3314,10 @@ public class BuildingSystem implements ActionListener {
                 wall
         );
 
+        attachBuildingOutline(
+                wall
+        );
+
 
         nextWallId++;
     }
@@ -3325,6 +3358,10 @@ public class BuildingSystem implements ActionListener {
 
 
         placedDoorFrames.add(
+                frame
+        );
+
+        attachBuildingOutline(
                 frame
         );
 
@@ -3373,6 +3410,10 @@ public class BuildingSystem implements ActionListener {
         );
 
         placedDoors.add(
+                door
+        );
+
+        attachBuildingOutline(
                 door
         );
 
@@ -3550,6 +3591,322 @@ public class BuildingSystem implements ActionListener {
                 );
             }
         }
+    }
+
+
+    private void attachBuildingOutline(
+            Spatial source
+    ) {
+
+        if (
+                source == null
+                        ||
+                        buildingOutlines.containsKey(
+                                source
+                        )
+        ) {
+
+            return;
+        }
+
+        Spatial outline =
+                createOutlineSpatial(
+                        source
+                );
+
+        if (
+                outline == null
+        ) {
+
+            return;
+        }
+
+        rootNode.attachChild(
+                outline
+        );
+
+        buildingOutlines.put(
+                source,
+                outline
+        );
+
+        syncBuildingOutline(
+                source
+        );
+    }
+
+
+    private Spatial createOutlineSpatial(
+            Spatial source
+    ) {
+
+        if (
+                source instanceof Geometry
+        ) {
+
+            Geometry sourceGeometry =
+                    (Geometry) source;
+
+            if (
+                    !(sourceGeometry.getMesh() instanceof Box)
+            ) {
+
+                return null;
+            }
+
+            Box box =
+                    (Box) sourceGeometry.getMesh();
+
+            float x =
+                    box.getXExtent() * 1.002f;
+
+            float y =
+                    box.getYExtent() * 1.002f;
+
+            float z =
+                    box.getZExtent() * 1.002f;
+
+            Node outlineNode =
+                    new Node(
+                            sourceGeometry.getName()
+                                    +
+                                    "_Outline"
+                    );
+
+            Vector3f[] corners =
+                    new Vector3f[] {
+                            new Vector3f(-x, -y, -z),
+                            new Vector3f( x, -y, -z),
+                            new Vector3f( x,  y, -z),
+                            new Vector3f(-x,  y, -z),
+
+                            new Vector3f(-x, -y,  z),
+                            new Vector3f( x, -y,  z),
+                            new Vector3f( x,  y,  z),
+                            new Vector3f(-x,  y,  z)
+                    };
+
+            int[][] edges =
+                    new int[][] {
+                            {0, 1},
+                            {1, 2},
+                            {2, 3},
+                            {3, 0},
+
+                            {4, 5},
+                            {5, 6},
+                            {6, 7},
+                            {7, 4},
+
+                            {0, 4},
+                            {1, 5},
+                            {2, 6},
+                            {3, 7}
+                    };
+
+            Material outlineMaterial =
+                    createOutlineMaterial();
+
+            for (
+                    int i = 0;
+                    i < edges.length;
+                    i++
+            ) {
+
+                int startIndex =
+                        edges[i][0];
+
+                int endIndex =
+                        edges[i][1];
+
+                Geometry edgeGeometry =
+                        new Geometry(
+                                sourceGeometry.getName()
+                                        +
+                                        "_OutlineEdge_"
+                                        +
+                                        i,
+                                new Line(
+                                        corners[startIndex],
+                                        corners[endIndex]
+                                )
+                        );
+
+                edgeGeometry.setMaterial(
+                        outlineMaterial
+                );
+
+                edgeGeometry.setQueueBucket(
+                        RenderQueue.Bucket.Transparent
+                );
+
+                outlineNode.attachChild(
+                        edgeGeometry
+                );
+            }
+
+            return outlineNode;
+        }
+
+        if (
+                source instanceof Node
+        ) {
+
+            Node sourceNode =
+                    (Node) source;
+
+            Node outlineNode =
+                    new Node(
+                            sourceNode.getName()
+                                    +
+                                    "_Outline"
+                    );
+
+            for (
+                    Spatial child
+                    :
+                    sourceNode.getChildren()
+            ) {
+
+                /*
+                 * Unsichtbare Physics-Hilfsobjekte sollen keinen
+                 * sichtbaren Umriss erhalten.
+                 */
+                if (
+                        child.getName() != null
+                                &&
+                                child.getName().startsWith(
+                                        "StairsCollision_"
+                                )
+                ) {
+
+                    continue;
+                }
+
+                Spatial childOutline =
+                        createOutlineSpatial(
+                                child
+                        );
+
+                if (
+                        childOutline == null
+                ) {
+
+                    continue;
+                }
+
+                childOutline.setLocalTranslation(
+                        child.getLocalTranslation()
+                                .clone()
+                );
+
+                childOutline.setLocalRotation(
+                        child.getLocalRotation()
+                                .clone()
+                );
+
+                childOutline.setLocalScale(
+                        child.getLocalScale()
+                                .clone()
+                );
+
+                outlineNode.attachChild(
+                        childOutline
+                );
+            }
+
+            return outlineNode;
+        }
+
+        return null;
+    }
+
+
+    private void syncBuildingOutline(
+            Spatial source
+    ) {
+
+        Spatial outline =
+                buildingOutlines.get(
+                        source
+                );
+
+        if (
+                outline == null
+        ) {
+
+            return;
+        }
+
+        outline.setLocalTranslation(
+                source.getLocalTranslation()
+                        .clone()
+        );
+
+        outline.setLocalRotation(
+                source.getLocalRotation()
+                        .clone()
+        );
+
+        outline.setLocalScale(
+                source.getLocalScale()
+                        .clone()
+        );
+    }
+
+
+    private void removeBuildingOutline(
+            Spatial source
+    ) {
+
+        Spatial outline =
+                buildingOutlines.remove(
+                        source
+                );
+
+        if (
+                outline != null
+        ) {
+
+            outline.removeFromParent();
+        }
+    }
+
+
+    private Material createOutlineMaterial() {
+
+        Material material =
+                new Material(
+                        assetManager,
+                        "Common/MatDefs/Misc/Unshaded.j3md"
+                );
+
+        material.setColor(
+                "Color",
+                new ColorRGBA(
+                        0f,
+                        0f,
+                        0f,
+                        0.92f
+                )
+        );
+
+        material.getAdditionalRenderState()
+                .setBlendMode(
+                        RenderState.BlendMode.Alpha
+                );
+
+        material.getAdditionalRenderState()
+                .setDepthWrite(
+                        false
+                );
+
+        material.getAdditionalRenderState()
+                .setLineWidth(
+                        1f
+                );
+
+        return material;
     }
 
 
@@ -3934,6 +4291,22 @@ public class BuildingSystem implements ActionListener {
 
         placedStairs.clear();
 
+        for (
+                Spatial outline
+                :
+                buildingOutlines.values()
+        ) {
+
+            if (
+                    outline != null
+            ) {
+
+                outline.removeFromParent();
+            }
+        }
+
+        buildingOutlines.clear();
+
         doorClosedRotations.clear();
 
         doorOpenStates.clear();
@@ -4049,6 +4422,10 @@ public class BuildingSystem implements ActionListener {
             Geometry geometry
     ) {
 
+        removeBuildingOutline(
+                geometry
+        );
+
         RigidBodyControl physics =
                 geometry.getControl(
                         RigidBodyControl.class
@@ -4072,6 +4449,10 @@ public class BuildingSystem implements ActionListener {
     private void removeDoorFrameWithPhysics(
             Node frame
     ) {
+
+        removeBuildingOutline(
+                frame
+        );
 
         for (
                 Spatial child
@@ -4248,6 +4629,11 @@ public class BuildingSystem implements ActionListener {
 
 
     private void removeStairsWithPhysics(Node stairs) {
+
+        removeBuildingOutline(
+                stairs
+        );
+
         removePhysicsRecursively(stairs);
         stairs.removeFromParent();
     }
