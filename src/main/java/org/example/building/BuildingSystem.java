@@ -26,6 +26,9 @@ import org.example.inventory.Inventory;
 import org.example.inventory.ItemType;
 import org.example.ui.InventoryMenuSystem;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class BuildingSystem implements ActionListener {
 
     private static final String TOGGLE_BUILD =
@@ -34,10 +37,8 @@ public class BuildingSystem implements ActionListener {
     private static final String PLACE_BUILDING =
             "PlaceBuilding";
 
-
     public static final int FOUNDATION_WOOD_COST =
             5;
-
 
     private static final float BUILD_DISTANCE =
             4f;
@@ -66,12 +67,20 @@ public class BuildingSystem implements ActionListener {
     private final BitmapText buildText;
 
 
+    /*
+     * Hier merken wir uns ALLE tatsächlich
+     * gebauten Fundamente.
+     */
+    private final List<Geometry> placedFoundations =
+            new ArrayList<>();
+
+
     private boolean active =
             false;
 
 
-    private int placedFoundationCount =
-            0;
+    private int nextFoundationId =
+            1;
 
 
     public BuildingSystem(
@@ -492,6 +501,49 @@ public class BuildingSystem implements ActionListener {
                         .clone();
 
 
+        createAndAttachFoundation(
+                position
+        );
+
+
+        inventory.removeItem(
+                ItemType.WOOD,
+                FOUNDATION_WOOD_COST
+        );
+
+
+        System.out.println(
+                "Fundament gebaut."
+        );
+
+
+        System.out.println(
+                "Fundamente insgesamt: "
+                        +
+                        placedFoundations.size()
+        );
+
+
+        System.out.println(
+                "Verbleibendes Holz: "
+                        +
+                        inventory.getAmount(
+                                ItemType.WOOD
+                        )
+        );
+    }
+
+
+    /*
+     * Diese Methode wird sowohl beim normalen
+     * Bauen als auch beim Laden verwendet.
+     *
+     * Beim Laden entstehen dadurch keine Kosten.
+     */
+    private void createAndAttachFoundation(
+            Vector3f position
+    ) {
+
         Geometry foundation =
                 createFoundation(
                         position
@@ -519,27 +571,12 @@ public class BuildingSystem implements ActionListener {
         );
 
 
-        inventory.removeItem(
-                ItemType.WOOD,
-                FOUNDATION_WOOD_COST
+        placedFoundations.add(
+                foundation
         );
 
 
-        placedFoundationCount++;
-
-
-        System.out.println(
-                "Fundament gebaut."
-        );
-
-
-        System.out.println(
-                "Verbleibendes Holz: "
-                        +
-                        inventory.getAmount(
-                                ItemType.WOOD
-                        )
-        );
+        nextFoundationId++;
     }
 
 
@@ -559,7 +596,7 @@ public class BuildingSystem implements ActionListener {
                 new Geometry(
                         "Foundation_"
                                 +
-                                placedFoundationCount,
+                                nextFoundationId,
                         foundationBox
                 );
 
@@ -609,6 +646,90 @@ public class BuildingSystem implements ActionListener {
 
 
         return foundation;
+    }
+
+
+    /*
+     * ==========================
+     * SAVE-SYSTEM API
+     * ==========================
+     */
+
+
+    public int getFoundationCount() {
+
+        return placedFoundations.size();
+    }
+
+
+    public Vector3f getFoundationPosition(
+            int index
+    ) {
+
+        return placedFoundations
+                .get(
+                        index
+                )
+                .getLocalTranslation()
+                .clone();
+    }
+
+
+    /*
+     * Vor dem Laden entfernen wir alle
+     * momentan vorhandenen Fundamente.
+     *
+     * Wichtig:
+     * Auch die Physics-Objekte müssen
+     * aus der PhysicsSpace entfernt werden.
+     */
+    public void clearFoundations() {
+
+        for (
+                Geometry foundation
+                :
+                placedFoundations
+        ) {
+
+            RigidBodyControl physics =
+                    foundation.getControl(
+                            RigidBodyControl.class
+                    );
+
+
+            if (
+                    physics != null
+            ) {
+
+                physicsSpace.remove(
+                        physics
+                );
+            }
+
+
+            foundation.removeFromParent();
+        }
+
+
+        placedFoundations.clear();
+
+
+        nextFoundationId =
+                1;
+    }
+
+
+    /*
+     * Wird ausschließlich vom SaveGameSystem
+     * beim Laden aufgerufen.
+     */
+    public void loadFoundation(
+            Vector3f position
+    ) {
+
+        createAndAttachFoundation(
+                position.clone()
+        );
     }
 
 

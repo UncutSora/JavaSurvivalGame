@@ -6,6 +6,7 @@ import com.jme3.input.controls.ActionListener;
 import com.jme3.input.controls.KeyTrigger;
 import com.jme3.math.Vector3f;
 
+import org.example.building.BuildingSystem;
 import org.example.inventory.Inventory;
 import org.example.inventory.InventorySlot;
 import org.example.inventory.ItemType;
@@ -35,7 +36,7 @@ public class SaveGameSystem implements ActionListener {
 
 
     private static final int SAVE_VERSION =
-            3;
+            4;
 
 
     private final Player player;
@@ -49,6 +50,8 @@ public class SaveGameSystem implements ActionListener {
     private final List<HarvestableResource> resources;
 
     private final DayNightSystem dayNightSystem;
+
+    private final BuildingSystem buildingSystem;
 
 
     private final Path saveFile =
@@ -65,7 +68,8 @@ public class SaveGameSystem implements ActionListener {
             Inventory inventory,
             ToolDurabilitySystem toolDurabilitySystem,
             List<HarvestableResource> resources,
-            DayNightSystem dayNightSystem
+            DayNightSystem dayNightSystem,
+            BuildingSystem buildingSystem
     ) {
 
         this.player =
@@ -85,6 +89,9 @@ public class SaveGameSystem implements ActionListener {
 
         this.dayNightSystem =
                 dayNightSystem;
+
+        this.buildingSystem =
+                buildingSystem;
 
 
         inputManager.addMapping(
@@ -118,7 +125,9 @@ public class SaveGameSystem implements ActionListener {
             float tpf
     ) {
 
-        if (!isPressed) {
+        if (
+                !isPressed
+        ) {
 
             return;
         }
@@ -332,7 +341,7 @@ public class SaveGameSystem implements ActionListener {
 
 
         // ==========================
-        // WELTZUSTAND
+        // RESSOURCEN / WELT
         // ==========================
 
         for (
@@ -367,7 +376,69 @@ public class SaveGameSystem implements ActionListener {
 
 
         // ==========================
-        // DATEI SPEICHERN
+        // GEBÄUDE
+        // ==========================
+
+        int foundationCount =
+                buildingSystem.getFoundationCount();
+
+
+        properties.setProperty(
+                "building.foundation.count",
+                Integer.toString(
+                        foundationCount
+                )
+        );
+
+
+        for (
+                int i = 0;
+                i < foundationCount;
+                i++
+        ) {
+
+            Vector3f foundationPosition =
+                    buildingSystem
+                            .getFoundationPosition(
+                                    i
+                            );
+
+
+            String prefix =
+                    "building.foundation."
+                            +
+                            i
+                            +
+                            ".";
+
+
+            properties.setProperty(
+                    prefix + "x",
+                    Float.toString(
+                            foundationPosition.x
+                    )
+            );
+
+
+            properties.setProperty(
+                    prefix + "y",
+                    Float.toString(
+                            foundationPosition.y
+                    )
+            );
+
+
+            properties.setProperty(
+                    prefix + "z",
+                    Float.toString(
+                            foundationPosition.z
+                    )
+            );
+        }
+
+
+        // ==========================
+        // DATEI SCHREIBEN
         // ==========================
 
         try {
@@ -416,9 +487,9 @@ public class SaveGameSystem implements ActionListener {
 
 
             System.out.println(
-                    "Ressourcen gespeichert: "
+                    "Fundamente gespeichert: "
                             +
-                            resources.size()
+                            foundationCount
             );
 
 
@@ -590,7 +661,7 @@ public class SaveGameSystem implements ActionListener {
 
 
         // ==========================
-        // TAG / UHRZEIT LADEN
+        // TAG / UHRZEIT
         // ==========================
 
         int savedDay =
@@ -728,7 +799,7 @@ public class SaveGameSystem implements ActionListener {
 
 
         // ==========================
-        // WELT LADEN
+        // RESSOURCEN / WELT
         // ==========================
 
         for (
@@ -769,6 +840,69 @@ public class SaveGameSystem implements ActionListener {
         }
 
 
+        // ==========================
+        // GEBÄUDE LADEN
+        // ==========================
+
+        buildingSystem.clearFoundations();
+
+
+        int foundationCount =
+                readInt(
+                        properties,
+                        "building.foundation.count",
+                        0
+                );
+
+
+        for (
+                int i = 0;
+                i < foundationCount;
+                i++
+        ) {
+
+            String prefix =
+                    "building.foundation."
+                            +
+                            i
+                            +
+                            ".";
+
+
+            float foundationX =
+                    readFloat(
+                            properties,
+                            prefix + "x",
+                            0f
+                    );
+
+
+            float foundationY =
+                    readFloat(
+                            properties,
+                            prefix + "y",
+                            0.12f
+                    );
+
+
+            float foundationZ =
+                    readFloat(
+                            properties,
+                            prefix + "z",
+                            0f
+                    );
+
+
+            buildingSystem.loadFoundation(
+                    new Vector3f(
+                            foundationX,
+                            foundationY,
+                            foundationZ
+                    )
+            );
+        }
+
+
         System.out.println(
                 "================================"
         );
@@ -794,17 +928,9 @@ public class SaveGameSystem implements ActionListener {
 
 
         System.out.println(
-                "Position: "
+                "Fundamente geladen: "
                         +
-                        x
-                        +
-                        ", "
-                        +
-                        y
-                        +
-                        ", "
-                        +
-                        z
+                        foundationCount
         );
 
 

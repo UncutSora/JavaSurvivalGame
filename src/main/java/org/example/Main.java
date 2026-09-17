@@ -347,7 +347,8 @@ public class Main extends SimpleApplication {
                         guiNode,
                         cam,
                         inputManager,
-                        bulletAppState.getPhysicsSpace(),
+                        bulletAppState
+                                .getPhysicsSpace(),
                         inventory,
                         inventoryMenuSystem
                 );
@@ -364,7 +365,8 @@ public class Main extends SimpleApplication {
                         inventory,
                         toolDurabilitySystem,
                         resources,
-                        dayNightSystem
+                        dayNightSystem,
+                        buildingSystem
                 );
     }
 
@@ -393,43 +395,67 @@ public class Main extends SimpleApplication {
                         "tree_01",
                         assetManager,
                         bulletAppState.getPhysicsSpace(),
-                        new Vector3f(0f, 0f, 0f)
+                        new Vector3f(
+                                0f,
+                                0f,
+                                0f
+                        )
                 )
         );
+
 
         addResource(
                 new Tree(
                         "tree_02",
                         assetManager,
                         bulletAppState.getPhysicsSpace(),
-                        new Vector3f(5f, 0f, -3f)
+                        new Vector3f(
+                                5f,
+                                0f,
+                                -3f
+                        )
                 )
         );
+
 
         addResource(
                 new Tree(
                         "tree_03",
                         assetManager,
                         bulletAppState.getPhysicsSpace(),
-                        new Vector3f(-5f, 0f, -4f)
+                        new Vector3f(
+                                -5f,
+                                0f,
+                                -4f
+                        )
                 )
         );
+
 
         addResource(
                 new Tree(
                         "tree_04",
                         assetManager,
                         bulletAppState.getPhysicsSpace(),
-                        new Vector3f(7f, 0f, 4f)
+                        new Vector3f(
+                                7f,
+                                0f,
+                                4f
+                        )
                 )
         );
+
 
         addResource(
                 new Tree(
                         "tree_05",
                         assetManager,
                         bulletAppState.getPhysicsSpace(),
-                        new Vector3f(-7f, 0f, 3f)
+                        new Vector3f(
+                                -7f,
+                                0f,
+                                3f
+                        )
                 )
         );
 
@@ -439,34 +465,53 @@ public class Main extends SimpleApplication {
                         "rock_01",
                         assetManager,
                         bulletAppState.getPhysicsSpace(),
-                        new Vector3f(3f, 0f, 3f)
+                        new Vector3f(
+                                3f,
+                                0f,
+                                3f
+                        )
                 )
         );
+
 
         addResource(
                 new Rock(
                         "rock_02",
                         assetManager,
                         bulletAppState.getPhysicsSpace(),
-                        new Vector3f(-3f, 0f, 2f)
+                        new Vector3f(
+                                -3f,
+                                0f,
+                                2f
+                        )
                 )
         );
+
 
         addResource(
                 new Rock(
                         "rock_03",
                         assetManager,
                         bulletAppState.getPhysicsSpace(),
-                        new Vector3f(4f, 0f, -6f)
+                        new Vector3f(
+                                4f,
+                                0f,
+                                -6f
+                        )
                 )
         );
+
 
         addResource(
                 new Rock(
                         "rock_04",
                         assetManager,
                         bulletAppState.getPhysicsSpace(),
-                        new Vector3f(-4f, 0f, -7f)
+                        new Vector3f(
+                                -4f,
+                                0f,
+                                -7f
+                        )
                 )
         );
 
@@ -476,25 +521,39 @@ public class Main extends SimpleApplication {
                         "berry_01",
                         assetManager,
                         bulletAppState.getPhysicsSpace(),
-                        new Vector3f(2f, 0f, -2f)
+                        new Vector3f(
+                                2f,
+                                0f,
+                                -2f
+                        )
                 )
         );
+
 
         addResource(
                 new BerryBush(
                         "berry_02",
                         assetManager,
                         bulletAppState.getPhysicsSpace(),
-                        new Vector3f(-2f, 0f, -3f)
+                        new Vector3f(
+                                -2f,
+                                0f,
+                                -3f
+                        )
                 )
         );
+
 
         addResource(
                 new BerryBush(
                         "berry_03",
                         assetManager,
                         bulletAppState.getPhysicsSpace(),
-                        new Vector3f(6f, 0f, 1f)
+                        new Vector3f(
+                                6f,
+                                0f,
+                                1f
+                        )
                 )
         );
 
@@ -503,7 +562,11 @@ public class Main extends SimpleApplication {
                 new WaterSource(
                         "water_01",
                         assetManager,
-                        new Vector3f(0f, 0f, -9f)
+                        new Vector3f(
+                                0f,
+                                0f,
+                                -9f
+                        )
                 )
         );
     }
