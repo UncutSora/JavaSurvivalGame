@@ -37,7 +37,7 @@ public class SaveGameSystem implements ActionListener {
 
 
     private static final int SAVE_VERSION =
-            5;
+            6;
 
 
     private final Player player;
@@ -266,6 +266,13 @@ public class SaveGameSystem implements ActionListener {
 
 
             System.out.println(
+                    "Türrahmen: "
+                            +
+                            buildingSystem.getDoorFrameCount()
+            );
+
+
+            System.out.println(
                     "================================"
             );
 
@@ -284,6 +291,10 @@ public class SaveGameSystem implements ActionListener {
         }
     }
 
+
+    // =========================================================
+    // SPIELER SPEICHERN
+    // =========================================================
 
     private void savePlayer(
             Properties properties
@@ -317,6 +328,10 @@ public class SaveGameSystem implements ActionListener {
         );
     }
 
+
+    // =========================================================
+    // SURVIVAL-WERTE SPEICHERN
+    // =========================================================
 
     private void saveStats(
             Properties properties
@@ -363,6 +378,10 @@ public class SaveGameSystem implements ActionListener {
     }
 
 
+    // =========================================================
+    // ZEIT SPEICHERN
+    // =========================================================
+
     private void saveTime(
             Properties properties
     ) {
@@ -383,6 +402,10 @@ public class SaveGameSystem implements ActionListener {
         );
     }
 
+
+    // =========================================================
+    // INVENTAR SPEICHERN
+    // =========================================================
 
     private void saveInventory(
             Properties properties
@@ -446,6 +469,10 @@ public class SaveGameSystem implements ActionListener {
     }
 
 
+    // =========================================================
+    // WERKZEUGE SPEICHERN
+    // =========================================================
+
     private void saveTools(
             Properties properties
     ) {
@@ -459,6 +486,10 @@ public class SaveGameSystem implements ActionListener {
         );
     }
 
+
+    // =========================================================
+    // WELT SPEICHERN
+    // =========================================================
 
     private void saveWorld(
             Properties properties
@@ -496,13 +527,33 @@ public class SaveGameSystem implements ActionListener {
     }
 
 
+    // =========================================================
+    // GEBÄUDE SPEICHERN
+    // =========================================================
+
     private void saveBuildings(
             Properties properties
     ) {
 
-        // ==========================
-        // FUNDAMENTE
-        // ==========================
+        saveFoundations(
+                properties
+        );
+
+
+        saveWalls(
+                properties
+        );
+
+
+        saveDoorFrames(
+                properties
+        );
+    }
+
+
+    private void saveFoundations(
+            Properties properties
+    ) {
 
         int foundationCount =
                 buildingSystem.getFoundationCount();
@@ -560,11 +611,12 @@ public class SaveGameSystem implements ActionListener {
                     )
             );
         }
+    }
 
 
-        // ==========================
-        // WÄNDE
-        // ==========================
+    private void saveWalls(
+            Properties properties
+    ) {
 
         int wallCount =
                 buildingSystem.getWallCount();
@@ -663,6 +715,112 @@ public class SaveGameSystem implements ActionListener {
         }
     }
 
+
+    private void saveDoorFrames(
+            Properties properties
+    ) {
+
+        int doorFrameCount =
+                buildingSystem.getDoorFrameCount();
+
+
+        properties.setProperty(
+                "building.doorFrame.count",
+                Integer.toString(
+                        doorFrameCount
+                )
+        );
+
+
+        for (
+                int i = 0;
+                i < doorFrameCount;
+                i++
+        ) {
+
+            Vector3f position =
+                    buildingSystem
+                            .getDoorFramePosition(
+                                    i
+                            );
+
+
+            Quaternion rotation =
+                    buildingSystem
+                            .getDoorFrameRotation(
+                                    i
+                            );
+
+
+            String prefix =
+                    "building.doorFrame."
+                            +
+                            i
+                            +
+                            ".";
+
+
+            properties.setProperty(
+                    prefix + "x",
+                    Float.toString(
+                            position.x
+                    )
+            );
+
+
+            properties.setProperty(
+                    prefix + "y",
+                    Float.toString(
+                            position.y
+                    )
+            );
+
+
+            properties.setProperty(
+                    prefix + "z",
+                    Float.toString(
+                            position.z
+                    )
+            );
+
+
+            properties.setProperty(
+                    prefix + "rotX",
+                    Float.toString(
+                            rotation.getX()
+                    )
+            );
+
+
+            properties.setProperty(
+                    prefix + "rotY",
+                    Float.toString(
+                            rotation.getY()
+                    )
+            );
+
+
+            properties.setProperty(
+                    prefix + "rotZ",
+                    Float.toString(
+                            rotation.getZ()
+                    )
+            );
+
+
+            properties.setProperty(
+                    prefix + "rotW",
+                    Float.toString(
+                            rotation.getW()
+                    )
+            );
+        }
+    }
+
+
+    // =========================================================
+    // LADEN
+    // =========================================================
 
     public void loadGame() {
 
@@ -774,10 +932,21 @@ public class SaveGameSystem implements ActionListener {
 
 
         System.out.println(
+                "Türrahmen: "
+                        +
+                        buildingSystem.getDoorFrameCount()
+        );
+
+
+        System.out.println(
                 "================================"
         );
     }
 
+
+    // =========================================================
+    // SPIELER LADEN
+    // =========================================================
 
     private void loadPlayer(
             Properties properties
@@ -822,6 +991,10 @@ public class SaveGameSystem implements ActionListener {
                 );
     }
 
+
+    // =========================================================
+    // SURVIVAL-WERTE LADEN
+    // =========================================================
 
     private void loadStats(
             Properties properties
@@ -878,6 +1051,10 @@ public class SaveGameSystem implements ActionListener {
     }
 
 
+    // =========================================================
+    // ZEIT LADEN
+    // =========================================================
+
     private void loadTime(
             Properties properties
     ) {
@@ -904,6 +1081,10 @@ public class SaveGameSystem implements ActionListener {
         );
     }
 
+
+    // =========================================================
+    // INVENTAR LADEN
+    // =========================================================
 
     private void loadInventory(
             Properties properties
@@ -995,6 +1176,10 @@ public class SaveGameSystem implements ActionListener {
     }
 
 
+    // =========================================================
+    // TOOLS LADEN
+    // =========================================================
+
     private void loadTools(
             Properties properties
     ) {
@@ -1014,6 +1199,10 @@ public class SaveGameSystem implements ActionListener {
                 );
     }
 
+
+    // =========================================================
+    // WELT LADEN
+    // =========================================================
 
     private void loadWorld(
             Properties properties
@@ -1058,6 +1247,10 @@ public class SaveGameSystem implements ActionListener {
     }
 
 
+    // =========================================================
+    // GEBÄUDE LADEN
+    // =========================================================
+
     private void loadBuildings(
             Properties properties
     ) {
@@ -1065,9 +1258,25 @@ public class SaveGameSystem implements ActionListener {
         buildingSystem.clearBuildings();
 
 
-        // ==========================
-        // FUNDAMENTE
-        // ==========================
+        loadFoundations(
+                properties
+        );
+
+
+        loadWalls(
+                properties
+        );
+
+
+        loadDoorFrames(
+                properties
+        );
+    }
+
+
+    private void loadFoundations(
+            Properties properties
+    ) {
 
         int foundationCount =
                 readInt(
@@ -1123,11 +1332,12 @@ public class SaveGameSystem implements ActionListener {
                     )
             );
         }
+    }
 
 
-        // ==========================
-        // WÄNDE
-        // ==========================
+    private void loadWalls(
+            Properties properties
+    ) {
 
         int wallCount =
                 readInt(
@@ -1227,6 +1437,113 @@ public class SaveGameSystem implements ActionListener {
         }
     }
 
+
+    private void loadDoorFrames(
+            Properties properties
+    ) {
+
+        int doorFrameCount =
+                readInt(
+                        properties,
+                        "building.doorFrame.count",
+                        0
+                );
+
+
+        for (
+                int i = 0;
+                i < doorFrameCount;
+                i++
+        ) {
+
+            String prefix =
+                    "building.doorFrame."
+                            +
+                            i
+                            +
+                            ".";
+
+
+            float x =
+                    readFloat(
+                            properties,
+                            prefix + "x",
+                            0f
+                    );
+
+
+            float y =
+                    readFloat(
+                            properties,
+                            prefix + "y",
+                            1.62f
+                    );
+
+
+            float z =
+                    readFloat(
+                            properties,
+                            prefix + "z",
+                            0f
+                    );
+
+
+            float rotX =
+                    readFloat(
+                            properties,
+                            prefix + "rotX",
+                            0f
+                    );
+
+
+            float rotY =
+                    readFloat(
+                            properties,
+                            prefix + "rotY",
+                            0f
+                    );
+
+
+            float rotZ =
+                    readFloat(
+                            properties,
+                            prefix + "rotZ",
+                            0f
+                    );
+
+
+            float rotW =
+                    readFloat(
+                            properties,
+                            prefix + "rotW",
+                            1f
+                    );
+
+
+            Quaternion rotation =
+                    new Quaternion(
+                            rotX,
+                            rotY,
+                            rotZ,
+                            rotW
+                    );
+
+
+            buildingSystem.loadDoorFrame(
+                    new Vector3f(
+                            x,
+                            y,
+                            z
+                    ),
+                    rotation
+            );
+        }
+    }
+
+
+    // =========================================================
+    // HELPER
+    // =========================================================
 
     private float readFloat(
             Properties properties,

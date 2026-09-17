@@ -44,12 +44,18 @@ public class BuildingSystem implements ActionListener {
     private static final String SELECT_WALL =
             "SelectWall";
 
+    private static final String SELECT_DOOR_FRAME =
+            "SelectDoorFrame";
+
 
     public static final int FOUNDATION_WOOD_COST =
             5;
 
     public static final int WALL_WOOD_COST =
             3;
+
+    public static final int DOOR_FRAME_WOOD_COST =
+            4;
 
 
     private static final float BUILD_DISTANCE =
@@ -62,7 +68,8 @@ public class BuildingSystem implements ActionListener {
     private enum BuildType {
 
         FOUNDATION,
-        WALL
+        WALL,
+        DOOR_FRAME
     }
 
 
@@ -83,9 +90,16 @@ public class BuildingSystem implements ActionListener {
 
     private final Material foundationPreviewMaterial;
 
+
     private final Geometry wallPreview;
 
     private final Material wallPreviewMaterial;
+
+
+    private final Node doorFramePreview;
+
+    private final Material doorFramePreviewMaterial;
+
 
     private final BitmapText buildText;
 
@@ -94,6 +108,9 @@ public class BuildingSystem implements ActionListener {
             new ArrayList<>();
 
     private final List<Geometry> placedWalls =
+            new ArrayList<>();
+
+    private final List<Node> placedDoorFrames =
             new ArrayList<>();
 
 
@@ -109,6 +126,9 @@ public class BuildingSystem implements ActionListener {
             1;
 
     private int nextWallId =
+            1;
+
+    private int nextDoorFrameId =
             1;
 
 
@@ -143,7 +163,7 @@ public class BuildingSystem implements ActionListener {
 
 
         // ==========================
-        // FUNDAMENT PREVIEW
+        // FUNDAMENT-VORSCHAU
         // ==========================
 
         foundationPreview =
@@ -182,7 +202,7 @@ public class BuildingSystem implements ActionListener {
 
 
         // ==========================
-        // WALL PREVIEW
+        // WAND-VORSCHAU
         // ==========================
 
         wallPreview =
@@ -217,6 +237,36 @@ public class BuildingSystem implements ActionListener {
 
         rootNode.attachChild(
                 wallPreview
+        );
+
+
+        // ==========================
+        // TÜRRAHMEN-VORSCHAU
+        // ==========================
+
+        doorFramePreviewMaterial =
+                createPreviewMaterial();
+
+
+        doorFramePreview =
+                createDoorFrameNode(
+                        "DoorFramePreview",
+                        doorFramePreviewMaterial
+                );
+
+
+        doorFramePreview.setQueueBucket(
+                RenderQueue.Bucket.Transparent
+        );
+
+
+        doorFramePreview.setCullHint(
+                Spatial.CullHint.Always
+        );
+
+
+        rootNode.attachChild(
+                doorFramePreview
         );
 
 
@@ -292,6 +342,14 @@ public class BuildingSystem implements ActionListener {
 
 
         inputManager.addMapping(
+                SELECT_DOOR_FRAME,
+                new KeyTrigger(
+                        KeyInput.KEY_3
+                )
+        );
+
+
+        inputManager.addMapping(
                 PLACE_BUILDING,
                 new MouseButtonTrigger(
                         MouseInput.BUTTON_LEFT
@@ -304,6 +362,7 @@ public class BuildingSystem implements ActionListener {
                 TOGGLE_BUILD,
                 SELECT_FOUNDATION,
                 SELECT_WALL,
+                SELECT_DOOR_FRAME,
                 PLACE_BUILDING
         );
     }
@@ -369,11 +428,6 @@ public class BuildingSystem implements ActionListener {
                     BuildType.FOUNDATION;
 
 
-            System.out.println(
-                    "Bauteil ausgewählt: Fundament"
-            );
-
-
             return;
         }
 
@@ -390,9 +444,20 @@ public class BuildingSystem implements ActionListener {
                     BuildType.WALL;
 
 
-            System.out.println(
-                    "Bauteil ausgewählt: Wand"
-            );
+            return;
+        }
+
+
+        if (
+                name.equals(
+                        SELECT_DOOR_FRAME
+                )
+                        &&
+                        isPressed
+        ) {
+
+            selectedBuildType =
+                    BuildType.DOOR_FRAME;
 
 
             return;
@@ -432,18 +497,29 @@ public class BuildingSystem implements ActionListener {
         }
 
 
-        if (
+        switch (
                 selectedBuildType
-                        ==
-                        BuildType.FOUNDATION
         ) {
 
-            updateFoundationPreview();
-        }
+            case FOUNDATION:
 
-        else {
+                updateFoundationPreview();
 
-            updateWallPreview();
+                break;
+
+
+            case WALL:
+
+                updateWallPreview();
+
+                break;
+
+
+            case DOOR_FRAME:
+
+                updateDoorFramePreview();
+
+                break;
         }
 
 
@@ -458,6 +534,11 @@ public class BuildingSystem implements ActionListener {
         );
 
 
+        doorFramePreview.setCullHint(
+                Spatial.CullHint.Always
+        );
+
+
         foundationPreview.setCullHint(
                 Spatial.CullHint.Inherit
         );
@@ -467,44 +548,40 @@ public class BuildingSystem implements ActionListener {
                 getHorizontalBuildTarget();
 
 
-        float snappedX =
+        float x =
                 snap(
                         target.x
                 );
 
 
-        float snappedZ =
+        float z =
                 snap(
                         target.z
                 );
 
 
         foundationPreview.setLocalTranslation(
-                snappedX,
+                x,
                 0.12f,
-                snappedZ
+                z
         );
 
 
-        boolean enoughWood =
+        boolean valid =
                 inventory.hasItem(
                         ItemType.WOOD,
                         FOUNDATION_WOOD_COST
-                );
-
-
-        boolean occupied =
-                foundationExistsAt(
-                        snappedX,
-                        snappedZ
-                );
+                )
+                        &&
+                        !foundationExistsAt(
+                                x,
+                                z
+                        );
 
 
         setPreviewColor(
                 foundationPreviewMaterial,
-                enoughWood
-                        &&
-                        !occupied
+                valid
         );
     }
 
@@ -516,25 +593,17 @@ public class BuildingSystem implements ActionListener {
         );
 
 
-        if (
-                placedFoundations.isEmpty()
-        ) {
-
-            wallPreview.setCullHint(
-                    Spatial.CullHint.Always
-            );
+        doorFramePreview.setCullHint(
+                Spatial.CullHint.Always
+        );
 
 
-            return;
-        }
-
-
-        Geometry nearestFoundation =
-                getNearestFoundationToBuildTarget();
+        EdgeTransform edge =
+                calculateCurrentEdgeTransform();
 
 
         if (
-                nearestFoundation == null
+                edge == null
         ) {
 
             wallPreview.setCullHint(
@@ -551,9 +620,111 @@ public class BuildingSystem implements ActionListener {
         );
 
 
+        wallPreview.setLocalTranslation(
+                edge.position
+        );
+
+
+        wallPreview.setLocalRotation(
+                edge.rotation
+        );
+
+
+        boolean valid =
+                inventory.hasItem(
+                        ItemType.WOOD,
+                        WALL_WOOD_COST
+                )
+                        &&
+                        !edgeOccupied(
+                                edge.position
+                        );
+
+
+        setPreviewColor(
+                wallPreviewMaterial,
+                valid
+        );
+    }
+
+
+    private void updateDoorFramePreview() {
+
+        foundationPreview.setCullHint(
+                Spatial.CullHint.Always
+        );
+
+
+        wallPreview.setCullHint(
+                Spatial.CullHint.Always
+        );
+
+
+        EdgeTransform edge =
+                calculateCurrentEdgeTransform();
+
+
+        if (
+                edge == null
+        ) {
+
+            doorFramePreview.setCullHint(
+                    Spatial.CullHint.Always
+            );
+
+
+            return;
+        }
+
+
+        doorFramePreview.setCullHint(
+                Spatial.CullHint.Inherit
+        );
+
+
+        doorFramePreview.setLocalTranslation(
+                edge.position
+        );
+
+
+        doorFramePreview.setLocalRotation(
+                edge.rotation
+        );
+
+
+        boolean valid =
+                inventory.hasItem(
+                        ItemType.WOOD,
+                        DOOR_FRAME_WOOD_COST
+                )
+                        &&
+                        !edgeOccupied(
+                                edge.position
+                        );
+
+
+        setDoorFramePreviewColor(
+                valid
+        );
+    }
+
+
+    private EdgeTransform calculateCurrentEdgeTransform() {
+
+        Geometry foundation =
+                getNearestFoundationToBuildTarget();
+
+
+        if (
+                foundation == null
+        ) {
+
+            return null;
+        }
+
+
         Vector3f foundationPosition =
-                nearestFoundation
-                        .getLocalTranslation();
+                foundation.getLocalTranslation();
 
 
         Vector3f target =
@@ -561,41 +732,25 @@ public class BuildingSystem implements ActionListener {
 
 
         float dx =
-                target.x
-                        -
-                        foundationPosition.x;
+                target.x - foundationPosition.x;
 
 
         float dz =
-                target.z
-                        -
-                        foundationPosition.z;
+                target.z - foundationPosition.z;
 
 
-        float absoluteX =
-                Math.abs(
-                        dx
-                );
-
-
-        float absoluteZ =
-                Math.abs(
-                        dz
-                );
-
-
-        Vector3f wallPosition =
+        Vector3f position =
                 new Vector3f();
 
 
-        Quaternion wallRotation =
+        Quaternion rotation =
                 new Quaternion();
 
 
         if (
-                absoluteX
+                Math.abs(dx)
                         >
-                        absoluteZ
+                        Math.abs(dz)
         ) {
 
             float direction =
@@ -606,18 +761,16 @@ public class BuildingSystem implements ActionListener {
                             -1f;
 
 
-            wallPosition.set(
+            position.set(
                     foundationPosition.x
                             +
                             direction * 1.5f,
-
                     1.62f,
-
                     foundationPosition.z
             );
 
 
-            wallRotation.fromAngles(
+            rotation.fromAngles(
                     0f,
                     (float) Math.toRadians(
                             90f
@@ -636,53 +789,19 @@ public class BuildingSystem implements ActionListener {
                             -1f;
 
 
-            wallPosition.set(
+            position.set(
                     foundationPosition.x,
-
                     1.62f,
-
                     foundationPosition.z
                             +
                             direction * 1.5f
             );
-
-
-            wallRotation.fromAngles(
-                    0f,
-                    0f,
-                    0f
-            );
         }
 
 
-        wallPreview.setLocalTranslation(
-                wallPosition
-        );
-
-
-        wallPreview.setLocalRotation(
-                wallRotation
-        );
-
-
-        boolean enoughWood =
-                inventory.hasItem(
-                        ItemType.WOOD,
-                        WALL_WOOD_COST
-                );
-
-
-        boolean occupied =
-                wallExistsNear(
-                        wallPosition
-                );
-
-
-        setPreviewColor(
-                wallPreviewMaterial,
-                enoughWood
-                        &&
-                        !occupied
+        return new EdgeTransform(
+                position,
+                rotation
         );
     }
 
@@ -690,8 +809,7 @@ public class BuildingSystem implements ActionListener {
     private Vector3f getHorizontalBuildTarget() {
 
         Vector3f direction =
-                camera
-                        .getDirection()
+                camera.getDirection()
                         .clone();
 
 
@@ -716,8 +834,7 @@ public class BuildingSystem implements ActionListener {
         direction.normalizeLocal();
 
 
-        return camera
-                .getLocation()
+        return camera.getLocation()
                 .add(
                         direction.mult(
                                 BUILD_DISTANCE
@@ -726,19 +843,15 @@ public class BuildingSystem implements ActionListener {
     }
 
 
-    private float snap(
-            float value
-    ) {
-
-        return Math.round(
-                value / GRID_SIZE
-        )
-                *
-                GRID_SIZE;
-    }
-
-
     private Geometry getNearestFoundationToBuildTarget() {
+
+        if (
+                placedFoundations.isEmpty()
+        ) {
+
+            return null;
+        }
+
 
         Vector3f target =
                 getHorizontalBuildTarget();
@@ -767,25 +880,21 @@ public class BuildingSystem implements ActionListener {
 
 
             if (
-                    distance
-                            <
-                            nearestDistance
+                    distance < nearestDistance
             ) {
-
-                nearestDistance =
-                        distance;
-
 
                 nearest =
                         foundation;
+
+
+                nearestDistance =
+                        distance;
             }
         }
 
 
         if (
-                nearestDistance
-                        >
-                        64f
+                nearestDistance > 64f
         ) {
 
             return null;
@@ -793,6 +902,18 @@ public class BuildingSystem implements ActionListener {
 
 
         return nearest;
+    }
+
+
+    private float snap(
+            float value
+    ) {
+
+        return Math.round(
+                value / GRID_SIZE
+        )
+                *
+                GRID_SIZE;
     }
 
 
@@ -808,8 +929,7 @@ public class BuildingSystem implements ActionListener {
         ) {
 
             Vector3f position =
-                    foundation
-                            .getLocalTranslation();
+                    foundation.getLocalTranslation();
 
 
             if (
@@ -837,6 +957,20 @@ public class BuildingSystem implements ActionListener {
     }
 
 
+    private boolean edgeOccupied(
+            Vector3f position
+    ) {
+
+        return wallExistsNear(
+                position
+        )
+                ||
+                doorFrameExistsNear(
+                        position
+                );
+    }
+
+
     private boolean wallExistsNear(
             Vector3f position
     ) {
@@ -848,8 +982,35 @@ public class BuildingSystem implements ActionListener {
         ) {
 
             if (
-                    wall
-                            .getLocalTranslation()
+                    wall.getLocalTranslation()
+                            .distanceSquared(
+                                    position
+                            )
+                            <
+                            0.05f
+            ) {
+
+                return true;
+            }
+        }
+
+
+        return false;
+    }
+
+
+    private boolean doorFrameExistsNear(
+            Vector3f position
+    ) {
+
+        for (
+                Node frame
+                :
+                placedDoorFrames
+        ) {
+
+            if (
+                    frame.getLocalTranslation()
                             .distanceSquared(
                                     position
                             )
@@ -871,33 +1032,39 @@ public class BuildingSystem implements ActionListener {
             boolean valid
     ) {
 
-        if (
+        ColorRGBA color =
                 valid
-        ) {
+                        ?
+                        new ColorRGBA(
+                                0.15f,
+                                1f,
+                                0.25f,
+                                0.42f
+                        )
+                        :
+                        new ColorRGBA(
+                                1f,
+                                0.12f,
+                                0.12f,
+                                0.42f
+                        );
 
-            material.setColor(
-                    "Color",
-                    new ColorRGBA(
-                            0.15f,
-                            1f,
-                            0.25f,
-                            0.42f
-                    )
-            );
-        }
 
-        else {
+        material.setColor(
+                "Color",
+                color
+        );
+    }
 
-            material.setColor(
-                    "Color",
-                    new ColorRGBA(
-                            1f,
-                            0.12f,
-                            0.12f,
-                            0.42f
-                    )
-            );
-        }
+
+    private void setDoorFramePreviewColor(
+            boolean valid
+    ) {
+
+        setPreviewColor(
+                doorFramePreviewMaterial,
+                valid
+        );
     }
 
 
@@ -914,31 +1081,46 @@ public class BuildingSystem implements ActionListener {
         int cost;
 
 
-        if (
+        switch (
                 selectedBuildType
-                        ==
-                        BuildType.FOUNDATION
         ) {
 
-            selectedName =
-                    "Fundament";
+            case FOUNDATION:
 
-            cost =
-                    FOUNDATION_WOOD_COST;
-        }
+                selectedName =
+                        "Fundament";
 
-        else {
+                cost =
+                        FOUNDATION_WOOD_COST;
 
-            selectedName =
-                    "Wand";
+                break;
 
-            cost =
-                    WALL_WOOD_COST;
+
+            case WALL:
+
+                selectedName =
+                        "Wand";
+
+                cost =
+                        WALL_WOOD_COST;
+
+                break;
+
+
+            default:
+
+                selectedName =
+                        "Türrahmen";
+
+                cost =
+                        DOOR_FRAME_WOOD_COST;
+
+                break;
         }
 
 
         buildText.setText(
-                "BAUMODUS | [1] Fundament | [2] Wand | "
+                "BAUMODUS | [1] Fundament | [2] Wand | [3] Türrahmen | "
                         +
                         selectedName
                         +
@@ -957,18 +1139,29 @@ public class BuildingSystem implements ActionListener {
 
     private void placeSelectedBuilding() {
 
-        if (
+        switch (
                 selectedBuildType
-                        ==
-                        BuildType.FOUNDATION
         ) {
 
-            placeFoundation();
-        }
+            case FOUNDATION:
 
-        else {
+                placeFoundation();
 
-            placeWall();
+                break;
+
+
+            case WALL:
+
+                placeWall();
+
+                break;
+
+
+            case DOOR_FRAME:
+
+                placeDoorFrame();
+
+                break;
         }
     }
 
@@ -981,11 +1174,6 @@ public class BuildingSystem implements ActionListener {
                         FOUNDATION_WOOD_COST
                 )
         ) {
-
-            System.out.println(
-                    "Nicht genug Holz für Fundament."
-            );
-
 
             return;
         }
@@ -1003,11 +1191,6 @@ public class BuildingSystem implements ActionListener {
                         position.z
                 )
         ) {
-
-            System.out.println(
-                    "Hier steht bereits ein Fundament."
-            );
-
 
             return;
         }
@@ -1032,67 +1215,30 @@ public class BuildingSystem implements ActionListener {
 
     private void placeWall() {
 
-        if (
-                !inventory.hasItem(
-                        ItemType.WOOD,
-                        WALL_WOOD_COST
-                )
-        ) {
-
-            System.out.println(
-                    "Nicht genug Holz für Wand."
-            );
-
-
-            return;
-        }
+        EdgeTransform edge =
+                calculateCurrentEdgeTransform();
 
 
         if (
-                wallPreview.getCullHint()
-                        ==
-                        Spatial.CullHint.Always
+                edge == null
+                        ||
+                        edgeOccupied(
+                                edge.position
+                        )
+                        ||
+                        !inventory.hasItem(
+                                ItemType.WOOD,
+                                WALL_WOOD_COST
+                        )
         ) {
-
-            System.out.println(
-                    "Keine gültige Wandposition."
-            );
-
-
-            return;
-        }
-
-
-        Vector3f position =
-                wallPreview
-                        .getLocalTranslation()
-                        .clone();
-
-
-        Quaternion rotation =
-                wallPreview
-                        .getLocalRotation()
-                        .clone();
-
-
-        if (
-                wallExistsNear(
-                        position
-                )
-        ) {
-
-            System.out.println(
-                    "Hier steht bereits eine Wand."
-            );
-
 
             return;
         }
 
 
         createAndAttachWall(
-                position,
-                rotation
+                edge.position,
+                edge.rotation
         );
 
 
@@ -1108,88 +1254,48 @@ public class BuildingSystem implements ActionListener {
     }
 
 
+    private void placeDoorFrame() {
+
+        EdgeTransform edge =
+                calculateCurrentEdgeTransform();
+
+
+        if (
+                edge == null
+                        ||
+                        edgeOccupied(
+                                edge.position
+                        )
+                        ||
+                        !inventory.hasItem(
+                                ItemType.WOOD,
+                                DOOR_FRAME_WOOD_COST
+                        )
+        ) {
+
+            return;
+        }
+
+
+        createAndAttachDoorFrame(
+                edge.position,
+                edge.rotation
+        );
+
+
+        inventory.removeItem(
+                ItemType.WOOD,
+                DOOR_FRAME_WOOD_COST
+        );
+
+
+        System.out.println(
+                "Türrahmen gebaut."
+        );
+    }
+
+
     private void createAndAttachFoundation(
-            Vector3f position
-    ) {
-
-        Geometry foundation =
-                createFoundation(
-                        position
-                );
-
-
-        rootNode.attachChild(
-                foundation
-        );
-
-
-        addPhysics(
-                foundation
-        );
-
-
-        placedFoundations.add(
-                foundation
-        );
-
-
-        nextFoundationId++;
-    }
-
-
-    private void createAndAttachWall(
-            Vector3f position,
-            Quaternion rotation
-    ) {
-
-        Geometry wall =
-                createWall(
-                        position,
-                        rotation
-                );
-
-
-        rootNode.attachChild(
-                wall
-        );
-
-
-        addPhysics(
-                wall
-        );
-
-
-        placedWalls.add(
-                wall
-        );
-
-
-        nextWallId++;
-    }
-
-
-    private void addPhysics(
-            Geometry geometry
-    ) {
-
-        RigidBodyControl physics =
-                new RigidBodyControl(
-                        0f
-                );
-
-
-        geometry.addControl(
-                physics
-        );
-
-
-        physicsSpace.add(
-                physics
-        );
-    }
-
-
-    private Geometry createFoundation(
             Vector3f position
     ) {
 
@@ -1216,11 +1322,26 @@ public class BuildingSystem implements ActionListener {
         );
 
 
-        return foundation;
+        rootNode.attachChild(
+                foundation
+        );
+
+
+        addPhysics(
+                foundation
+        );
+
+
+        placedFoundations.add(
+                foundation
+        );
+
+
+        nextFoundationId++;
     }
 
 
-    private Geometry createWall(
+    private void createAndAttachWall(
             Vector3f position,
             Quaternion rotation
     ) {
@@ -1253,7 +1374,207 @@ public class BuildingSystem implements ActionListener {
         );
 
 
-        return wall;
+        rootNode.attachChild(
+                wall
+        );
+
+
+        addPhysics(
+                wall
+        );
+
+
+        placedWalls.add(
+                wall
+        );
+
+
+        nextWallId++;
+    }
+
+
+    private void createAndAttachDoorFrame(
+            Vector3f position,
+            Quaternion rotation
+    ) {
+
+        Node frame =
+                createDoorFrameNode(
+                        "DoorFrame_"
+                                +
+                                nextDoorFrameId,
+                        createWoodMaterial()
+                );
+
+
+        frame.setLocalTranslation(
+                position
+        );
+
+
+        frame.setLocalRotation(
+                rotation
+        );
+
+
+        rootNode.attachChild(
+                frame
+        );
+
+
+        addPhysicsToDoorFrame(
+                frame
+        );
+
+
+        placedDoorFrames.add(
+                frame
+        );
+
+
+        nextDoorFrameId++;
+    }
+
+
+    private Node createDoorFrameNode(
+            String name,
+            Material material
+    ) {
+
+        Node frame =
+                new Node(
+                        name
+                );
+
+
+        Geometry leftPost =
+                new Geometry(
+                        name + "_Left",
+                        new Box(
+                                0.22f,
+                                1.5f,
+                                0.12f
+                        )
+                );
+
+
+        leftPost.setMaterial(
+                material
+        );
+
+
+        leftPost.setLocalTranslation(
+                -1.28f,
+                0f,
+                0f
+        );
+
+
+        frame.attachChild(
+                leftPost
+        );
+
+
+        Geometry rightPost =
+                new Geometry(
+                        name + "_Right",
+                        new Box(
+                                0.22f,
+                                1.5f,
+                                0.12f
+                        )
+                );
+
+
+        rightPost.setMaterial(
+                material
+        );
+
+
+        rightPost.setLocalTranslation(
+                1.28f,
+                0f,
+                0f
+        );
+
+
+        frame.attachChild(
+                rightPost
+        );
+
+
+        Geometry topBeam =
+                new Geometry(
+                        name + "_Top",
+                        new Box(
+                                1.06f,
+                                0.22f,
+                                0.12f
+                        )
+                );
+
+
+        topBeam.setMaterial(
+                material
+        );
+
+
+        topBeam.setLocalTranslation(
+                0f,
+                1.28f,
+                0f
+        );
+
+
+        frame.attachChild(
+                topBeam
+        );
+
+
+        return frame;
+    }
+
+
+    private void addPhysics(
+            Geometry geometry
+    ) {
+
+        RigidBodyControl physics =
+                new RigidBodyControl(
+                        0f
+                );
+
+
+        geometry.addControl(
+                physics
+        );
+
+
+        physicsSpace.add(
+                physics
+        );
+    }
+
+
+    private void addPhysicsToDoorFrame(
+            Node frame
+    ) {
+
+        for (
+                Spatial child
+                :
+                frame.getChildren()
+        ) {
+
+            if (
+                    child instanceof Geometry
+            ) {
+
+                addPhysics(
+                        (Geometry) child
+                );
+            }
+        }
     }
 
 
@@ -1272,7 +1593,7 @@ public class BuildingSystem implements ActionListener {
         );
 
 
-        ColorRGBA woodColor =
+        ColorRGBA color =
                 new ColorRGBA(
                         0.42f,
                         0.25f,
@@ -1283,13 +1604,13 @@ public class BuildingSystem implements ActionListener {
 
         material.setColor(
                 "Diffuse",
-                woodColor
+                color
         );
 
 
         material.setColor(
                 "Ambient",
-                woodColor
+                color
         );
 
 
@@ -1317,15 +1638,13 @@ public class BuildingSystem implements ActionListener {
         );
 
 
-        material
-                .getAdditionalRenderState()
+        material.getAdditionalRenderState()
                 .setBlendMode(
                         RenderState.BlendMode.Alpha
                 );
 
 
-        material
-                .getAdditionalRenderState()
+        material.getAdditionalRenderState()
                 .setDepthWrite(
                         false
                 );
@@ -1343,6 +1662,11 @@ public class BuildingSystem implements ActionListener {
 
 
         wallPreview.setCullHint(
+                Spatial.CullHint.Always
+        );
+
+
+        doorFramePreview.setCullHint(
                 Spatial.CullHint.Always
         );
     }
@@ -1363,11 +1687,6 @@ public class BuildingSystem implements ActionListener {
             buildText.setCullHint(
                     Spatial.CullHint.Inherit
             );
-
-
-            System.out.println(
-                    "Baumodus aktiviert."
-            );
         }
 
         else {
@@ -1377,11 +1696,6 @@ public class BuildingSystem implements ActionListener {
 
             buildText.setCullHint(
                     Spatial.CullHint.Always
-            );
-
-
-            System.out.println(
-                    "Baumodus deaktiviert."
             );
         }
     }
@@ -1393,9 +1707,9 @@ public class BuildingSystem implements ActionListener {
     }
 
 
-    // ==========================
-    // FUNDAMENT SAVE API
-    // ==========================
+    // =========================================================
+    // SAVE API
+    // =========================================================
 
     public int getFoundationCount() {
 
@@ -1408,17 +1722,11 @@ public class BuildingSystem implements ActionListener {
     ) {
 
         return placedFoundations
-                .get(
-                        index
-                )
+                .get(index)
                 .getLocalTranslation()
                 .clone();
     }
 
-
-    // ==========================
-    // WAND SAVE API
-    // ==========================
 
     public int getWallCount() {
 
@@ -1431,9 +1739,7 @@ public class BuildingSystem implements ActionListener {
     ) {
 
         return placedWalls
-                .get(
-                        index
-                )
+                .get(index)
                 .getLocalTranslation()
                 .clone();
     }
@@ -1444,17 +1750,39 @@ public class BuildingSystem implements ActionListener {
     ) {
 
         return placedWalls
-                .get(
-                        index
-                )
+                .get(index)
                 .getLocalRotation()
                 .clone();
     }
 
 
-    // ==========================
-    // LOAD / CLEAR
-    // ==========================
+    public int getDoorFrameCount() {
+
+        return placedDoorFrames.size();
+    }
+
+
+    public Vector3f getDoorFramePosition(
+            int index
+    ) {
+
+        return placedDoorFrames
+                .get(index)
+                .getLocalTranslation()
+                .clone();
+    }
+
+
+    public Quaternion getDoorFrameRotation(
+            int index
+    ) {
+
+        return placedDoorFrames
+                .get(index)
+                .getLocalRotation()
+                .clone();
+    }
+
 
     public void clearBuildings() {
 
@@ -1482,9 +1810,23 @@ public class BuildingSystem implements ActionListener {
         }
 
 
+        for (
+                Node frame
+                :
+                placedDoorFrames
+        ) {
+
+            removeDoorFrameWithPhysics(
+                    frame
+            );
+        }
+
+
         placedFoundations.clear();
 
         placedWalls.clear();
+
+        placedDoorFrames.clear();
 
 
         nextFoundationId =
@@ -1492,13 +1834,12 @@ public class BuildingSystem implements ActionListener {
 
         nextWallId =
                 1;
+
+        nextDoorFrameId =
+                1;
     }
 
 
-    /*
-     * Für Kompatibilität mit unserem
-     * bisherigen SaveGameSystem.
-     */
     public void clearFoundations() {
 
         clearBuildings();
@@ -1527,6 +1868,18 @@ public class BuildingSystem implements ActionListener {
     }
 
 
+    public void loadDoorFrame(
+            Vector3f position,
+            Quaternion rotation
+    ) {
+
+        createAndAttachDoorFrame(
+                position.clone(),
+                rotation.clone()
+        );
+    }
+
+
     private void removeGeometryWithPhysics(
             Geometry geometry
     ) {
@@ -1548,5 +1901,66 @@ public class BuildingSystem implements ActionListener {
 
 
         geometry.removeFromParent();
+    }
+
+
+    private void removeDoorFrameWithPhysics(
+            Node frame
+    ) {
+
+        for (
+                Spatial child
+                :
+                frame.getChildren()
+        ) {
+
+            if (
+                    child instanceof Geometry
+            ) {
+
+                Geometry geometry =
+                        (Geometry) child;
+
+
+                RigidBodyControl physics =
+                        geometry.getControl(
+                                RigidBodyControl.class
+                        );
+
+
+                if (
+                        physics != null
+                ) {
+
+                    physicsSpace.remove(
+                            physics
+                    );
+                }
+            }
+        }
+
+
+        frame.removeFromParent();
+    }
+
+
+    private static class EdgeTransform {
+
+        private final Vector3f position;
+
+        private final Quaternion rotation;
+
+
+        private EdgeTransform(
+                Vector3f position,
+                Quaternion rotation
+        ) {
+
+            this.position =
+                    position;
+
+            this.rotation =
+                    rotation;
+        }
     }
 }
