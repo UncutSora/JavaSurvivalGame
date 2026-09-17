@@ -192,6 +192,20 @@ public class InventoryHud {
                 addRect(target, "AxeEdge", 57f, 40f, 6f, 16f,
                         new ColorRGBA(0.88f, 0.89f, 0.90f, 1f));
                 break;
+
+            case RAW_MEAT:
+                addRect(target, "MeatMain", 8f, 14f, 49f, 32f,
+                        new ColorRGBA(0.68f, 0.16f, 0.14f, 1f));
+                addRect(target, "MeatFat", 16f, 36f, 35f, 9f,
+                        new ColorRGBA(0.93f, 0.67f, 0.61f, 1f));
+                break;
+
+            case WOOL:
+                addRect(target, "WoolA", 9f, 14f, 46f, 31f,
+                        new ColorRGBA(0.90f, 0.90f, 0.86f, 1f));
+                addRect(target, "WoolB", 18f, 34f, 35f, 18f,
+                        new ColorRGBA(0.98f, 0.98f, 0.95f, 1f));
+                break;
         }
     }
 

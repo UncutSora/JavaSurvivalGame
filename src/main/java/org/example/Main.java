@@ -30,6 +30,7 @@ import org.example.ui.ToolView;
 import org.example.world.BerryBush;
 import org.example.world.HarvestableResource;
 import org.example.world.Rock;
+import org.example.world.Sheep;
 import org.example.world.Tree;
 import org.example.world.WaterSource;
 
@@ -71,6 +72,9 @@ public class Main extends SimpleApplication {
 
 
     private final List<HarvestableResource> resources =
+            new ArrayList<>();
+
+    private final List<Sheep> sheep =
             new ArrayList<>();
 
 
@@ -116,6 +120,10 @@ public class Main extends SimpleApplication {
             60;
 
 
+    private static final int SHEEP_COUNT =
+            80;
+
+
     // =========================================================
     // GENERIERUNGS-EINSTELLUNGEN
     // =========================================================
@@ -142,6 +150,10 @@ public class Main extends SimpleApplication {
 
     private static final float WATER_MIN_DISTANCE =
             10f;
+
+
+    private static final float SHEEP_MIN_DISTANCE =
+            3.5f;
 
 
     public static void main(
@@ -486,6 +498,7 @@ public class Main extends SimpleApplication {
                 inputManager,
                 rootNode,
                 resources,
+                sheep,
                 inventory,
                 hotbarSystem,
                 toolView,
@@ -524,6 +537,11 @@ public class Main extends SimpleApplication {
 
 
         generateWaterSources(
+                random
+        );
+
+
+        generateSheep(
                 random
         );
 
@@ -574,6 +592,13 @@ public class Main extends SimpleApplication {
                 "Wasserstellen: "
                         +
                         WATER_SOURCE_COUNT
+        );
+
+
+        System.out.println(
+                "Schafe: "
+                        +
+                        SHEEP_COUNT
         );
 
 
@@ -747,6 +772,81 @@ public class Main extends SimpleApplication {
 
             addResource(
                     waterSource
+            );
+        }
+    }
+
+
+    // =========================================================
+    // SCHAFE
+    // =========================================================
+
+    private void generateSheep(
+            Random random
+    ) {
+
+        for (
+                int i = 1;
+                i <= SHEEP_COUNT;
+                i++
+        ) {
+
+            Vector3f position;
+
+
+            if (
+                    i <= 8
+            ) {
+
+                float angle =
+                        (float) (
+                                (i - 1)
+                                        *
+                                        (Math.PI * 2.0 / 8.0)
+                        );
+
+                float radius =
+                        16f
+                                +
+                                (i % 2) * 3f;
+
+                position =
+                        new Vector3f(
+                                (float) Math.cos(angle) * radius,
+                                0f,
+                                (float) Math.sin(angle) * radius
+                        );
+            }
+
+            else {
+
+                position =
+                        generateResourcePosition(
+                                random,
+                                SHEEP_MIN_DISTANCE
+                        );
+            }
+
+
+            Sheep currentSheep =
+                    new Sheep(
+                            createId(
+                                    "sheep",
+                                    i
+                            ),
+                            assetManager,
+                            position,
+                            WORLD_SEED + i * 31L
+                    );
+
+
+            sheep.add(
+                    currentSheep
+            );
+
+
+            currentSheep.attachToWorld(
+                    rootNode
             );
         }
     }
@@ -1256,6 +1356,18 @@ public class Main extends SimpleApplication {
         ) {
 
             inventoryMenuSystem.update();
+        }
+
+
+        for (
+                Sheep currentSheep
+                :
+                sheep
+        ) {
+
+            currentSheep.update(
+                    tpf
+            );
         }
 
 

@@ -248,6 +248,22 @@ public class InventoryMenuSystem implements ActionListener {
                 addIconRect(target, "AxeEdge", 63f, 44f, 7f, 18f,
                         new ColorRGBA(0.88f, 0.89f, 0.90f, 1f), scale);
                 break;
+
+            case RAW_MEAT:
+                addIconRect(target, "MeatMain", 11f, 16f, 52f, 35f,
+                        new ColorRGBA(0.68f, 0.16f, 0.14f, 1f), scale);
+                addIconRect(target, "MeatFat", 18f, 40f, 38f, 10f,
+                        new ColorRGBA(0.93f, 0.67f, 0.61f, 1f), scale);
+                break;
+
+            case WOOL:
+                addIconRect(target, "WoolA", 12f, 16f, 48f, 34f,
+                        new ColorRGBA(0.90f, 0.90f, 0.86f, 1f), scale);
+                addIconRect(target, "WoolB", 22f, 38f, 38f, 20f,
+                        new ColorRGBA(0.98f, 0.98f, 0.95f, 1f), scale);
+                addIconRect(target, "WoolShadow", 9f, 12f, 16f, 18f,
+                        new ColorRGBA(0.72f, 0.72f, 0.69f, 1f), scale);
+                break;
         }
     }
 
@@ -478,6 +494,16 @@ public class InventoryMenuSystem implements ActionListener {
 
             case WATER:
                 detailDescription.setText("Trinkbares Wasser.\nStillt deinen Durst.");
+                detailStats.setText("Menge        " + slot.getAmount() + "\nMax. Stack   " + type.getMaxStack());
+                break;
+
+            case RAW_MEAT:
+                detailDescription.setText("Rohes Fleisch vom Schaf.\nNoch nicht zum sicheren\nVerzehr vorbereitet.");
+                detailStats.setText("Menge        " + slot.getAmount() + "\nMax. Stack   " + type.getMaxStack());
+                break;
+
+            case WOOL:
+                detailDescription.setText("Weiche Schafwolle.\nWird spaeter fuer ein\nBett benoetigt.");
                 detailStats.setText("Menge        " + slot.getAmount() + "\nMax. Stack   " + type.getMaxStack());
                 break;
         }

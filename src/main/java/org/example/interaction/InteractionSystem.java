@@ -19,6 +19,7 @@ import org.example.tools.ToolDurabilitySystem;
 import org.example.ui.InventoryMenuSystem;
 import org.example.ui.ToolView;
 import org.example.world.HarvestableResource;
+import org.example.world.Sheep;
 
 import java.util.List;
 
@@ -29,6 +30,8 @@ public class InteractionSystem implements ActionListener {
     private final Node rootNode;
 
     private final List<HarvestableResource> resources;
+
+    private final List<Sheep> sheep;
 
     private final Inventory inventory;
 
@@ -52,6 +55,7 @@ public class InteractionSystem implements ActionListener {
             InputManager inputManager,
             Node rootNode,
             List<HarvestableResource> resources,
+            List<Sheep> sheep,
             Inventory inventory,
             HotbarSystem hotbarSystem,
             ToolView toolView,
@@ -68,6 +72,9 @@ public class InteractionSystem implements ActionListener {
 
         this.resources =
                 resources;
+
+        this.sheep =
+                sheep;
 
         this.inventory =
                 inventory;
@@ -182,6 +189,171 @@ public class InteractionSystem implements ActionListener {
 
             Geometry geometry =
                     collision.getGeometry();
+
+
+            for (
+                    Sheep currentSheep
+                    :
+                    sheep
+            ) {
+
+                if (
+                        currentSheep.isDead()
+                ) {
+
+                    continue;
+                }
+
+
+                if (
+                        !currentSheep.owns(
+                                geometry
+                        )
+                ) {
+
+                    continue;
+                }
+
+
+                boolean axeEquipped =
+                        isStoneAxeEquipped();
+
+
+                int damage =
+                        axeEquipped
+                                ?
+                                20
+                                :
+                                10;
+
+
+                if (
+                        axeEquipped
+                ) {
+
+                    toolView.swing();
+                }
+
+
+                boolean killed =
+                        currentSheep.takeDamage(
+                                damage
+                        );
+
+
+                System.out.println(
+                        "Schaf getroffen: "
+                                +
+                                damage
+                                +
+                                " Schaden"
+                );
+
+
+                if (
+                        axeEquipped
+                ) {
+
+                    boolean axeBroken =
+                            toolDurabilitySystem
+                                    .useStoneAxe();
+
+
+                    if (
+                            axeBroken
+                    ) {
+
+                        System.out.println(
+                                "Die Steinaxt ist zerbrochen!"
+                        );
+                    }
+                }
+
+
+                if (
+                        killed
+                ) {
+
+                    int meatAmount =
+                            3;
+
+                    int woolAmount =
+                            2;
+
+
+                    boolean meatAdded =
+                            inventory.addItem(
+                                    ItemType.RAW_MEAT,
+                                    meatAmount
+                            );
+
+
+                    boolean woolAdded =
+                            inventory.addItem(
+                                    ItemType.WOOL,
+                                    woolAmount
+                            );
+
+
+                    System.out.println(
+                            "Schaf erlegt."
+                    );
+
+
+                    if (
+                            meatAdded
+                    ) {
+
+                        System.out.println(
+                                "Rohes Fleisch gesammelt: +"
+                                        +
+                                        meatAmount
+                        );
+                    }
+
+                    else {
+
+                        System.out.println(
+                                "Inventar voll - Fleisch konnte nicht aufgenommen werden."
+                        );
+                    }
+
+
+                    if (
+                            woolAdded
+                    ) {
+
+                        System.out.println(
+                                "Wolle gesammelt: +"
+                                        +
+                                        woolAmount
+                        );
+                    }
+
+                    else {
+
+                        System.out.println(
+                                "Inventar voll - Wolle konnte nicht aufgenommen werden."
+                        );
+                    }
+                }
+
+                else {
+
+                    System.out.println(
+                            "Schaf-HP: "
+                                    +
+                                    currentSheep.getHealth()
+                                    +
+                                    " / "
+                                    +
+                                    currentSheep.getMaxHealth()
+                    );
+                }
+
+
+                return;
+            }
 
 
             for (

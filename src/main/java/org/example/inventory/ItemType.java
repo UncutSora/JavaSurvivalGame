@@ -25,6 +25,16 @@ public enum ItemType {
     WATER(
             "Wasser",
             10
+    ),
+
+    RAW_MEAT(
+            "Rohes Fleisch",
+            20
+    ),
+
+    WOOL(
+            "Wolle",
+            30
     );
 
 
