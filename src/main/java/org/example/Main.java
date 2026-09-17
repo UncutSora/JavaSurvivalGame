@@ -390,182 +390,219 @@ public class Main extends SimpleApplication {
 
     private void createResources() {
 
-        addResource(
-                new Tree(
-                        "tree_01",
-                        assetManager,
-                        bulletAppState.getPhysicsSpace(),
-                        new Vector3f(
-                                0f,
-                                0f,
-                                0f
-                        )
-                )
+        // ==========================
+        // 25 BÄUME
+        // ==========================
+
+        addTree("tree_01", 0f, 0f, 0f);
+        addTree("tree_02", 5f, 0f, -3f);
+        addTree("tree_03", -5f, 0f, -4f);
+        addTree("tree_04", 7f, 0f, 4f);
+        addTree("tree_05", -7f, 0f, 3f);
+
+        addTree("tree_06", 10f, 0f, 0f);
+        addTree("tree_07", -10f, 0f, -1f);
+        addTree("tree_08", 12f, 0f, -6f);
+        addTree("tree_09", -12f, 0f, -7f);
+        addTree("tree_10", 9f, 0f, 9f);
+
+        addTree("tree_11", -9f, 0f, 10f);
+        addTree("tree_12", 14f, 0f, 5f);
+        addTree("tree_13", -14f, 0f, 6f);
+        addTree("tree_14", 15f, 0f, -10f);
+        addTree("tree_15", -15f, 0f, -11f);
+
+        addTree("tree_16", 4f, 0f, 13f);
+        addTree("tree_17", -4f, 0f, 14f);
+        addTree("tree_18", 17f, 0f, 1f);
+        addTree("tree_19", -17f, 0f, 2f);
+        addTree("tree_20", 18f, 0f, 11f);
+
+        addTree("tree_21", -18f, 0f, 12f);
+        addTree("tree_22", 3f, 0f, -15f);
+        addTree("tree_23", -3f, 0f, -16f);
+        addTree("tree_24", 11f, 0f, -17f);
+        addTree("tree_25", -11f, 0f, -18f);
+
+
+        // ==========================
+        // 12 STEINE
+        // ==========================
+
+        addRock("rock_01", 3f, 0f, 3f);
+        addRock("rock_02", -3f, 0f, 2f);
+        addRock("rock_03", 4f, 0f, -6f);
+        addRock("rock_04", -4f, 0f, -7f);
+
+        addRock("rock_05", 8f, 0f, -10f);
+        addRock("rock_06", -8f, 0f, -9f);
+        addRock("rock_07", 13f, 0f, 10f);
+        addRock("rock_08", -13f, 0f, 11f);
+
+        addRock("rock_09", 16f, 0f, -4f);
+        addRock("rock_10", -16f, 0f, -5f);
+        addRock("rock_11", 6f, 0f, 17f);
+        addRock("rock_12", -6f, 0f, 18f);
+
+
+        // ==========================
+        // 6 BEERENSTRÄUCHER
+        // ==========================
+
+        addBerryBush(
+                "berry_01",
+                2f,
+                0f,
+                -2f
         );
 
 
-        addResource(
-                new Tree(
-                        "tree_02",
-                        assetManager,
-                        bulletAppState.getPhysicsSpace(),
-                        new Vector3f(
-                                5f,
-                                0f,
-                                -3f
-                        )
-                )
+        addBerryBush(
+                "berry_02",
+                -2f,
+                0f,
+                -3f
         );
 
 
-        addResource(
-                new Tree(
-                        "tree_03",
-                        assetManager,
-                        bulletAppState.getPhysicsSpace(),
-                        new Vector3f(
-                                -5f,
-                                0f,
-                                -4f
-                        )
-                )
+        addBerryBush(
+                "berry_03",
+                6f,
+                0f,
+                1f
         );
 
 
-        addResource(
-                new Tree(
-                        "tree_04",
-                        assetManager,
-                        bulletAppState.getPhysicsSpace(),
-                        new Vector3f(
-                                7f,
-                                0f,
-                                4f
-                        )
-                )
+        addBerryBush(
+                "berry_04",
+                -8f,
+                0f,
+                7f
         );
 
 
+        addBerryBush(
+                "berry_05",
+                12f,
+                0f,
+                12f
+        );
+
+
+        addBerryBush(
+                "berry_06",
+                -12f,
+                0f,
+                -13f
+        );
+
+
+        // ==========================
+        // 2 WASSERQUELLEN
+        // ==========================
+
+        addWaterSource(
+                "water_01",
+                0f,
+                0f,
+                -9f
+        );
+
+
+        addWaterSource(
+                "water_02",
+                14f,
+                0f,
+                14f
+        );
+    }
+
+
+    // ==========================
+    // RESOURCE-HELPER
+    // ==========================
+
+    private void addTree(
+            String id,
+            float x,
+            float y,
+            float z
+    ) {
+
         addResource(
                 new Tree(
-                        "tree_05",
+                        id,
                         assetManager,
                         bulletAppState.getPhysicsSpace(),
                         new Vector3f(
-                                -7f,
-                                0f,
-                                3f
+                                x,
+                                y,
+                                z
                         )
                 )
         );
+    }
 
+
+    private void addRock(
+            String id,
+            float x,
+            float y,
+            float z
+    ) {
 
         addResource(
                 new Rock(
-                        "rock_01",
+                        id,
                         assetManager,
                         bulletAppState.getPhysicsSpace(),
                         new Vector3f(
-                                3f,
-                                0f,
-                                3f
+                                x,
+                                y,
+                                z
                         )
                 )
         );
+    }
 
 
-        addResource(
-                new Rock(
-                        "rock_02",
-                        assetManager,
-                        bulletAppState.getPhysicsSpace(),
-                        new Vector3f(
-                                -3f,
-                                0f,
-                                2f
-                        )
-                )
-        );
-
-
-        addResource(
-                new Rock(
-                        "rock_03",
-                        assetManager,
-                        bulletAppState.getPhysicsSpace(),
-                        new Vector3f(
-                                4f,
-                                0f,
-                                -6f
-                        )
-                )
-        );
-
-
-        addResource(
-                new Rock(
-                        "rock_04",
-                        assetManager,
-                        bulletAppState.getPhysicsSpace(),
-                        new Vector3f(
-                                -4f,
-                                0f,
-                                -7f
-                        )
-                )
-        );
-
+    private void addBerryBush(
+            String id,
+            float x,
+            float y,
+            float z
+    ) {
 
         addResource(
                 new BerryBush(
-                        "berry_01",
+                        id,
                         assetManager,
                         bulletAppState.getPhysicsSpace(),
                         new Vector3f(
-                                2f,
-                                0f,
-                                -2f
+                                x,
+                                y,
+                                z
                         )
                 )
         );
+    }
 
 
-        addResource(
-                new BerryBush(
-                        "berry_02",
-                        assetManager,
-                        bulletAppState.getPhysicsSpace(),
-                        new Vector3f(
-                                -2f,
-                                0f,
-                                -3f
-                        )
-                )
-        );
-
-
-        addResource(
-                new BerryBush(
-                        "berry_03",
-                        assetManager,
-                        bulletAppState.getPhysicsSpace(),
-                        new Vector3f(
-                                6f,
-                                0f,
-                                1f
-                        )
-                )
-        );
-
+    private void addWaterSource(
+            String id,
+            float x,
+            float y,
+            float z
+    ) {
 
         addResource(
                 new WaterSource(
-                        "water_01",
+                        id,
                         assetManager,
                         new Vector3f(
-                                0f,
-                                0f,
-                                -9f
+                                x,
+                                y,
+                                z
                         )
                 )
         );
@@ -589,11 +626,19 @@ public class Main extends SimpleApplication {
 
     private void createGround() {
 
+        /*
+         * Größerer Boden:
+         *
+         * Box benutzt Halbgrößen.
+         * 35 bedeutet also ungefähr
+         * 70 x 70 Einheiten Spielfläche.
+         */
+
         Box groundBox =
                 new Box(
-                        25f,
+                        35f,
                         0.1f,
-                        25f
+                        35f
                 );
 
 
