@@ -16,6 +16,7 @@ import org.example.survival.PlayerStats;
 import org.example.time.DayNightSystem;
 import org.example.tools.ToolDurabilitySystem;
 import org.example.world.HarvestableResource;
+import org.example.world.Sheep;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -37,7 +38,7 @@ public class SaveGameSystem implements ActionListener {
 
 
     private static final int SAVE_VERSION =
-            11;
+            12;
 
 
     private final Player player;
@@ -49,6 +50,8 @@ public class SaveGameSystem implements ActionListener {
     private final ToolDurabilitySystem toolDurabilitySystem;
 
     private final List<HarvestableResource> resources;
+
+    private final List<Sheep> sheep;
 
     private final DayNightSystem dayNightSystem;
 
@@ -69,6 +72,7 @@ public class SaveGameSystem implements ActionListener {
             Inventory inventory,
             ToolDurabilitySystem toolDurabilitySystem,
             List<HarvestableResource> resources,
+            List<Sheep> sheep,
             DayNightSystem dayNightSystem,
             BuildingSystem buildingSystem
     ) {
@@ -87,6 +91,9 @@ public class SaveGameSystem implements ActionListener {
 
         this.resources =
                 resources;
+
+        this.sheep =
+                sheep;
 
         this.dayNightSystem =
                 dayNightSystem;
@@ -197,6 +204,11 @@ public class SaveGameSystem implements ActionListener {
 
 
         saveWorld(
+                properties
+        );
+
+
+        saveSheep(
                 properties
         );
 
@@ -535,6 +547,72 @@ public class SaveGameSystem implements ActionListener {
                     Boolean.toString(
                             resource.isHarvested()
                     )
+            );
+        }
+    }
+
+
+    private void saveSheep(
+            Properties properties
+    ) {
+
+        properties.setProperty(
+                "sheep.count",
+                Integer.toString(
+                        sheep.size()
+                )
+        );
+
+        for (
+                Sheep currentSheep
+                :
+                sheep
+        ) {
+
+            String prefix =
+                    "sheep."
+                            +
+                            currentSheep.getSaveId()
+                            +
+                            ".";
+
+            Vector3f position =
+                    currentSheep.getPosition();
+
+            properties.setProperty(
+                    prefix + "health",
+                    Integer.toString(
+                            currentSheep.getHealth()
+                    )
+            );
+
+            properties.setProperty(
+                    prefix + "dead",
+                    Boolean.toString(
+                            currentSheep.isDead()
+                    )
+            );
+
+            properties.setProperty(
+                    prefix + "deathGameMinute",
+                    Float.toString(
+                            currentSheep.getDeathGameMinute()
+                    )
+            );
+
+            properties.setProperty(
+                    prefix + "x",
+                    Float.toString(position.x)
+            );
+
+            properties.setProperty(
+                    prefix + "y",
+                    Float.toString(position.y)
+            );
+
+            properties.setProperty(
+                    prefix + "z",
+                    Float.toString(position.z)
             );
         }
     }
@@ -1100,6 +1178,11 @@ public class SaveGameSystem implements ActionListener {
         );
 
 
+        loadSheep(
+                properties
+        );
+
+
         loadBuildings(
                 properties
         );
@@ -1453,6 +1536,83 @@ public class SaveGameSystem implements ActionListener {
             resource.loadState(
                     resourceHealth,
                     harvested
+            );
+        }
+    }
+
+
+    private void loadSheep(
+            Properties properties
+    ) {
+
+        for (
+                Sheep currentSheep
+                :
+                sheep
+        ) {
+
+            String prefix =
+                    "sheep."
+                            +
+                            currentSheep.getSaveId()
+                            +
+                            ".";
+
+            int health =
+                    readInt(
+                            properties,
+                            prefix + "health",
+                            currentSheep.getMaxHealth()
+                    );
+
+            boolean dead =
+                    Boolean.parseBoolean(
+                            properties.getProperty(
+                                    prefix + "dead",
+                                    "false"
+                            )
+                    );
+
+            float deathGameMinute =
+                    readFloat(
+                            properties,
+                            prefix + "deathGameMinute",
+                            -1f
+                    );
+
+            Vector3f currentPosition =
+                    currentSheep.getPosition();
+
+            float x =
+                    readFloat(
+                            properties,
+                            prefix + "x",
+                            currentPosition.x
+                    );
+
+            float y =
+                    readFloat(
+                            properties,
+                            prefix + "y",
+                            currentPosition.y
+                    );
+
+            float z =
+                    readFloat(
+                            properties,
+                            prefix + "z",
+                            currentPosition.z
+                    );
+
+            currentSheep.loadState(
+                    health,
+                    dead,
+                    deathGameMinute,
+                    new Vector3f(
+                            x,
+                            y,
+                            z
+                    )
             );
         }
     }

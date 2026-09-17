@@ -15,6 +15,7 @@ import org.example.building.BuildingSystem;
 import org.example.hotbar.HotbarSystem;
 import org.example.inventory.Inventory;
 import org.example.inventory.ItemType;
+import org.example.time.DayNightSystem;
 import org.example.tools.ToolDurabilitySystem;
 import org.example.ui.InventoryMenuSystem;
 import org.example.ui.ToolView;
@@ -45,6 +46,8 @@ public class InteractionSystem implements ActionListener {
 
     private final BuildingSystem buildingSystem;
 
+    private final DayNightSystem dayNightSystem;
+
 
     private final float interactionDistance =
             4f;
@@ -61,7 +64,8 @@ public class InteractionSystem implements ActionListener {
             ToolView toolView,
             ToolDurabilitySystem toolDurabilitySystem,
             InventoryMenuSystem inventoryMenuSystem,
-            BuildingSystem buildingSystem
+            BuildingSystem buildingSystem,
+            DayNightSystem dayNightSystem
     ) {
 
         this.camera =
@@ -93,6 +97,9 @@ public class InteractionSystem implements ActionListener {
 
         this.buildingSystem =
                 buildingSystem;
+
+        this.dayNightSystem =
+                dayNightSystem;
 
 
         inputManager.addMapping(
@@ -273,6 +280,10 @@ public class InteractionSystem implements ActionListener {
                 if (
                         killed
                 ) {
+
+                    currentSheep.markDeathTime(
+                            getCurrentGameMinute()
+                    );
 
                     int meatAmount =
                             3;
@@ -508,6 +519,18 @@ public class InteractionSystem implements ActionListener {
                 return;
             }
         }
+    }
+
+
+    private float getCurrentGameMinute() {
+
+        return dayNightSystem.getDay()
+                *
+                24f
+                *
+                60f
+                +
+                dayNightSystem.getMinuteOfDay();
     }
 
 

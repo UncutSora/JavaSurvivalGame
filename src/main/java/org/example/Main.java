@@ -481,6 +481,7 @@ public class Main extends SimpleApplication {
                         inventory,
                         toolDurabilitySystem,
                         resources,
+                        sheep,
                         dayNightSystem,
                         buildingSystem
                 );
@@ -504,7 +505,8 @@ public class Main extends SimpleApplication {
                 toolView,
                 toolDurabilitySystem,
                 inventoryMenuSystem,
-                buildingSystem
+                buildingSystem,
+                dayNightSystem
         );
     }
 
@@ -1280,6 +1282,18 @@ public class Main extends SimpleApplication {
     }
 
 
+    private float getCurrentGameMinute() {
+
+        return dayNightSystem.getDay()
+                *
+                24f
+                *
+                60f
+                +
+                dayNightSystem.getMinuteOfDay();
+    }
+
+
     // =========================================================
     // UPDATE
     // =========================================================
@@ -1366,7 +1380,8 @@ public class Main extends SimpleApplication {
         ) {
 
             currentSheep.update(
-                    tpf
+                    tpf,
+                    getCurrentGameMinute()
             );
         }
 

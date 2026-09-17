@@ -26,17 +26,26 @@ public class Sheep {
 
     private static final float WORLD_MARGIN = 10f;
 
+    public static final float RESPAWN_DELAY_MINUTES =
+            2f * 24f * 60f;
+
     private final String saveId;
 
     private final Node node;
 
     private final Random random;
 
+    private final Vector3f spawnPosition;
+
+    private Node rootNode;
+
     private final Vector3f moveDirection = new Vector3f();
 
     private int health = MAX_HEALTH;
 
     private boolean dead = false;
+
+    private float deathGameMinute = -1f;
 
     private float directionTimer = 0f;
 
@@ -50,6 +59,8 @@ public class Sheep {
         this.saveId = saveId;
 
         this.random = new Random(randomSeed);
+
+        this.spawnPosition = position.clone();
 
         node = new Node(
                 "Sheep_" + saveId
@@ -289,19 +300,40 @@ public class Sheep {
             Node rootNode
     ) {
 
-        rootNode.attachChild(
-                node
-        );
+        this.rootNode = rootNode;
+
+        if (
+                !dead
+                        &&
+                        node.getParent() == null
+        ) {
+
+            rootNode.attachChild(
+                    node
+            );
+        }
     }
 
 
     public void update(
-            float tpf
+            float tpf,
+            float currentGameMinute
     ) {
 
         if (
                 dead
         ) {
+
+            if (
+                    deathGameMinute >= 0f
+                            &&
+                            currentGameMinute - deathGameMinute
+                                    >=
+                                    RESPAWN_DELAY_MINUTES
+            ) {
+
+                respawn();
+            }
 
             return;
         }
@@ -495,6 +527,124 @@ public class Sheep {
         }
 
         return false;
+    }
+
+
+    public void markDeathTime(
+            float gameMinute
+    ) {
+
+        if (
+                dead
+        ) {
+
+            deathGameMinute =
+                    gameMinute;
+        }
+    }
+
+
+    private void respawn() {
+
+        health =
+                MAX_HEALTH;
+
+        dead =
+                false;
+
+        deathGameMinute =
+                -1f;
+
+        node.setLocalTranslation(
+                spawnPosition.clone()
+        );
+
+        chooseNewDirection();
+
+        if (
+                rootNode != null
+                        &&
+                        node.getParent() == null
+        ) {
+
+            rootNode.attachChild(
+                    node
+            );
+        }
+
+        System.out.println(
+                "Schaf ist nach 2 Ingame-Tagen respawnt: "
+                        +
+                        saveId
+        );
+    }
+
+
+    public void loadState(
+            int health,
+            boolean dead,
+            float deathGameMinute,
+            Vector3f position
+    ) {
+
+        this.health =
+                Math.max(
+                        0,
+                        Math.min(
+                                MAX_HEALTH,
+                                health
+                        )
+                );
+
+        this.dead =
+                dead || this.health <= 0;
+
+        this.deathGameMinute =
+                this.dead
+                        ?
+                        deathGameMinute
+                        :
+                        -1f;
+
+        if (
+                position != null
+        ) {
+
+            node.setLocalTranslation(
+                    position.clone()
+            );
+        }
+
+        if (
+                this.dead
+        ) {
+
+            node.removeFromParent();
+        }
+
+        else if (
+                rootNode != null
+                        &&
+                        node.getParent() == null
+        ) {
+
+            rootNode.attachChild(
+                    node
+            );
+        }
+    }
+
+
+    public float getDeathGameMinute() {
+
+        return deathGameMinute;
+    }
+
+
+    public Vector3f getPosition() {
+
+        return node.getLocalTranslation()
+                .clone();
     }
 
 
