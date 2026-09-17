@@ -37,7 +37,7 @@ public class SaveGameSystem implements ActionListener {
 
 
     private static final int SAVE_VERSION =
-            6;
+            7;
 
 
     private final Player player;
@@ -548,6 +548,11 @@ public class SaveGameSystem implements ActionListener {
         saveDoorFrames(
                 properties
         );
+
+
+        saveDoors(
+                properties
+        );
     }
 
 
@@ -814,6 +819,57 @@ public class SaveGameSystem implements ActionListener {
                             rotation.getW()
                     )
             );
+        }
+    }
+
+
+    private void saveDoors(
+            Properties properties
+    ) {
+
+        int doorCount =
+                buildingSystem.getDoorCount();
+
+
+        properties.setProperty(
+                "building.door.count",
+                Integer.toString(
+                        doorCount
+                )
+        );
+
+
+        for (
+                int i = 0;
+                i < doorCount;
+                i++
+        ) {
+
+            Vector3f framePosition =
+                    buildingSystem.getDoorParentFramePosition(
+                            i
+                    );
+
+            Quaternion rotation =
+                    buildingSystem.getDoorRotation(
+                            i
+                    );
+
+            String prefix =
+                    "building.door."
+                            +
+                            i
+                            +
+                            ".";
+
+
+            properties.setProperty(prefix + "frameX", Float.toString(framePosition.x));
+            properties.setProperty(prefix + "frameY", Float.toString(framePosition.y));
+            properties.setProperty(prefix + "frameZ", Float.toString(framePosition.z));
+            properties.setProperty(prefix + "rotX", Float.toString(rotation.getX()));
+            properties.setProperty(prefix + "rotY", Float.toString(rotation.getY()));
+            properties.setProperty(prefix + "rotZ", Float.toString(rotation.getZ()));
+            properties.setProperty(prefix + "rotW", Float.toString(rotation.getW()));
         }
     }
 
@@ -1271,6 +1327,11 @@ public class SaveGameSystem implements ActionListener {
         loadDoorFrames(
                 properties
         );
+
+
+        loadDoors(
+                properties
+        );
     }
 
 
@@ -1536,6 +1597,56 @@ public class SaveGameSystem implements ActionListener {
                             z
                     ),
                     rotation
+            );
+        }
+    }
+
+
+    private void loadDoors(
+            Properties properties
+    ) {
+
+        int doorCount =
+                readInt(
+                        properties,
+                        "building.door.count",
+                        0
+                );
+
+
+        for (
+                int i = 0;
+                i < doorCount;
+                i++
+        ) {
+
+            String prefix =
+                    "building.door."
+                            +
+                            i
+                            +
+                            ".";
+
+            float frameX = readFloat(properties, prefix + "frameX", 0f);
+            float frameY = readFloat(properties, prefix + "frameY", 1.62f);
+            float frameZ = readFloat(properties, prefix + "frameZ", 0f);
+            float rotX = readFloat(properties, prefix + "rotX", 0f);
+            float rotY = readFloat(properties, prefix + "rotY", 0f);
+            float rotZ = readFloat(properties, prefix + "rotZ", 0f);
+            float rotW = readFloat(properties, prefix + "rotW", 1f);
+
+            buildingSystem.loadDoor(
+                    new Vector3f(
+                            frameX,
+                            frameY,
+                            frameZ
+                    ),
+                    new Quaternion(
+                            rotX,
+                            rotY,
+                            rotZ,
+                            rotW
+                    )
             );
         }
     }

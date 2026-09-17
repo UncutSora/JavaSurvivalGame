@@ -47,6 +47,9 @@ public class BuildingSystem implements ActionListener {
     private static final String SELECT_DOOR_FRAME =
             "SelectDoorFrame";
 
+    private static final String SELECT_DOOR =
+            "SelectDoor";
+
 
     public static final int FOUNDATION_WOOD_COST =
             5;
@@ -56,6 +59,9 @@ public class BuildingSystem implements ActionListener {
 
     public static final int DOOR_FRAME_WOOD_COST =
             4;
+
+    public static final int DOOR_WOOD_COST =
+            3;
 
 
     private static final float BUILD_DISTANCE =
@@ -69,7 +75,8 @@ public class BuildingSystem implements ActionListener {
 
         FOUNDATION,
         WALL,
-        DOOR_FRAME
+        DOOR_FRAME,
+        DOOR
     }
 
 
@@ -100,6 +107,10 @@ public class BuildingSystem implements ActionListener {
 
     private final Material doorFramePreviewMaterial;
 
+    private final Geometry doorPreview;
+
+    private final Material doorPreviewMaterial;
+
 
     private final BitmapText buildText;
 
@@ -111,6 +122,9 @@ public class BuildingSystem implements ActionListener {
             new ArrayList<>();
 
     private final List<Node> placedDoorFrames =
+            new ArrayList<>();
+
+    private final List<Geometry> placedDoors =
             new ArrayList<>();
 
 
@@ -129,6 +143,9 @@ public class BuildingSystem implements ActionListener {
             1;
 
     private int nextDoorFrameId =
+            1;
+
+    private int nextDoorId =
             1;
 
 
@@ -271,6 +288,45 @@ public class BuildingSystem implements ActionListener {
 
 
         // ==========================
+        // TÜR-VORSCHAU
+        // ==========================
+
+        doorPreviewMaterial =
+                createPreviewMaterial();
+
+
+        doorPreview =
+                new Geometry(
+                        "DoorPreview",
+                        new Box(
+                                1.0f,
+                                1.22f,
+                                0.10f
+                        )
+                );
+
+
+        doorPreview.setMaterial(
+                doorPreviewMaterial
+        );
+
+
+        doorPreview.setQueueBucket(
+                RenderQueue.Bucket.Transparent
+        );
+
+
+        doorPreview.setCullHint(
+                Spatial.CullHint.Always
+        );
+
+
+        rootNode.attachChild(
+                doorPreview
+        );
+
+
+        // ==========================
         // HUD
         // ==========================
 
@@ -350,6 +406,14 @@ public class BuildingSystem implements ActionListener {
 
 
         inputManager.addMapping(
+                SELECT_DOOR,
+                new KeyTrigger(
+                        KeyInput.KEY_4
+                )
+        );
+
+
+        inputManager.addMapping(
                 PLACE_BUILDING,
                 new MouseButtonTrigger(
                         MouseInput.BUTTON_LEFT
@@ -363,6 +427,7 @@ public class BuildingSystem implements ActionListener {
                 SELECT_FOUNDATION,
                 SELECT_WALL,
                 SELECT_DOOR_FRAME,
+                SELECT_DOOR,
                 PLACE_BUILDING
         );
     }
@@ -466,6 +531,22 @@ public class BuildingSystem implements ActionListener {
 
         if (
                 name.equals(
+                        SELECT_DOOR
+                )
+                        &&
+                        isPressed
+        ) {
+
+            selectedBuildType =
+                    BuildType.DOOR;
+
+
+            return;
+        }
+
+
+        if (
+                name.equals(
                         PLACE_BUILDING
                 )
                         &&
@@ -520,6 +601,13 @@ public class BuildingSystem implements ActionListener {
                 updateDoorFramePreview();
 
                 break;
+
+
+            case DOOR:
+
+                updateDoorPreview();
+
+                break;
         }
 
 
@@ -535,6 +623,11 @@ public class BuildingSystem implements ActionListener {
 
 
         doorFramePreview.setCullHint(
+                Spatial.CullHint.Always
+        );
+
+
+        doorPreview.setCullHint(
                 Spatial.CullHint.Always
         );
 
@@ -594,6 +687,11 @@ public class BuildingSystem implements ActionListener {
 
 
         doorFramePreview.setCullHint(
+                Spatial.CullHint.Always
+        );
+
+
+        doorPreview.setCullHint(
                 Spatial.CullHint.Always
         );
 
@@ -660,6 +758,11 @@ public class BuildingSystem implements ActionListener {
         );
 
 
+        doorPreview.setCullHint(
+                Spatial.CullHint.Always
+        );
+
+
         EdgeTransform edge =
                 calculateCurrentEdgeTransform();
 
@@ -706,6 +809,169 @@ public class BuildingSystem implements ActionListener {
         setDoorFramePreviewColor(
                 valid
         );
+    }
+
+
+    private void updateDoorPreview() {
+
+        foundationPreview.setCullHint(
+                Spatial.CullHint.Always
+        );
+
+        wallPreview.setCullHint(
+                Spatial.CullHint.Always
+        );
+
+        doorFramePreview.setCullHint(
+                Spatial.CullHint.Always
+        );
+
+
+        Node frame =
+                getNearestDoorFrameToBuildTarget();
+
+
+        if (
+                frame == null
+        ) {
+
+            doorPreview.setCullHint(
+                    Spatial.CullHint.Always
+            );
+
+            return;
+        }
+
+
+        doorPreview.setCullHint(
+                Spatial.CullHint.Inherit
+        );
+
+
+        Vector3f position =
+                frame.getLocalTranslation()
+                        .clone();
+
+        position.y -= 0.22f;
+
+
+        doorPreview.setLocalTranslation(
+                position
+        );
+
+        doorPreview.setLocalRotation(
+                frame.getLocalRotation()
+        );
+
+
+        boolean valid =
+                inventory.hasItem(
+                        ItemType.WOOD,
+                        DOOR_WOOD_COST
+                )
+                        &&
+                        !doorExistsForFrame(
+                                frame
+                        );
+
+
+        setPreviewColor(
+                doorPreviewMaterial,
+                valid
+        );
+    }
+
+
+    private Node getNearestDoorFrameToBuildTarget() {
+
+        if (
+                placedDoorFrames.isEmpty()
+        ) {
+
+            return null;
+        }
+
+
+        Vector3f target =
+                getHorizontalBuildTarget();
+
+        Node nearest =
+                null;
+
+        float nearestDistance =
+                Float.MAX_VALUE;
+
+
+        for (
+                Node frame
+                :
+                placedDoorFrames
+        ) {
+
+            float distance =
+                    frame.getLocalTranslation()
+                            .distanceSquared(
+                                    target
+                            );
+
+            if (
+                    distance < nearestDistance
+            ) {
+
+                nearest =
+                        frame;
+
+                nearestDistance =
+                        distance;
+            }
+        }
+
+
+        if (
+                nearestDistance > 36f
+        ) {
+
+            return null;
+        }
+
+
+        return nearest;
+    }
+
+
+    private boolean doorExistsForFrame(
+            Node frame
+    ) {
+
+        Vector3f framePosition =
+                frame.getLocalTranslation();
+
+
+        for (
+                Geometry door
+                :
+                placedDoors
+        ) {
+
+            Vector3f doorFramePosition =
+                    door.getUserData(
+                            "framePosition"
+                    );
+
+            if (
+                    doorFramePosition != null
+                            &&
+                            doorFramePosition.distanceSquared(
+                                    framePosition
+                            ) < 0.05f
+            ) {
+
+                return true;
+            }
+        }
+
+
+        return false;
     }
 
 
@@ -1107,7 +1373,7 @@ public class BuildingSystem implements ActionListener {
                 break;
 
 
-            default:
+            case DOOR_FRAME:
 
                 selectedName =
                         "Türrahmen";
@@ -1116,11 +1382,22 @@ public class BuildingSystem implements ActionListener {
                         DOOR_FRAME_WOOD_COST;
 
                 break;
+
+
+            default:
+
+                selectedName =
+                        "Tür";
+
+                cost =
+                        DOOR_WOOD_COST;
+
+                break;
         }
 
 
         buildText.setText(
-                "BAUMODUS | [1] Fundament | [2] Wand | [3] Türrahmen | "
+                "BAUMODUS | [1] Fundament | [2] Wand | [3] Türrahmen | [4] Tür | "
                         +
                         selectedName
                         +
@@ -1160,6 +1437,13 @@ public class BuildingSystem implements ActionListener {
             case DOOR_FRAME:
 
                 placeDoorFrame();
+
+                break;
+
+
+            case DOOR:
+
+                placeDoor();
 
                 break;
         }
@@ -1291,6 +1575,48 @@ public class BuildingSystem implements ActionListener {
 
         System.out.println(
                 "Türrahmen gebaut."
+        );
+    }
+
+
+    private void placeDoor() {
+
+        Node frame =
+                getNearestDoorFrameToBuildTarget();
+
+
+        if (
+                frame == null
+                        ||
+                        doorExistsForFrame(
+                                frame
+                        )
+                        ||
+                        !inventory.hasItem(
+                                ItemType.WOOD,
+                                DOOR_WOOD_COST
+                        )
+        ) {
+
+            return;
+        }
+
+
+        createAndAttachDoor(
+                frame.getLocalTranslation(),
+                frame.getLocalRotation(),
+                frame.getLocalTranslation()
+        );
+
+
+        inventory.removeItem(
+                ItemType.WOOD,
+                DOOR_WOOD_COST
+        );
+
+
+        System.out.println(
+                "Tür gebaut."
         );
     }
 
@@ -1433,6 +1759,66 @@ public class BuildingSystem implements ActionListener {
 
 
         nextDoorFrameId++;
+    }
+
+
+    private void createAndAttachDoor(
+            Vector3f framePosition,
+            Quaternion rotation,
+            Vector3f savedFramePosition
+    ) {
+
+        Geometry door =
+                new Geometry(
+                        "Door_"
+                                +
+                                nextDoorId,
+                        new Box(
+                                1.0f,
+                                1.22f,
+                                0.10f
+                        )
+                );
+
+
+        door.setMaterial(
+                createWoodMaterial()
+        );
+
+
+        Vector3f doorPosition =
+                framePosition.clone();
+
+        doorPosition.y -= 0.22f;
+
+
+        door.setLocalTranslation(
+                doorPosition
+        );
+
+        door.setLocalRotation(
+                rotation
+        );
+
+        door.setUserData(
+                "framePosition",
+                savedFramePosition.clone()
+        );
+
+
+        rootNode.attachChild(
+                door
+        );
+
+        addPhysics(
+                door
+        );
+
+        placedDoors.add(
+                door
+        );
+
+        nextDoorId++;
     }
 
 
@@ -1669,6 +2055,11 @@ public class BuildingSystem implements ActionListener {
         doorFramePreview.setCullHint(
                 Spatial.CullHint.Always
         );
+
+
+        doorPreview.setCullHint(
+                Spatial.CullHint.Always
+        );
     }
 
 
@@ -1784,6 +2175,38 @@ public class BuildingSystem implements ActionListener {
     }
 
 
+    public int getDoorCount() {
+
+        return placedDoors.size();
+    }
+
+
+    public Vector3f getDoorParentFramePosition(
+            int index
+    ) {
+
+        Vector3f framePosition =
+                placedDoors
+                        .get(index)
+                        .getUserData(
+                                "framePosition"
+                        );
+
+        return framePosition.clone();
+    }
+
+
+    public Quaternion getDoorRotation(
+            int index
+    ) {
+
+        return placedDoors
+                .get(index)
+                .getLocalRotation()
+                .clone();
+    }
+
+
     public void clearBuildings() {
 
         for (
@@ -1822,11 +2245,25 @@ public class BuildingSystem implements ActionListener {
         }
 
 
+        for (
+                Geometry door
+                :
+                placedDoors
+        ) {
+
+            removeGeometryWithPhysics(
+                    door
+            );
+        }
+
+
         placedFoundations.clear();
 
         placedWalls.clear();
 
         placedDoorFrames.clear();
+
+        placedDoors.clear();
 
 
         nextFoundationId =
@@ -1836,6 +2273,9 @@ public class BuildingSystem implements ActionListener {
                 1;
 
         nextDoorFrameId =
+                1;
+
+        nextDoorId =
                 1;
     }
 
@@ -1876,6 +2316,19 @@ public class BuildingSystem implements ActionListener {
         createAndAttachDoorFrame(
                 position.clone(),
                 rotation.clone()
+        );
+    }
+
+
+    public void loadDoor(
+            Vector3f framePosition,
+            Quaternion rotation
+    ) {
+
+        createAndAttachDoor(
+                framePosition.clone(),
+                rotation.clone(),
+                framePosition.clone()
         );
     }
 
