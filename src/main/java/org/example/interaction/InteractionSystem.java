@@ -13,6 +13,7 @@ import com.jme3.scene.Node;
 import org.example.hotbar.HotbarSystem;
 import org.example.inventory.Inventory;
 import org.example.inventory.ItemType;
+import org.example.tools.ToolDurabilitySystem;
 import org.example.ui.ToolView;
 import org.example.world.HarvestableResource;
 
@@ -32,6 +33,9 @@ public class InteractionSystem implements ActionListener {
 
     private final ToolView toolView;
 
+    private final ToolDurabilitySystem
+            toolDurabilitySystem;
+
 
     private final float interactionDistance =
             4f;
@@ -44,31 +48,30 @@ public class InteractionSystem implements ActionListener {
             List<HarvestableResource> resources,
             Inventory inventory,
             HotbarSystem hotbarSystem,
-            ToolView toolView
+            ToolView toolView,
+            ToolDurabilitySystem toolDurabilitySystem
     ) {
 
         this.camera =
                 camera;
 
-
         this.rootNode =
                 rootNode;
-
 
         this.resources =
                 resources;
 
-
         this.inventory =
                 inventory;
-
 
         this.hotbarSystem =
                 hotbarSystem;
 
-
         this.toolView =
                 toolView;
+
+        this.toolDurabilitySystem =
+                toolDurabilitySystem;
 
 
         inputManager.addMapping(
@@ -171,19 +174,30 @@ public class InteractionSystem implements ActionListener {
                 }
 
 
+                boolean axeEquipped =
+                        isStoneAxeEquipped();
+
+
                 int damage =
                         calculateDamage(
-                                resource
+                                resource,
+                                axeEquipped
                         );
 
 
-                if (
-                        toolView.isAxeEquipped()
-                ) {
+                /*
+                 * Axtanimation starten.
+                 */
+
+                if (axeEquipped) {
 
                     toolView.swing();
                 }
 
+
+                /*
+                 * Ressource bekommt Schaden.
+                 */
 
                 boolean destroyed =
                         resource.takeDamage(
@@ -199,6 +213,45 @@ public class InteractionSystem implements ActionListener {
                                 " Schaden"
                 );
 
+
+                /*
+                 * Axt verliert Haltbarkeit.
+                 */
+
+                if (axeEquipped) {
+
+                    boolean axeBroken =
+                            toolDurabilitySystem
+                                    .useStoneAxe();
+
+
+                    if (axeBroken) {
+
+                        System.out.println(
+                                "Die Steinaxt ist zerbrochen!"
+                        );
+                    }
+
+                    else {
+
+                        System.out.println(
+                                "Axt-Haltbarkeit: "
+                                        +
+                                        toolDurabilitySystem
+                                                .getStoneAxeDurability()
+                                        +
+                                        " / "
+                                        +
+                                        toolDurabilitySystem
+                                                .getStoneAxeMaxDurability()
+                        );
+                    }
+                }
+
+
+                /*
+                 * Ressource wurde zerstört.
+                 */
 
                 if (destroyed) {
 
@@ -220,7 +273,7 @@ public class InteractionSystem implements ActionListener {
                 else {
 
                     System.out.println(
-                            "HP: "
+                            "Ressourcen-HP: "
                                     +
                                     resource.getHealth()
                                     +
@@ -237,23 +290,24 @@ public class InteractionSystem implements ActionListener {
     }
 
 
+    private boolean isStoneAxeEquipped() {
+
+        return hotbarSystem
+                .getSelectedItemType()
+                ==
+                ItemType.STONE_AXE
+
+                &&
+
+                toolDurabilitySystem
+                        .hasUsableStoneAxe();
+    }
+
+
     private int calculateDamage(
-            HarvestableResource resource
+            HarvestableResource resource,
+            boolean axeEquipped
     ) {
-
-        boolean axeEquipped =
-                hotbarSystem
-                        .getSelectedItemType()
-                        ==
-                        ItemType.STONE_AXE
-
-                        &&
-
-                        inventory.hasItem(
-                                ItemType.STONE_AXE,
-                                1
-                        );
-
 
         // ==========================
         // BAUM
@@ -265,10 +319,20 @@ public class InteractionSystem implements ActionListener {
                         ItemType.WOOD
         ) {
 
+            /*
+             * Steinaxt ist gut
+             * zum Fällen von Bäumen.
+             */
+
             if (axeEquipped) {
+
                 return 50;
             }
 
+
+            /*
+             * Mit bloßer Hand.
+             */
 
             return 25;
         }
@@ -285,11 +349,12 @@ public class InteractionSystem implements ActionListener {
         ) {
 
             /*
-             * Die Axt ist das falsche
-             * Werkzeug für Stein.
+             * Axt ist für Stein
+             * das falsche Werkzeug.
              */
 
             if (axeEquipped) {
+
                 return 10;
             }
 

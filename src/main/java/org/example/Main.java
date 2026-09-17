@@ -18,6 +18,7 @@ import org.example.hotbar.HotbarSystem;
 import org.example.interaction.InteractionSystem;
 import org.example.inventory.Inventory;
 import org.example.player.Player;
+import org.example.tools.ToolDurabilitySystem;
 import org.example.ui.InventoryHud;
 import org.example.ui.ToolView;
 import org.example.world.HarvestableResource;
@@ -40,6 +41,9 @@ public class Main extends SimpleApplication {
     private HotbarSystem hotbarSystem;
 
     private ToolView toolView;
+
+    private ToolDurabilitySystem
+            toolDurabilitySystem;
 
 
     private final List<HarvestableResource>
@@ -102,6 +106,8 @@ public class Main extends SimpleApplication {
         createInventory();
 
         createHotbarSystem();
+
+        createToolDurabilitySystem();
 
         createInventoryHud();
 
@@ -168,6 +174,15 @@ public class Main extends SimpleApplication {
     }
 
 
+    private void createToolDurabilitySystem() {
+
+        toolDurabilitySystem =
+                new ToolDurabilitySystem(
+                        inventory
+                );
+    }
+
+
     private void createInventoryHud() {
 
         inventoryHud =
@@ -176,7 +191,8 @@ public class Main extends SimpleApplication {
                         guiNode,
                         cam,
                         inventory,
-                        hotbarSystem
+                        hotbarSystem,
+                        toolDurabilitySystem
                 );
     }
 
@@ -212,7 +228,8 @@ public class Main extends SimpleApplication {
                 resources,
                 inventory,
                 hotbarSystem,
-                toolView
+                toolView,
+                toolDurabilitySystem
         );
     }
 
@@ -603,6 +620,14 @@ public class Main extends SimpleApplication {
             player.update(
                     tpf
             );
+        }
+
+
+        if (
+                toolDurabilitySystem != null
+        ) {
+
+            toolDurabilitySystem.update();
         }
 
 

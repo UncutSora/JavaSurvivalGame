@@ -15,24 +15,51 @@ import com.jme3.scene.shape.Quad;
 import org.example.hotbar.HotbarSystem;
 import org.example.inventory.Inventory;
 import org.example.inventory.ItemType;
+import org.example.tools.ToolDurabilitySystem;
 
 public class InventoryHud {
 
-    private static final float SLOT_SIZE = 92f;
-    private static final float INNER_SLOT_SIZE = 84f;
-    private static final float SLOT_GAP = 10f;
+    private static final float SLOT_SIZE =
+            92f;
+
+    private static final float INNER_SLOT_SIZE =
+            84f;
+
+    private static final float SLOT_GAP =
+            10f;
+
 
     private final Inventory inventory;
+
     private final HotbarSystem hotbarSystem;
+
+    private final ToolDurabilitySystem
+            toolDurabilitySystem;
+
 
     private final Material[] slotBorderMaterials =
             new Material[3];
 
+
     private final BitmapText[] amountTexts =
             new BitmapText[3];
 
+
     private final Node axeIconNode =
-            new Node("AxeIcon");
+            new Node(
+                    "AxeIcon"
+            );
+
+
+    private final Node durabilityNode =
+            new Node(
+                    "AxeDurability"
+            );
+
+
+    private final Geometry durabilityFill;
+
+    private final BitmapText durabilityText;
 
     private final BitmapText selectedItemText;
 
@@ -60,14 +87,20 @@ public class InventoryHud {
             Node guiNode,
             Camera camera,
             Inventory inventory,
-            HotbarSystem hotbarSystem
+            HotbarSystem hotbarSystem,
+            ToolDurabilitySystem toolDurabilitySystem
     ) {
 
         this.inventory =
                 inventory;
 
+
         this.hotbarSystem =
                 hotbarSystem;
+
+
+        this.toolDurabilitySystem =
+                toolDurabilitySystem;
 
 
         BitmapFont font =
@@ -200,7 +233,11 @@ public class InventoryHud {
 
         selectedItemText.setLocalTranslation(
                 startX,
-                startY + SLOT_SIZE + 28f,
+                startY
+                        +
+                        SLOT_SIZE
+                        +
+                        30f,
                 10f
         );
 
@@ -242,13 +279,149 @@ public class InventoryHud {
 
         craftingHint.setLocalTranslation(
                 startX,
-                startY + SLOT_SIZE + 50f,
+                startY
+                        +
+                        SLOT_SIZE
+                        +
+                        55f,
                 10f
         );
 
 
         guiNode.attachChild(
                 craftingHint
+        );
+
+
+        // ==========================
+        // HALTBARKEITSANZEIGE
+        // ==========================
+
+        durabilityText =
+                new BitmapText(
+                        font
+                );
+
+
+        durabilityText.setSize(
+                14f
+        );
+
+
+        durabilityText.setColor(
+                ColorRGBA.White
+        );
+
+
+        durabilityText.setLocalTranslation(
+                0f,
+                28f,
+                3f
+        );
+
+
+        durabilityNode.attachChild(
+                durabilityText
+        );
+
+
+        Geometry durabilityBackground =
+                new Geometry(
+                        "DurabilityBackground",
+                        new Quad(
+                                180f,
+                                10f
+                        )
+                );
+
+
+        durabilityBackground.setMaterial(
+                createGuiMaterial(
+                        assetManager,
+                        new ColorRGBA(
+                                0.15f,
+                                0.15f,
+                                0.15f,
+                                0.9f
+                        )
+                )
+        );
+
+
+        durabilityBackground.setQueueBucket(
+                RenderQueue.Bucket.Gui
+        );
+
+
+        durabilityBackground.setLocalTranslation(
+                0f,
+                0f,
+                1f
+        );
+
+
+        durabilityNode.attachChild(
+                durabilityBackground
+        );
+
+
+        durabilityFill =
+                new Geometry(
+                        "DurabilityFill",
+                        new Quad(
+                                176f,
+                                6f
+                        )
+                );
+
+
+        durabilityFill.setMaterial(
+                createGuiMaterial(
+                        assetManager,
+                        new ColorRGBA(
+                                0.2f,
+                                0.8f,
+                                0.3f,
+                                1f
+                        )
+                )
+        );
+
+
+        durabilityFill.setQueueBucket(
+                RenderQueue.Bucket.Gui
+        );
+
+
+        durabilityFill.setLocalTranslation(
+                2f,
+                2f,
+                2f
+        );
+
+
+        durabilityNode.attachChild(
+                durabilityFill
+        );
+
+
+        durabilityNode.setLocalTranslation(
+                startX
+                        +
+                        totalWidth / 2f
+                        -
+                        90f,
+                startY
+                        +
+                        SLOT_SIZE
+                        +
+                        72f,
+                10f
+        );
+
+
+        guiNode.attachChild(
+                durabilityNode
         );
 
 
@@ -267,13 +440,11 @@ public class InventoryHud {
             float y
     ) {
 
-        // ==========================
-        // AUSWAHLRAHMEN
-        // ==========================
-
         Geometry border =
                 new Geometry(
-                        "SlotBorder" + slotNumber,
+                        "SlotBorder"
+                                +
+                                slotNumber,
                         new Quad(
                                 SLOT_SIZE,
                                 SLOT_SIZE
@@ -314,13 +485,11 @@ public class InventoryHud {
                 borderMaterial;
 
 
-        // ==========================
-        // SLOT HINTERGRUND
-        // ==========================
-
         Geometry background =
                 new Geometry(
-                        "SlotBackground" + slotNumber,
+                        "SlotBackground"
+                                +
+                                slotNumber,
                         new Quad(
                                 INNER_SLOT_SIZE,
                                 INNER_SLOT_SIZE
@@ -328,7 +497,7 @@ public class InventoryHud {
                 );
 
 
-        Material backgroundMaterial =
+        background.setMaterial(
                 createGuiMaterial(
                         assetManager,
                         new ColorRGBA(
@@ -337,11 +506,7 @@ public class InventoryHud {
                                 0.06f,
                                 0.82f
                         )
-                );
-
-
-        background.setMaterial(
-                backgroundMaterial
+                )
         );
 
 
@@ -361,10 +526,6 @@ public class InventoryHud {
                 background
         );
 
-
-        // ==========================
-        // SLOT-NUMMER
-        // ==========================
 
         BitmapText slotNumberText =
                 new BitmapText(
@@ -400,10 +561,6 @@ public class InventoryHud {
                 slotNumberText
         );
 
-
-        // ==========================
-        // ITEM-NAME
-        // ==========================
 
         BitmapText itemNameText =
                 new BitmapText(
@@ -442,10 +599,6 @@ public class InventoryHud {
                 itemNameText
         );
 
-
-        // ==========================
-        // ITEM-MENGE
-        // ==========================
 
         BitmapText amountText =
                 new BitmapText(
@@ -487,7 +640,7 @@ public class InventoryHud {
             float y
     ) {
 
-        Material woodMaterial =
+        Material material =
                 createGuiMaterial(
                         assetManager,
                         new ColorRGBA(
@@ -510,7 +663,7 @@ public class InventoryHud {
 
 
         log1.setMaterial(
-                woodMaterial
+                material
         );
 
 
@@ -542,7 +695,7 @@ public class InventoryHud {
 
 
         log2.setMaterial(
-                woodMaterial
+                material
         );
 
 
@@ -571,7 +724,7 @@ public class InventoryHud {
             float y
     ) {
 
-        Material stoneMaterial =
+        Material material =
                 createGuiMaterial(
                         assetManager,
                         new ColorRGBA(
@@ -583,67 +736,35 @@ public class InventoryHud {
                 );
 
 
-        Geometry stone1 =
+        Geometry stone =
                 new Geometry(
-                        "StoneIcon1",
+                        "StoneIcon",
                         new Quad(
-                                38f,
-                                32f
+                                42f,
+                                34f
                         )
                 );
 
 
-        stone1.setMaterial(
-                stoneMaterial
+        stone.setMaterial(
+                material
         );
 
 
-        stone1.setQueueBucket(
+        stone.setQueueBucket(
                 RenderQueue.Bucket.Gui
         );
 
 
-        stone1.setLocalTranslation(
-                x + 27f,
-                y + 34f,
+        stone.setLocalTranslation(
+                x + 25f,
+                y + 38f,
                 5f
         );
 
 
         guiNode.attachChild(
-                stone1
-        );
-
-
-        Geometry stone2 =
-                new Geometry(
-                        "StoneIcon2",
-                        new Quad(
-                                25f,
-                                22f
-                        )
-                );
-
-
-        stone2.setMaterial(
-                stoneMaterial
-        );
-
-
-        stone2.setQueueBucket(
-                RenderQueue.Bucket.Gui
-        );
-
-
-        stone2.setLocalTranslation(
-                x + 36f,
-                y + 56f,
-                6f
-        );
-
-
-        guiNode.attachChild(
-                stone2
+                stone
         );
     }
 
@@ -655,10 +776,6 @@ public class InventoryHud {
             float y
     ) {
 
-        // ==========================
-        // AXTGRIFF
-        // ==========================
-
         Geometry handle =
                 new Geometry(
                         "AxeIconHandle",
@@ -669,7 +786,7 @@ public class InventoryHud {
                 );
 
 
-        Material handleMaterial =
+        handle.setMaterial(
                 createGuiMaterial(
                         assetManager,
                         new ColorRGBA(
@@ -678,11 +795,7 @@ public class InventoryHud {
                                 0.12f,
                                 1f
                         )
-                );
-
-
-        handle.setMaterial(
-                handleMaterial
+                )
         );
 
 
@@ -703,10 +816,6 @@ public class InventoryHud {
         );
 
 
-        // ==========================
-        // AXTKOPF
-        // ==========================
-
         Geometry head =
                 new Geometry(
                         "AxeIconHead",
@@ -717,7 +826,7 @@ public class InventoryHud {
                 );
 
 
-        Material headMaterial =
+        head.setMaterial(
                 createGuiMaterial(
                         assetManager,
                         new ColorRGBA(
@@ -726,11 +835,7 @@ public class InventoryHud {
                                 0.6f,
                                 1f
                         )
-                );
-
-
-        head.setMaterial(
-                headMaterial
+                )
         );
 
 
@@ -834,7 +939,7 @@ public class InventoryHud {
 
 
         // ==========================
-        // AUSWAHLRAHMEN AKTUALISIEREN
+        // AUSWAHLRAHMEN
         // ==========================
 
         for (
@@ -868,7 +973,7 @@ public class InventoryHud {
 
 
         // ==========================
-        // AXT-ICON NUR WENN VORHANDEN
+        // AXT
         // ==========================
 
         if (axes > 0) {
@@ -876,11 +981,54 @@ public class InventoryHud {
             axeIconNode.setCullHint(
                     Spatial.CullHint.Inherit
             );
+
+
+            durabilityNode.setCullHint(
+                    Spatial.CullHint.Inherit
+            );
+
+
+            int durability =
+                    toolDurabilitySystem
+                            .getStoneAxeDurability();
+
+
+            int maxDurability =
+                    toolDurabilitySystem
+                            .getStoneAxeMaxDurability();
+
+
+            durabilityText.setText(
+                    "Axt-Haltbarkeit: "
+                            +
+                            durability
+                            +
+                            " / "
+                            +
+                            maxDurability
+            );
+
+
+            float durabilityPercent =
+                    toolDurabilitySystem
+                            .getStoneAxeDurabilityPercent();
+
+
+            durabilityFill.setLocalScale(
+                    durabilityPercent,
+                    1f,
+                    1f
+            );
         }
 
         else {
 
             axeIconNode.setCullHint(
+                    Spatial.CullHint.Always
+            );
+
+
+            durabilityNode.setCullHint(
                     Spatial.CullHint.Always
             );
         }
