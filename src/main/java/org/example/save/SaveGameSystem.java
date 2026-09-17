@@ -37,7 +37,7 @@ public class SaveGameSystem implements ActionListener {
 
 
     private static final int SAVE_VERSION =
-            7;
+            8;
 
 
     private final Player player;
@@ -269,6 +269,13 @@ public class SaveGameSystem implements ActionListener {
                     "Türrahmen: "
                             +
                             buildingSystem.getDoorFrameCount()
+            );
+
+
+            System.out.println(
+                    "Türen: "
+                            +
+                            buildingSystem.getDoorCount()
             );
 
 
@@ -870,6 +877,7 @@ public class SaveGameSystem implements ActionListener {
             properties.setProperty(prefix + "rotY", Float.toString(rotation.getY()));
             properties.setProperty(prefix + "rotZ", Float.toString(rotation.getZ()));
             properties.setProperty(prefix + "rotW", Float.toString(rotation.getW()));
+            properties.setProperty(prefix + "open", Boolean.toString(buildingSystem.isDoorOpen(i)));
         }
     }
 
@@ -991,6 +999,13 @@ public class SaveGameSystem implements ActionListener {
                 "Türrahmen: "
                         +
                         buildingSystem.getDoorFrameCount()
+        );
+
+
+        System.out.println(
+                "Türen: "
+                        +
+                        buildingSystem.getDoorCount()
         );
 
 
@@ -1634,6 +1649,7 @@ public class SaveGameSystem implements ActionListener {
             float rotY = readFloat(properties, prefix + "rotY", 0f);
             float rotZ = readFloat(properties, prefix + "rotZ", 0f);
             float rotW = readFloat(properties, prefix + "rotW", 1f);
+            boolean open = Boolean.parseBoolean(properties.getProperty(prefix + "open", "false"));
 
             buildingSystem.loadDoor(
                     new Vector3f(
@@ -1646,7 +1662,8 @@ public class SaveGameSystem implements ActionListener {
                             rotY,
                             rotZ,
                             rotW
-                    )
+                    ),
+                    open
             );
         }
     }

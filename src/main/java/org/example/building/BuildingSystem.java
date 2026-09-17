@@ -1,6 +1,7 @@
 package org.example.building;
 
 import com.jme3.asset.AssetManager;
+import com.jme3.collision.CollisionResults;
 import com.jme3.bullet.PhysicsSpace;
 import com.jme3.bullet.control.RigidBodyControl;
 import com.jme3.font.BitmapFont;
@@ -15,6 +16,7 @@ import com.jme3.material.Material;
 import com.jme3.material.RenderState;
 import com.jme3.math.ColorRGBA;
 import com.jme3.math.Quaternion;
+import com.jme3.math.Ray;
 import com.jme3.math.Vector3f;
 import com.jme3.renderer.Camera;
 import com.jme3.renderer.queue.RenderQueue;
@@ -50,6 +52,9 @@ public class BuildingSystem implements ActionListener {
     private static final String SELECT_DOOR =
             "SelectDoor";
 
+    private static final String INTERACT_DOOR =
+            "InteractDoor";
+
 
     public static final int FOUNDATION_WOOD_COST =
             5;
@@ -69,6 +74,18 @@ public class BuildingSystem implements ActionListener {
 
     private static final float GRID_SIZE =
             3f;
+
+    private static final float DOOR_INTERACTION_DISTANCE =
+            3.2f;
+
+    private static final float DOOR_OPEN_ANGLE =
+            -(float) Math.toRadians(90f);
+
+    private static final float DOOR_ANIMATION_SPEED =
+            4f;
+
+    private static final float DOOR_HALF_WIDTH =
+            1.0f;
 
 
     private enum BuildType {
@@ -127,6 +144,18 @@ public class BuildingSystem implements ActionListener {
     private final List<Geometry> placedDoors =
             new ArrayList<>();
 
+    private final List<Quaternion> doorClosedRotations =
+            new ArrayList<>();
+
+    private final List<Boolean> doorOpenStates =
+            new ArrayList<>();
+
+    private final List<Boolean> doorTargetOpenStates =
+            new ArrayList<>();
+
+    private final List<Float> doorAnimationProgress =
+            new ArrayList<>();
+
 
     private BuildType selectedBuildType =
             BuildType.FOUNDATION;
@@ -147,6 +176,9 @@ public class BuildingSystem implements ActionListener {
 
     private int nextDoorId =
             1;
+
+    private long lastDoorAnimationTimeNanos =
+            System.nanoTime();
 
 
     public BuildingSystem(
@@ -414,6 +446,14 @@ public class BuildingSystem implements ActionListener {
 
 
         inputManager.addMapping(
+                INTERACT_DOOR,
+                new KeyTrigger(
+                        KeyInput.KEY_E
+                )
+        );
+
+
+        inputManager.addMapping(
                 PLACE_BUILDING,
                 new MouseButtonTrigger(
                         MouseInput.BUTTON_LEFT
@@ -428,6 +468,7 @@ public class BuildingSystem implements ActionListener {
                 SELECT_WALL,
                 SELECT_DOOR_FRAME,
                 SELECT_DOOR,
+                INTERACT_DOOR,
                 PLACE_BUILDING
         );
     }
@@ -459,6 +500,28 @@ public class BuildingSystem implements ActionListener {
             setActive(
                     !active
             );
+
+
+            return;
+        }
+
+
+        if (
+                name.equals(
+                        INTERACT_DOOR
+                )
+                        &&
+                        isPressed
+        ) {
+
+            if (
+                    !active
+                            &&
+                            !inventoryMenuSystem.isOpen()
+            ) {
+
+                interactWithDoor();
+            }
 
 
             return;
@@ -559,6 +622,9 @@ public class BuildingSystem implements ActionListener {
 
 
     public void update() {
+
+        updateDoorAnimations();
+
 
         if (
                 !active
@@ -972,6 +1038,349 @@ public class BuildingSystem implements ActionListener {
 
 
         return false;
+    }
+
+
+    private void interactWithDoor() {
+
+        if (
+                placedDoors.isEmpty()
+        ) {
+
+            return;
+        }
+
+
+        Ray ray =
+                new Ray(
+                        camera.getLocation(),
+                        camera.getDirection()
+                );
+
+
+        int nearestDoorIndex =
+                -1;
+
+        float nearestDistance =
+                Float.MAX_VALUE;
+
+
+        for (
+                int i = 0;
+                i < placedDoors.size();
+                i++
+        ) {
+
+            Geometry door =
+                    placedDoors.get(
+                            i
+                    );
+
+
+            CollisionResults results =
+                    new CollisionResults();
+
+
+            door.collideWith(
+                    ray,
+                    results
+            );
+
+
+            if (
+                    results.size() == 0
+            ) {
+
+                continue;
+            }
+
+
+            float distance =
+                    results
+                            .getClosestCollision()
+                            .getDistance();
+
+
+            if (
+                    distance <= DOOR_INTERACTION_DISTANCE
+                            &&
+                            distance < nearestDistance
+            ) {
+
+                nearestDistance =
+                        distance;
+
+                nearestDoorIndex =
+                        i;
+            }
+        }
+
+
+        if (
+                nearestDoorIndex < 0
+        ) {
+
+            return;
+        }
+
+
+        boolean newTargetOpen =
+                !doorTargetOpenStates.get(
+                        nearestDoorIndex
+                );
+
+
+        doorTargetOpenStates.set(
+                nearestDoorIndex,
+                newTargetOpen
+        );
+
+
+        System.out.println(
+                newTargetOpen
+                        ?
+                        "Tür wird geöffnet."
+                        :
+                        "Tür wird geschlossen."
+        );
+    }
+
+
+    private void updateDoorAnimations() {
+
+        long now =
+                System.nanoTime();
+
+
+        float deltaSeconds =
+                (now - lastDoorAnimationTimeNanos)
+                        /
+                        1_000_000_000f;
+
+
+        lastDoorAnimationTimeNanos =
+                now;
+
+
+        deltaSeconds =
+                Math.min(
+                        deltaSeconds,
+                        0.05f
+                );
+
+
+        if (
+                deltaSeconds <= 0f
+        ) {
+
+            return;
+        }
+
+
+        for (
+                int i = 0;
+                i < placedDoors.size();
+                i++
+        ) {
+
+            float currentProgress =
+                    doorAnimationProgress.get(
+                            i
+                    );
+
+
+            boolean targetOpen =
+                    doorTargetOpenStates.get(
+                            i
+                    );
+
+
+            float targetProgress =
+                    targetOpen
+                            ?
+                            1f
+                            :
+                            0f;
+
+
+            if (
+                    Math.abs(
+                            currentProgress - targetProgress
+                    ) < 0.0001f
+            ) {
+
+                continue;
+            }
+
+
+            float step =
+                    DOOR_ANIMATION_SPEED
+                            *
+                            deltaSeconds;
+
+
+            if (
+                    currentProgress < targetProgress
+            ) {
+
+                currentProgress =
+                        Math.min(
+                                targetProgress,
+                                currentProgress + step
+                        );
+            }
+
+            else {
+
+                currentProgress =
+                        Math.max(
+                                targetProgress,
+                                currentProgress - step
+                        );
+            }
+
+
+            doorAnimationProgress.set(
+                    i,
+                    currentProgress
+            );
+
+
+            applyDoorTransform(
+                    i,
+                    currentProgress
+            );
+
+
+            if (
+                    Math.abs(
+                            currentProgress - targetProgress
+                    ) < 0.0001f
+            ) {
+
+                doorOpenStates.set(
+                        i,
+                        targetOpen
+                );
+            }
+        }
+    }
+
+
+    private void applyDoorTransform(
+            int index,
+            float openProgress
+    ) {
+
+        Geometry door =
+                placedDoors.get(
+                        index
+                );
+
+
+        Vector3f framePosition =
+                door.getUserData(
+                        "framePosition"
+                );
+
+
+        Quaternion closedRotation =
+                doorClosedRotations.get(
+                        index
+                );
+
+
+        if (
+                framePosition == null
+        ) {
+
+            return;
+        }
+
+
+        Vector3f closedCenter =
+                framePosition.clone();
+
+        closedCenter.y -=
+                0.22f;
+
+
+        Vector3f hingeOffset =
+                closedRotation.mult(
+                        new Vector3f(
+                                -DOOR_HALF_WIDTH,
+                                0f,
+                                0f
+                        )
+                );
+
+
+        Vector3f hingePosition =
+                closedCenter.add(
+                        hingeOffset
+                );
+
+
+        Quaternion swingRotation =
+                new Quaternion();
+
+        swingRotation.fromAngleAxis(
+                DOOR_OPEN_ANGLE
+                        *
+                        openProgress,
+                Vector3f.UNIT_Y
+        );
+
+
+        Quaternion currentRotation =
+                closedRotation.mult(
+                        swingRotation
+                );
+
+
+        Vector3f centerFromHinge =
+                currentRotation.mult(
+                        new Vector3f(
+                                DOOR_HALF_WIDTH,
+                                0f,
+                                0f
+                        )
+                );
+
+
+        Vector3f currentPosition =
+                hingePosition.add(
+                        centerFromHinge
+                );
+
+
+        door.setLocalTranslation(
+                currentPosition
+        );
+
+        door.setLocalRotation(
+                currentRotation
+        );
+
+
+        RigidBodyControl physics =
+                door.getControl(
+                        RigidBodyControl.class
+                );
+
+
+        if (
+                physics != null
+        ) {
+
+            physics.setPhysicsLocation(
+                    door.getWorldTranslation()
+            );
+
+            physics.setPhysicsRotation(
+                    door.getWorldRotation()
+            );
+        }
     }
 
 
@@ -1605,7 +2014,8 @@ public class BuildingSystem implements ActionListener {
         createAndAttachDoor(
                 frame.getLocalTranslation(),
                 frame.getLocalRotation(),
-                frame.getLocalTranslation()
+                frame.getLocalTranslation(),
+                false
         );
 
 
@@ -1764,8 +2174,9 @@ public class BuildingSystem implements ActionListener {
 
     private void createAndAttachDoor(
             Vector3f framePosition,
-            Quaternion rotation,
-            Vector3f savedFramePosition
+            Quaternion closedRotation,
+            Vector3f savedFramePosition,
+            boolean open
     ) {
 
         Geometry door =
@@ -1774,7 +2185,7 @@ public class BuildingSystem implements ActionListener {
                                 +
                                 nextDoorId,
                         new Box(
-                                1.0f,
+                                DOOR_HALF_WIDTH,
                                 1.22f,
                                 0.10f
                         )
@@ -1785,20 +2196,6 @@ public class BuildingSystem implements ActionListener {
                 createWoodMaterial()
         );
 
-
-        Vector3f doorPosition =
-                framePosition.clone();
-
-        doorPosition.y -= 0.22f;
-
-
-        door.setLocalTranslation(
-                doorPosition
-        );
-
-        door.setLocalRotation(
-                rotation
-        );
 
         door.setUserData(
                 "framePosition",
@@ -1817,6 +2214,37 @@ public class BuildingSystem implements ActionListener {
         placedDoors.add(
                 door
         );
+
+        doorClosedRotations.add(
+                closedRotation.clone()
+        );
+
+        doorOpenStates.add(
+                open
+        );
+
+        doorTargetOpenStates.add(
+                open
+        );
+
+        doorAnimationProgress.add(
+                open
+                        ?
+                        1f
+                        :
+                        0f
+        );
+
+
+        applyDoorTransform(
+                placedDoors.size() - 1,
+                open
+                        ?
+                        1f
+                        :
+                        0f
+        );
+
 
         nextDoorId++;
     }
@@ -2200,10 +2628,19 @@ public class BuildingSystem implements ActionListener {
             int index
     ) {
 
-        return placedDoors
+        return doorClosedRotations
                 .get(index)
-                .getLocalRotation()
                 .clone();
+    }
+
+
+    public boolean isDoorOpen(
+            int index
+    ) {
+
+        return doorTargetOpenStates.get(
+                index
+        );
     }
 
 
@@ -2265,6 +2702,14 @@ public class BuildingSystem implements ActionListener {
 
         placedDoors.clear();
 
+        doorClosedRotations.clear();
+
+        doorOpenStates.clear();
+
+        doorTargetOpenStates.clear();
+
+        doorAnimationProgress.clear();
+
 
         nextFoundationId =
                 1;
@@ -2322,13 +2767,15 @@ public class BuildingSystem implements ActionListener {
 
     public void loadDoor(
             Vector3f framePosition,
-            Quaternion rotation
+            Quaternion rotation,
+            boolean open
     ) {
 
         createAndAttachDoor(
                 framePosition.clone(),
                 rotation.clone(),
-                framePosition.clone()
+                framePosition.clone(),
+                open
         );
     }
 
