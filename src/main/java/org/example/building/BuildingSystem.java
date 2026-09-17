@@ -1565,20 +1565,16 @@ public class BuildingSystem implements ActionListener {
 
     private EdgeTransform calculateCurrentEdgeTransform() {
 
-        Geometry foundation =
-                getNearestFoundationToBuildTarget();
+        Vector3f supportPosition =
+                getNearestWallSupportPosition();
 
 
         if (
-                foundation == null
+                supportPosition == null
         ) {
 
             return null;
         }
-
-
-        Vector3f foundationPosition =
-                foundation.getLocalTranslation();
 
 
         Vector3f target =
@@ -1586,11 +1582,11 @@ public class BuildingSystem implements ActionListener {
 
 
         float dx =
-                target.x - foundationPosition.x;
+                target.x - supportPosition.x;
 
 
         float dz =
-                target.z - foundationPosition.z;
+                target.z - supportPosition.z;
 
 
         Vector3f position =
@@ -1599,6 +1595,10 @@ public class BuildingSystem implements ActionListener {
 
         Quaternion rotation =
                 new Quaternion();
+
+
+        float wallCenterY =
+                supportPosition.y + 1.5f;
 
 
         if (
@@ -1616,11 +1616,11 @@ public class BuildingSystem implements ActionListener {
 
 
             position.set(
-                    foundationPosition.x
+                    supportPosition.x
                             +
                             direction * 1.5f,
-                    1.62f,
-                    foundationPosition.z
+                    wallCenterY,
+                    supportPosition.z
             );
 
 
@@ -1644,9 +1644,9 @@ public class BuildingSystem implements ActionListener {
 
 
             position.set(
-                    foundationPosition.x,
-                    1.62f,
-                    foundationPosition.z
+                    supportPosition.x,
+                    wallCenterY,
+                    supportPosition.z
                             +
                             direction * 1.5f
             );
@@ -1657,6 +1657,92 @@ public class BuildingSystem implements ActionListener {
                 position,
                 rotation
         );
+    }
+
+
+    private Vector3f getNearestWallSupportPosition() {
+
+        Vector3f target =
+                getHorizontalBuildTarget();
+
+
+        Vector3f nearestPosition =
+                null;
+
+
+        float nearestDistance =
+                Float.MAX_VALUE;
+
+
+        for (
+                Geometry foundation
+                :
+                placedFoundations
+        ) {
+
+            Vector3f position =
+                    foundation.getLocalTranslation();
+
+
+            float distance =
+                    position.distanceSquared(
+                            target
+                    );
+
+
+            if (
+                    distance < nearestDistance
+            ) {
+
+                nearestDistance =
+                        distance;
+
+                nearestPosition =
+                        position;
+            }
+        }
+
+
+        for (
+                Geometry ceiling
+                :
+                placedCeilings
+        ) {
+
+            Vector3f position =
+                    ceiling.getLocalTranslation();
+
+
+            float distance =
+                    position.distanceSquared(
+                            target
+                    );
+
+
+            if (
+                    distance < nearestDistance
+            ) {
+
+                nearestDistance =
+                        distance;
+
+                nearestPosition =
+                        position;
+            }
+        }
+
+
+        if (
+                nearestPosition == null
+                        ||
+                        nearestDistance > 64f
+        ) {
+
+            return null;
+        }
+
+
+        return nearestPosition.clone();
     }
 
 
