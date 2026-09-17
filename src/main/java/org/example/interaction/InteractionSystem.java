@@ -35,12 +35,9 @@ public class InteractionSystem implements ActionListener {
 
     private final ToolView toolView;
 
-    private final ToolDurabilitySystem
-            toolDurabilitySystem;
+    private final ToolDurabilitySystem toolDurabilitySystem;
 
-    private final InventoryMenuSystem
-            inventoryMenuSystem;
-
+    private final InventoryMenuSystem inventoryMenuSystem;
 
     private final float interactionDistance =
             4f;
@@ -152,7 +149,9 @@ public class InteractionSystem implements ActionListener {
         ) {
 
             CollisionResult collision =
-                    results.getCollision(i);
+                    results.getCollision(
+                            i
+                    );
 
 
             if (
@@ -213,7 +212,7 @@ public class InteractionSystem implements ActionListener {
 
 
                 // ==========================
-                // AXTANIMATION
+                // AXT-ANIMATION
                 // ==========================
 
                 if (
@@ -380,7 +379,7 @@ public class InteractionSystem implements ActionListener {
 
 
         // ==========================
-        // BAUM
+        // HOLZ
         // ==========================
 
         if (

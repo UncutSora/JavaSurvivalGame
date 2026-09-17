@@ -17,9 +17,12 @@ import java.util.List;
 
 public class BerryBush implements HarvestableResource {
 
+    private final String saveId;
+
     private final Node bushNode;
 
     private final Geometry bush;
+
 
     private final List<Geometry> berries =
             new ArrayList<>();
@@ -28,6 +31,13 @@ public class BerryBush implements HarvestableResource {
     private final PhysicsSpace physicsSpace;
 
     private final RigidBodyControl bushPhysics;
+
+
+    private Node worldParent;
+
+
+    private boolean physicsActive =
+            false;
 
 
     private final int maxHealth =
@@ -43,10 +53,15 @@ public class BerryBush implements HarvestableResource {
 
 
     public BerryBush(
+            String saveId,
             AssetManager assetManager,
             PhysicsSpace physicsSpace,
             Vector3f position
     ) {
+
+        this.saveId =
+                saveId;
+
 
         this.physicsSpace =
                 physicsSpace;
@@ -54,13 +69,11 @@ public class BerryBush implements HarvestableResource {
 
         bushNode =
                 new Node(
-                        "BerryBush"
+                        "BerryBush_"
+                                +
+                                saveId
                 );
 
-
-        // ==========================
-        // BUSCH
-        // ==========================
 
         Sphere bushMesh =
                 new Sphere(
@@ -129,10 +142,6 @@ public class BerryBush implements HarvestableResource {
         );
 
 
-        // ==========================
-        // ROTE BEEREN
-        // ==========================
-
         createBerry(
                 assetManager,
                 position.add(
@@ -183,10 +192,6 @@ public class BerryBush implements HarvestableResource {
         );
 
 
-        // ==========================
-        // PHYSIK
-        // ==========================
-
         bushPhysics =
                 new RigidBodyControl(
                         0f
@@ -194,11 +199,6 @@ public class BerryBush implements HarvestableResource {
 
 
         bush.addControl(
-                bushPhysics
-        );
-
-
-        physicsSpace.add(
                 bushPhysics
         );
     }
@@ -281,9 +281,89 @@ public class BerryBush implements HarvestableResource {
 
 
     @Override
+    public String getSaveId() {
+
+        return saveId;
+    }
+
+
+    @Override
     public Node getNode() {
 
         return bushNode;
+    }
+
+
+    @Override
+    public void attachToWorld(
+            Node rootNode
+    ) {
+
+        worldParent =
+                rootNode;
+
+
+        if (
+                harvested
+        ) {
+
+            return;
+        }
+
+
+        if (
+                bushNode.getParent()
+                        ==
+                        null
+        ) {
+
+            rootNode.attachChild(
+                    bushNode
+            );
+        }
+
+
+        activatePhysics();
+    }
+
+
+    private void activatePhysics() {
+
+        if (
+                physicsActive
+        ) {
+
+            return;
+        }
+
+
+        physicsSpace.add(
+                bushPhysics
+        );
+
+
+        physicsActive =
+                true;
+    }
+
+
+    private void removeFromWorld() {
+
+        if (
+                physicsActive
+        ) {
+
+            physicsSpace.remove(
+                    bushPhysics
+            );
+
+
+            physicsActive =
+                    false;
+        }
+
+
+        bushNode.removeFromParent();
     }
 
 
@@ -331,12 +411,7 @@ public class BerryBush implements HarvestableResource {
                     true;
 
 
-            physicsSpace.remove(
-                    bushPhysics
-            );
-
-
-            bushNode.removeFromParent();
+            removeFromWorld();
 
 
             return true;
@@ -379,5 +454,60 @@ public class BerryBush implements HarvestableResource {
     public int getYield() {
 
         return 3;
+    }
+
+
+    @Override
+    public void loadState(
+            int health,
+            boolean harvested
+    ) {
+
+        this.health =
+                Math.max(
+                        0,
+                        Math.min(
+                                maxHealth,
+                                health
+                        )
+                );
+
+
+        this.harvested =
+                harvested
+                        ||
+                        this.health <= 0;
+
+
+        if (
+                this.harvested
+        ) {
+
+            this.health =
+                    0;
+
+
+            removeFromWorld();
+
+
+            return;
+        }
+
+
+        if (
+                worldParent != null
+                        &&
+                        bushNode.getParent()
+                                ==
+                                null
+        ) {
+
+            worldParent.attachChild(
+                    bushNode
+            );
+        }
+
+
+        activatePhysics();
     }
 }

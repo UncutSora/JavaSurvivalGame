@@ -12,6 +12,7 @@ import org.example.inventory.ItemType;
 import org.example.player.Player;
 import org.example.survival.PlayerStats;
 import org.example.tools.ToolDurabilitySystem;
+import org.example.world.HarvestableResource;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -20,6 +21,7 @@ import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import java.util.List;
 import java.util.Properties;
 
 public class SaveGameSystem implements ActionListener {
@@ -30,6 +32,9 @@ public class SaveGameSystem implements ActionListener {
     private static final String LOAD_MAPPING =
             "LoadGame";
 
+    private static final int SAVE_VERSION =
+            2;
+
 
     private final Player player;
 
@@ -37,8 +42,9 @@ public class SaveGameSystem implements ActionListener {
 
     private final Inventory inventory;
 
-    private final ToolDurabilitySystem
-            toolDurabilitySystem;
+    private final ToolDurabilitySystem toolDurabilitySystem;
+
+    private final List<HarvestableResource> resources;
 
 
     private final Path saveFile =
@@ -53,7 +59,8 @@ public class SaveGameSystem implements ActionListener {
             Player player,
             PlayerStats playerStats,
             Inventory inventory,
-            ToolDurabilitySystem toolDurabilitySystem
+            ToolDurabilitySystem toolDurabilitySystem,
+            List<HarvestableResource> resources
     ) {
 
         this.player =
@@ -67,6 +74,9 @@ public class SaveGameSystem implements ActionListener {
 
         this.toolDurabilitySystem =
                 toolDurabilitySystem;
+
+        this.resources =
+                resources;
 
 
         inputManager.addMapping(
@@ -100,7 +110,9 @@ public class SaveGameSystem implements ActionListener {
             float tpf
     ) {
 
-        if (!isPressed) {
+        if (
+                !isPressed
+        ) {
 
             return;
         }
@@ -133,6 +145,14 @@ public class SaveGameSystem implements ActionListener {
 
         Properties properties =
                 new Properties();
+
+
+        properties.setProperty(
+                "save.version",
+                Integer.toString(
+                        SAVE_VERSION
+                )
+        );
 
 
         // ==========================
@@ -168,7 +188,7 @@ public class SaveGameSystem implements ActionListener {
 
 
         // ==========================
-        // SURVIVAL-WERTE
+        // SPIELERWERTE
         // ==========================
 
         properties.setProperty(
@@ -214,14 +234,6 @@ public class SaveGameSystem implements ActionListener {
         // ==========================
         // INVENTAR
         // ==========================
-
-        properties.setProperty(
-                "inventory.slotCount",
-                Integer.toString(
-                        inventory.getSlotCount()
-                )
-        );
-
 
         for (
                 int i = 0;
@@ -294,6 +306,41 @@ public class SaveGameSystem implements ActionListener {
 
 
         // ==========================
+        // WELTZUSTAND
+        // ==========================
+
+        for (
+                HarvestableResource resource
+                :
+                resources
+        ) {
+
+            String prefix =
+                    "world."
+                            +
+                            resource.getSaveId()
+                            +
+                            ".";
+
+
+            properties.setProperty(
+                    prefix + "health",
+                    Integer.toString(
+                            resource.getHealth()
+                    )
+            );
+
+
+            properties.setProperty(
+                    prefix + "harvested",
+                    Boolean.toString(
+                            resource.isHarvested()
+                    )
+            );
+        }
+
+
+        // ==========================
         // DATEI SCHREIBEN
         // ==========================
 
@@ -324,15 +371,14 @@ public class SaveGameSystem implements ActionListener {
 
 
             System.out.println(
-                    "SPIEL GESPEICHERT"
+                    "SPIEL + WELT GESPEICHERT"
             );
 
 
             System.out.println(
-                    "Datei: "
+                    "Ressourcen gespeichert: "
                             +
-                            saveFile
-                                    .toAbsolutePath()
+                            resources.size()
             );
 
 
@@ -366,11 +412,6 @@ public class SaveGameSystem implements ActionListener {
 
             System.out.println(
                     "Kein Spielstand vorhanden."
-            );
-
-
-            System.out.println(
-                    "Drücke zuerst F5 zum Speichern."
             );
 
 
@@ -455,7 +496,7 @@ public class SaveGameSystem implements ActionListener {
 
 
         // ==========================
-        // SURVIVAL-WERTE
+        // SPIELERWERTE
         // ==========================
 
         float health =
@@ -593,7 +634,7 @@ public class SaveGameSystem implements ActionListener {
             ) {
 
                 System.out.println(
-                        "Unbekanntes Item im Spielstand: "
+                        "Unbekanntes Item im Savegame: "
                                 +
                                 typeName
                 );
@@ -602,7 +643,7 @@ public class SaveGameSystem implements ActionListener {
 
 
         // ==========================
-        // AXT-HALTBARKEIT LADEN
+        // AXT-HALTBARKEIT
         // ==========================
 
         int durability =
@@ -620,13 +661,55 @@ public class SaveGameSystem implements ActionListener {
                 );
 
 
+        // ==========================
+        // WELT LADEN
+        // ==========================
+
+        for (
+                HarvestableResource resource
+                :
+                resources
+        ) {
+
+            String prefix =
+                    "world."
+                            +
+                            resource.getSaveId()
+                            +
+                            ".";
+
+
+            int resourceHealth =
+                    readInt(
+                            properties,
+                            prefix + "health",
+                            resource.getMaxHealth()
+                    );
+
+
+            boolean harvested =
+                    Boolean.parseBoolean(
+                            properties.getProperty(
+                                    prefix + "harvested",
+                                    "false"
+                            )
+                    );
+
+
+            resource.loadState(
+                    resourceHealth,
+                    harvested
+            );
+        }
+
+
         System.out.println(
                 "================================"
         );
 
 
         System.out.println(
-                "SPIELSTAND GELADEN"
+                "SPIEL + WELT GELADEN"
         );
 
 
@@ -642,33 +725,6 @@ public class SaveGameSystem implements ActionListener {
                         ", "
                         +
                         z
-        );
-
-
-        System.out.println(
-                "Leben: "
-                        +
-                        Math.round(
-                                health
-                        )
-        );
-
-
-        System.out.println(
-                "Hunger: "
-                        +
-                        Math.round(
-                                hunger
-                        )
-        );
-
-
-        System.out.println(
-                "Durst: "
-                        +
-                        Math.round(
-                                thirst
-                        )
         );
 
 

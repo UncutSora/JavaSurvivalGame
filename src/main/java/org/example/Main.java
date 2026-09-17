@@ -26,6 +26,7 @@ import org.example.ui.InventoryHud;
 import org.example.ui.InventoryMenuSystem;
 import org.example.ui.SurvivalHud;
 import org.example.ui.ToolView;
+
 import org.example.world.BerryBush;
 import org.example.world.HarvestableResource;
 import org.example.world.Rock;
@@ -40,66 +41,50 @@ public class Main extends SimpleApplication {
     private BulletAppState bulletAppState;
 
     private Player player;
-
     private PlayerStats playerStats;
 
     private SurvivalHud survivalHud;
 
     private Inventory inventory;
-
     private InventoryHud inventoryHud;
-
     private InventoryMenuSystem inventoryMenuSystem;
 
     private HotbarSystem hotbarSystem;
 
     private ToolView toolView;
-
     private ToolDurabilitySystem toolDurabilitySystem;
 
     private ConsumableSystem consumableSystem;
 
     private SaveGameSystem saveGameSystem;
 
-
     private final List<HarvestableResource> resources =
             new ArrayList<>();
 
 
-    public static void main(
-            String[] args
-    ) {
+    public static void main(String[] args) {
 
-        Main game =
-                new Main();
-
+        Main game = new Main();
 
         AppSettings settings =
-                new AppSettings(
-                        true
-                );
-
+                new AppSettings(true);
 
         settings.setTitle(
                 "Java Survival Game"
         );
-
 
         settings.setResolution(
                 1280,
                 720
         );
 
-
         game.setSettings(
                 settings
         );
 
-
         game.setShowSettings(
                 false
         );
-
 
         game.start();
     }
@@ -176,7 +161,6 @@ public class Main extends SimpleApplication {
         bulletAppState =
                 new BulletAppState();
 
-
         stateManager.attach(
                 bulletAppState
         );
@@ -189,16 +173,15 @@ public class Main extends SimpleApplication {
                 new Player(
                         cam,
                         inputManager,
-                        bulletAppState
-                                .getPhysicsSpace()
+                        bulletAppState.getPhysicsSpace()
                 );
 
 
         cam.lookAt(
                 new Vector3f(
-                        0,
+                        0f,
                         1.5f,
-                        0
+                        0f
                 ),
                 Vector3f.UNIT_Y
         );
@@ -323,7 +306,8 @@ public class Main extends SimpleApplication {
                         player,
                         playerStats,
                         inventory,
-                        toolDurabilitySystem
+                        toolDurabilitySystem,
+                        resources
                 );
     }
 
@@ -352,13 +336,13 @@ public class Main extends SimpleApplication {
 
         addResource(
                 new Tree(
+                        "tree_01",
                         assetManager,
-                        bulletAppState
-                                .getPhysicsSpace(),
+                        bulletAppState.getPhysicsSpace(),
                         new Vector3f(
-                                0,
-                                0,
-                                0
+                                0f,
+                                0f,
+                                0f
                         )
                 )
         );
@@ -366,13 +350,13 @@ public class Main extends SimpleApplication {
 
         addResource(
                 new Tree(
+                        "tree_02",
                         assetManager,
-                        bulletAppState
-                                .getPhysicsSpace(),
+                        bulletAppState.getPhysicsSpace(),
                         new Vector3f(
-                                5,
-                                0,
-                                -3
+                                5f,
+                                0f,
+                                -3f
                         )
                 )
         );
@@ -380,13 +364,13 @@ public class Main extends SimpleApplication {
 
         addResource(
                 new Tree(
+                        "tree_03",
                         assetManager,
-                        bulletAppState
-                                .getPhysicsSpace(),
+                        bulletAppState.getPhysicsSpace(),
                         new Vector3f(
-                                -5,
-                                0,
-                                -4
+                                -5f,
+                                0f,
+                                -4f
                         )
                 )
         );
@@ -394,13 +378,13 @@ public class Main extends SimpleApplication {
 
         addResource(
                 new Tree(
+                        "tree_04",
                         assetManager,
-                        bulletAppState
-                                .getPhysicsSpace(),
+                        bulletAppState.getPhysicsSpace(),
                         new Vector3f(
-                                7,
-                                0,
-                                4
+                                7f,
+                                0f,
+                                4f
                         )
                 )
         );
@@ -408,13 +392,13 @@ public class Main extends SimpleApplication {
 
         addResource(
                 new Tree(
+                        "tree_05",
                         assetManager,
-                        bulletAppState
-                                .getPhysicsSpace(),
+                        bulletAppState.getPhysicsSpace(),
                         new Vector3f(
-                                -7,
-                                0,
-                                3
+                                -7f,
+                                0f,
+                                3f
                         )
                 )
         );
@@ -426,13 +410,13 @@ public class Main extends SimpleApplication {
 
         addResource(
                 new Rock(
+                        "rock_01",
                         assetManager,
-                        bulletAppState
-                                .getPhysicsSpace(),
+                        bulletAppState.getPhysicsSpace(),
                         new Vector3f(
-                                3,
-                                0,
-                                3
+                                3f,
+                                0f,
+                                3f
                         )
                 )
         );
@@ -440,13 +424,13 @@ public class Main extends SimpleApplication {
 
         addResource(
                 new Rock(
+                        "rock_02",
                         assetManager,
-                        bulletAppState
-                                .getPhysicsSpace(),
+                        bulletAppState.getPhysicsSpace(),
                         new Vector3f(
-                                -3,
-                                0,
-                                2
+                                -3f,
+                                0f,
+                                2f
                         )
                 )
         );
@@ -454,13 +438,13 @@ public class Main extends SimpleApplication {
 
         addResource(
                 new Rock(
+                        "rock_03",
                         assetManager,
-                        bulletAppState
-                                .getPhysicsSpace(),
+                        bulletAppState.getPhysicsSpace(),
                         new Vector3f(
-                                4,
-                                0,
-                                -6
+                                4f,
+                                0f,
+                                -6f
                         )
                 )
         );
@@ -468,45 +452,31 @@ public class Main extends SimpleApplication {
 
         addResource(
                 new Rock(
+                        "rock_04",
                         assetManager,
-                        bulletAppState
-                                .getPhysicsSpace(),
+                        bulletAppState.getPhysicsSpace(),
                         new Vector3f(
-                                -4,
-                                0,
-                                -7
+                                -4f,
+                                0f,
+                                -7f
                         )
                 )
         );
 
 
         // ==========================
-        // BEEREN
+        // BEERENSTRÄUCHER
         // ==========================
 
         addResource(
                 new BerryBush(
+                        "berry_01",
                         assetManager,
-                        bulletAppState
-                                .getPhysicsSpace(),
+                        bulletAppState.getPhysicsSpace(),
                         new Vector3f(
-                                2,
-                                0,
-                                -2
-                        )
-                )
-        );
-
-
-        addResource(
-                new BerryBush(
-                        assetManager,
-                        bulletAppState
-                                .getPhysicsSpace(),
-                        new Vector3f(
-                                -2,
-                                0,
-                                -3
+                                2f,
+                                0f,
+                                -2f
                         )
                 )
         );
@@ -514,29 +484,44 @@ public class Main extends SimpleApplication {
 
         addResource(
                 new BerryBush(
+                        "berry_02",
                         assetManager,
-                        bulletAppState
-                                .getPhysicsSpace(),
+                        bulletAppState.getPhysicsSpace(),
                         new Vector3f(
-                                6,
-                                0,
-                                1
+                                -2f,
+                                0f,
+                                -3f
+                        )
+                )
+        );
+
+
+        addResource(
+                new BerryBush(
+                        "berry_03",
+                        assetManager,
+                        bulletAppState.getPhysicsSpace(),
+                        new Vector3f(
+                                6f,
+                                0f,
+                                1f
                         )
                 )
         );
 
 
         // ==========================
-        // WASSER
+        // WASSERQUELLE
         // ==========================
 
         addResource(
                 new WaterSource(
+                        "water_01",
                         assetManager,
                         new Vector3f(
-                                0,
-                                0,
-                                -9
+                                0f,
+                                0f,
+                                -9f
                         )
                 )
         );
@@ -552,8 +537,8 @@ public class Main extends SimpleApplication {
         );
 
 
-        rootNode.attachChild(
-                resource.getNode()
+        resource.attachToWorld(
+                rootNode
         );
     }
 
@@ -616,9 +601,9 @@ public class Main extends SimpleApplication {
 
 
         ground.setLocalTranslation(
-                0,
+                0f,
                 -0.1f,
-                0
+                0f
         );
 
 
@@ -724,9 +709,9 @@ public class Main extends SimpleApplication {
 
         sun.setDirection(
                 new Vector3f(
-                        -1,
-                        -2,
-                        -1
+                        -1f,
+                        -2f,
+                        -1f
                 ).normalizeLocal()
         );
 

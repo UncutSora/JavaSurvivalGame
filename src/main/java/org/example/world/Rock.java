@@ -9,9 +9,12 @@ import com.jme3.math.Vector3f;
 import com.jme3.scene.Geometry;
 import com.jme3.scene.Node;
 import com.jme3.scene.shape.Sphere;
+
 import org.example.inventory.ItemType;
 
 public class Rock implements HarvestableResource {
+
+    private final String saveId;
 
     private final Node rockNode;
 
@@ -21,18 +24,36 @@ public class Rock implements HarvestableResource {
 
     private final RigidBodyControl rockPhysics;
 
-    private final int maxHealth = 60;
 
-    private int health = maxHealth;
+    private Node worldParent;
 
-    private boolean harvested = false;
+
+    private boolean physicsActive =
+            false;
+
+
+    private final int maxHealth =
+            60;
+
+
+    private int health =
+            maxHealth;
+
+
+    private boolean harvested =
+            false;
 
 
     public Rock(
+            String saveId,
             AssetManager assetManager,
             PhysicsSpace physicsSpace,
             Vector3f position
     ) {
+
+        this.saveId =
+                saveId;
+
 
         this.physicsSpace =
                 physicsSpace;
@@ -40,7 +61,9 @@ public class Rock implements HarvestableResource {
 
         rockNode =
                 new Node(
-                        "Rock"
+                        "Rock_"
+                                +
+                                saveId
                 );
 
 
@@ -127,11 +150,13 @@ public class Rock implements HarvestableResource {
         rock.addControl(
                 rockPhysics
         );
+    }
 
 
-        physicsSpace.add(
-                rockPhysics
-        );
+    @Override
+    public String getSaveId() {
+
+        return saveId;
     }
 
 
@@ -139,6 +164,79 @@ public class Rock implements HarvestableResource {
     public Node getNode() {
 
         return rockNode;
+    }
+
+
+    @Override
+    public void attachToWorld(
+            Node rootNode
+    ) {
+
+        worldParent =
+                rootNode;
+
+
+        if (
+                harvested
+        ) {
+
+            return;
+        }
+
+
+        if (
+                rockNode.getParent()
+                        ==
+                        null
+        ) {
+
+            rootNode.attachChild(
+                    rockNode
+            );
+        }
+
+
+        activatePhysics();
+    }
+
+
+    private void activatePhysics() {
+
+        if (
+                physicsActive
+        ) {
+
+            return;
+        }
+
+
+        physicsSpace.add(
+                rockPhysics
+        );
+
+
+        physicsActive =
+                true;
+    }
+
+
+    private void removeFromWorld() {
+
+        if (
+                physicsActive
+        ) {
+
+            physicsSpace.remove(
+                    rockPhysics
+            );
+
+
+            physicsActive =
+                    false;
+        }
+
+
+        rockNode.removeFromParent();
     }
 
 
@@ -156,27 +254,33 @@ public class Rock implements HarvestableResource {
             int damage
     ) {
 
-        if (harvested || damage <= 0) {
+        if (
+                harvested
+                        ||
+                        damage <= 0
+        ) {
+
             return false;
         }
 
 
-        health -= damage;
+        health -=
+                damage;
 
 
-        if (health <= 0) {
+        if (
+                health <= 0
+        ) {
 
-            health = 0;
-
-            harvested = true;
-
-
-            physicsSpace.remove(
-                    rockPhysics
-            );
+            health =
+                    0;
 
 
-            rockNode.removeFromParent();
+            harvested =
+                    true;
+
+
+            removeFromWorld();
 
 
             return true;
@@ -219,5 +323,60 @@ public class Rock implements HarvestableResource {
     public int getYield() {
 
         return 1;
+    }
+
+
+    @Override
+    public void loadState(
+            int health,
+            boolean harvested
+    ) {
+
+        this.health =
+                Math.max(
+                        0,
+                        Math.min(
+                                maxHealth,
+                                health
+                        )
+                );
+
+
+        this.harvested =
+                harvested
+                        ||
+                        this.health <= 0;
+
+
+        if (
+                this.harvested
+        ) {
+
+            this.health =
+                    0;
+
+
+            removeFromWorld();
+
+
+            return;
+        }
+
+
+        if (
+                worldParent != null
+                        &&
+                        rockNode.getParent()
+                                ==
+                                null
+        ) {
+
+            worldParent.attachChild(
+                    rockNode
+            );
+        }
+
+
+        activatePhysics();
     }
 }

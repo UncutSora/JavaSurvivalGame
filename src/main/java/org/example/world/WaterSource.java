@@ -12,19 +12,31 @@ import org.example.inventory.ItemType;
 
 public class WaterSource implements HarvestableResource {
 
+    private final String saveId;
+
     private final Node waterNode;
 
     private final Geometry water;
 
 
+    private Node worldParent;
+
+
     public WaterSource(
+            String saveId,
             AssetManager assetManager,
             Vector3f position
     ) {
 
+        this.saveId =
+                saveId;
+
+
         waterNode =
                 new Node(
-                        "WaterSource"
+                        "WaterSource_"
+                                +
+                                saveId
                 );
 
 
@@ -97,9 +109,38 @@ public class WaterSource implements HarvestableResource {
 
 
     @Override
+    public String getSaveId() {
+
+        return saveId;
+    }
+
+
+    @Override
     public Node getNode() {
 
         return waterNode;
+    }
+
+
+    @Override
+    public void attachToWorld(
+            Node rootNode
+    ) {
+
+        worldParent =
+                rootNode;
+
+
+        if (
+                waterNode.getParent()
+                        ==
+                        null
+        ) {
+
+            rootNode.attachChild(
+                    waterNode
+            );
+        }
     }
 
 
@@ -111,13 +152,6 @@ public class WaterSource implements HarvestableResource {
         return geometry == water;
     }
 
-
-    /*
-     * Wasserquelle bleibt bestehen.
-     *
-     * Jeder erfolgreiche Klick zählt
-     * als Sammelvorgang.
-     */
 
     @Override
     public boolean takeDamage(
@@ -160,5 +194,26 @@ public class WaterSource implements HarvestableResource {
     public int getYield() {
 
         return 3;
+    }
+
+
+    @Override
+    public void loadState(
+            int health,
+            boolean harvested
+    ) {
+
+        if (
+                worldParent != null
+                        &&
+                        waterNode.getParent()
+                                ==
+                                null
+        ) {
+
+            worldParent.attachChild(
+                    waterNode
+            );
+        }
     }
 }

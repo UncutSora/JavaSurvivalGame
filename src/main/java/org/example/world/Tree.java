@@ -10,34 +10,56 @@ import com.jme3.scene.Geometry;
 import com.jme3.scene.Node;
 import com.jme3.scene.shape.Box;
 import com.jme3.scene.shape.Sphere;
+
 import org.example.inventory.ItemType;
 
 public class Tree implements HarvestableResource {
 
+    private final String saveId;
+
     private final Node treeNode;
 
     private final Geometry trunk;
+
     private final Geometry leaves;
 
     private final PhysicsSpace physicsSpace;
+
     private final RigidBodyControl trunkPhysics;
 
-    private final int maxHealth = 100;
+    private Node worldParent;
 
-    private int health = maxHealth;
+    private boolean physicsActive =
+            false;
 
-    private boolean harvested = false;
+    private final int maxHealth =
+            100;
+
+    private int health =
+            maxHealth;
+
+    private boolean harvested =
+            false;
 
 
     public Tree(
+            String saveId,
             AssetManager assetManager,
             PhysicsSpace physicsSpace,
             Vector3f position
     ) {
 
-        this.physicsSpace = physicsSpace;
+        this.saveId =
+                saveId;
 
-        treeNode = new Node("Tree");
+        this.physicsSpace =
+                physicsSpace;
+
+
+        treeNode =
+                new Node(
+                        "Tree_" + saveId
+                );
 
 
         // ==========================
@@ -74,13 +96,23 @@ public class Tree implements HarvestableResource {
 
         trunkMaterial.setColor(
                 "Diffuse",
-                ColorRGBA.Brown
+                new ColorRGBA(
+                        0.45f,
+                        0.28f,
+                        0.12f,
+                        1f
+                )
         );
 
 
         trunkMaterial.setColor(
                 "Ambient",
-                ColorRGBA.Brown
+                new ColorRGBA(
+                        0.45f,
+                        0.28f,
+                        0.12f,
+                        1f
+                )
         );
 
 
@@ -185,11 +217,13 @@ public class Tree implements HarvestableResource {
         trunk.addControl(
                 trunkPhysics
         );
+    }
 
 
-        physicsSpace.add(
-                trunkPhysics
-        );
+    @Override
+    public String getSaveId() {
+
+        return saveId;
     }
 
 
@@ -201,12 +235,80 @@ public class Tree implements HarvestableResource {
 
 
     @Override
+    public void attachToWorld(
+            Node rootNode
+    ) {
+
+        worldParent =
+                rootNode;
+
+
+        if (harvested) {
+
+            return;
+        }
+
+
+        if (
+                treeNode.getParent()
+                        ==
+                        null
+        ) {
+
+            rootNode.attachChild(
+                    treeNode
+            );
+        }
+
+
+        activatePhysics();
+    }
+
+
+    private void activatePhysics() {
+
+        if (physicsActive) {
+
+            return;
+        }
+
+
+        physicsSpace.add(
+                trunkPhysics
+        );
+
+
+        physicsActive =
+                true;
+    }
+
+
+    private void removeFromWorld() {
+
+        if (physicsActive) {
+
+            physicsSpace.remove(
+                    trunkPhysics
+            );
+
+
+            physicsActive =
+                    false;
+        }
+
+
+        treeNode.removeFromParent();
+    }
+
+
+    @Override
     public boolean owns(
             Geometry geometry
     ) {
 
         return geometry == trunk
-                || geometry == leaves;
+                ||
+                geometry == leaves;
     }
 
 
@@ -215,27 +317,33 @@ public class Tree implements HarvestableResource {
             int damage
     ) {
 
-        if (harvested || damage <= 0) {
+        if (
+                harvested
+                        ||
+                        damage <= 0
+        ) {
+
             return false;
         }
 
 
-        health -= damage;
+        health -=
+                damage;
 
 
-        if (health <= 0) {
+        if (
+                health <= 0
+        ) {
 
-            health = 0;
-
-            harvested = true;
-
-
-            physicsSpace.remove(
-                    trunkPhysics
-            );
+            health =
+                    0;
 
 
-            treeNode.removeFromParent();
+            harvested =
+                    true;
+
+
+            removeFromWorld();
 
 
             return true;
@@ -278,5 +386,58 @@ public class Tree implements HarvestableResource {
     public int getYield() {
 
         return 1;
+    }
+
+
+    @Override
+    public void loadState(
+            int health,
+            boolean harvested
+    ) {
+
+        this.health =
+                Math.max(
+                        0,
+                        Math.min(
+                                maxHealth,
+                                health
+                        )
+                );
+
+
+        this.harvested =
+                harvested
+                        ||
+                        this.health <= 0;
+
+
+        if (this.harvested) {
+
+            this.health =
+                    0;
+
+
+            removeFromWorld();
+
+
+            return;
+        }
+
+
+        if (
+                worldParent != null
+                        &&
+                        treeNode.getParent()
+                                ==
+                                null
+        ) {
+
+            worldParent.attachChild(
+                    treeNode
+            );
+        }
+
+
+        activatePhysics();
     }
 }
