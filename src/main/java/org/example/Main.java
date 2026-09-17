@@ -11,6 +11,7 @@ import com.jme3.scene.shape.Box;
 import com.jme3.scene.shape.Quad;
 import com.jme3.system.AppSettings;
 
+import org.example.building.BuildingSystem;
 import org.example.crafting.CraftingSystem;
 import org.example.hotbar.HotbarSystem;
 import org.example.interaction.InteractionSystem;
@@ -64,6 +65,8 @@ public class Main extends SimpleApplication {
     private DayNightSystem dayNightSystem;
 
     private TimeHud timeHud;
+
+    private BuildingSystem buildingSystem;
 
 
     private final List<HarvestableResource> resources =
@@ -141,6 +144,8 @@ public class Main extends SimpleApplication {
         createInventoryMenuSystem();
 
         createConsumableSystem();
+
+        createBuildingSystem();
 
         createSaveGameSystem();
 
@@ -333,6 +338,22 @@ public class Main extends SimpleApplication {
     }
 
 
+    private void createBuildingSystem() {
+
+        buildingSystem =
+                new BuildingSystem(
+                        assetManager,
+                        rootNode,
+                        guiNode,
+                        cam,
+                        inputManager,
+                        bulletAppState.getPhysicsSpace(),
+                        inventory,
+                        inventoryMenuSystem
+                );
+    }
+
+
     private void createSaveGameSystem() {
 
         saveGameSystem =
@@ -359,206 +380,130 @@ public class Main extends SimpleApplication {
                 hotbarSystem,
                 toolView,
                 toolDurabilitySystem,
-                inventoryMenuSystem
+                inventoryMenuSystem,
+                buildingSystem
         );
     }
 
 
     private void createResources() {
 
-        // ==========================
-        // BÄUME
-        // ==========================
-
         addResource(
                 new Tree(
                         "tree_01",
                         assetManager,
                         bulletAppState.getPhysicsSpace(),
-                        new Vector3f(
-                                0f,
-                                0f,
-                                0f
-                        )
+                        new Vector3f(0f, 0f, 0f)
                 )
         );
-
 
         addResource(
                 new Tree(
                         "tree_02",
                         assetManager,
                         bulletAppState.getPhysicsSpace(),
-                        new Vector3f(
-                                5f,
-                                0f,
-                                -3f
-                        )
+                        new Vector3f(5f, 0f, -3f)
                 )
         );
-
 
         addResource(
                 new Tree(
                         "tree_03",
                         assetManager,
                         bulletAppState.getPhysicsSpace(),
-                        new Vector3f(
-                                -5f,
-                                0f,
-                                -4f
-                        )
+                        new Vector3f(-5f, 0f, -4f)
                 )
         );
-
 
         addResource(
                 new Tree(
                         "tree_04",
                         assetManager,
                         bulletAppState.getPhysicsSpace(),
-                        new Vector3f(
-                                7f,
-                                0f,
-                                4f
-                        )
+                        new Vector3f(7f, 0f, 4f)
                 )
         );
-
 
         addResource(
                 new Tree(
                         "tree_05",
                         assetManager,
                         bulletAppState.getPhysicsSpace(),
-                        new Vector3f(
-                                -7f,
-                                0f,
-                                3f
-                        )
+                        new Vector3f(-7f, 0f, 3f)
                 )
         );
 
-
-        // ==========================
-        // STEINE
-        // ==========================
 
         addResource(
                 new Rock(
                         "rock_01",
                         assetManager,
                         bulletAppState.getPhysicsSpace(),
-                        new Vector3f(
-                                3f,
-                                0f,
-                                3f
-                        )
+                        new Vector3f(3f, 0f, 3f)
                 )
         );
-
 
         addResource(
                 new Rock(
                         "rock_02",
                         assetManager,
                         bulletAppState.getPhysicsSpace(),
-                        new Vector3f(
-                                -3f,
-                                0f,
-                                2f
-                        )
+                        new Vector3f(-3f, 0f, 2f)
                 )
         );
-
 
         addResource(
                 new Rock(
                         "rock_03",
                         assetManager,
                         bulletAppState.getPhysicsSpace(),
-                        new Vector3f(
-                                4f,
-                                0f,
-                                -6f
-                        )
+                        new Vector3f(4f, 0f, -6f)
                 )
         );
-
 
         addResource(
                 new Rock(
                         "rock_04",
                         assetManager,
                         bulletAppState.getPhysicsSpace(),
-                        new Vector3f(
-                                -4f,
-                                0f,
-                                -7f
-                        )
+                        new Vector3f(-4f, 0f, -7f)
                 )
         );
 
-
-        // ==========================
-        // BEEREN
-        // ==========================
 
         addResource(
                 new BerryBush(
                         "berry_01",
                         assetManager,
                         bulletAppState.getPhysicsSpace(),
-                        new Vector3f(
-                                2f,
-                                0f,
-                                -2f
-                        )
+                        new Vector3f(2f, 0f, -2f)
                 )
         );
-
 
         addResource(
                 new BerryBush(
                         "berry_02",
                         assetManager,
                         bulletAppState.getPhysicsSpace(),
-                        new Vector3f(
-                                -2f,
-                                0f,
-                                -3f
-                        )
+                        new Vector3f(-2f, 0f, -3f)
                 )
         );
-
 
         addResource(
                 new BerryBush(
                         "berry_03",
                         assetManager,
                         bulletAppState.getPhysicsSpace(),
-                        new Vector3f(
-                                6f,
-                                0f,
-                                1f
-                        )
+                        new Vector3f(6f, 0f, 1f)
                 )
         );
 
-
-        // ==========================
-        // WASSER
-        // ==========================
 
         addResource(
                 new WaterSource(
                         "water_01",
                         assetManager,
-                        new Vector3f(
-                                0f,
-                                0f,
-                                -9f
-                        )
+                        new Vector3f(0f, 0f, -9f)
                 )
         );
     }
@@ -609,25 +554,24 @@ public class Main extends SimpleApplication {
         );
 
 
-        material.setColor(
-                "Diffuse",
+        ColorRGBA groundColor =
                 new ColorRGBA(
                         0.25f,
                         0.6f,
                         0.25f,
                         1f
-                )
+                );
+
+
+        material.setColor(
+                "Diffuse",
+                groundColor
         );
 
 
         material.setColor(
                 "Ambient",
-                new ColorRGBA(
-                        0.25f,
-                        0.6f,
-                        0.25f,
-                        1f
-                )
+                groundColor
         );
 
 
@@ -809,6 +753,14 @@ public class Main extends SimpleApplication {
         ) {
 
             inventoryMenuSystem.update();
+        }
+
+
+        if (
+                buildingSystem != null
+        ) {
+
+            buildingSystem.update();
         }
 
 

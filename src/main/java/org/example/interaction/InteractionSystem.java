@@ -11,6 +11,7 @@ import com.jme3.renderer.Camera;
 import com.jme3.scene.Geometry;
 import com.jme3.scene.Node;
 
+import org.example.building.BuildingSystem;
 import org.example.hotbar.HotbarSystem;
 import org.example.inventory.Inventory;
 import org.example.inventory.ItemType;
@@ -39,6 +40,9 @@ public class InteractionSystem implements ActionListener {
 
     private final InventoryMenuSystem inventoryMenuSystem;
 
+    private final BuildingSystem buildingSystem;
+
+
     private final float interactionDistance =
             4f;
 
@@ -52,7 +56,8 @@ public class InteractionSystem implements ActionListener {
             HotbarSystem hotbarSystem,
             ToolView toolView,
             ToolDurabilitySystem toolDurabilitySystem,
-            InventoryMenuSystem inventoryMenuSystem
+            InventoryMenuSystem inventoryMenuSystem,
+            BuildingSystem buildingSystem
     ) {
 
         this.camera =
@@ -79,6 +84,9 @@ public class InteractionSystem implements ActionListener {
         this.inventoryMenuSystem =
                 inventoryMenuSystem;
 
+        this.buildingSystem =
+                buildingSystem;
+
 
         inputManager.addMapping(
                 "Attack",
@@ -104,6 +112,14 @@ public class InteractionSystem implements ActionListener {
 
         if (
                 inventoryMenuSystem.isOpen()
+        ) {
+
+            return;
+        }
+
+
+        if (
+                buildingSystem.isActive()
         ) {
 
             return;
@@ -211,10 +227,6 @@ public class InteractionSystem implements ActionListener {
                         );
 
 
-                // ==========================
-                // AXT-ANIMATION
-                // ==========================
-
                 if (
                         axeUsed
                 ) {
@@ -237,10 +249,6 @@ public class InteractionSystem implements ActionListener {
                                 " Schaden"
                 );
 
-
-                // ==========================
-                // AXT-HALTBARKEIT
-                // ==========================
 
                 if (
                         axeUsed
@@ -276,10 +284,6 @@ public class InteractionSystem implements ActionListener {
                     }
                 }
 
-
-                // ==========================
-                // RESSOURCE SAMMELN
-                // ==========================
 
                 if (
                         collected
@@ -357,15 +361,9 @@ public class InteractionSystem implements ActionListener {
                 resource.getItemType();
 
 
-        return type
-                ==
-                ItemType.WOOD
-
+        return type == ItemType.WOOD
                 ||
-
-                type
-                        ==
-                        ItemType.STONE;
+                type == ItemType.STONE;
     }
 
 
@@ -378,72 +376,40 @@ public class InteractionSystem implements ActionListener {
                 resource.getItemType();
 
 
-        // ==========================
-        // HOLZ
-        // ==========================
-
         if (
-                type
-                        ==
-                        ItemType.WOOD
+                type == ItemType.WOOD
         ) {
 
-            if (
-                    axeEquipped
-            ) {
-
-                return 50;
-            }
-
-
-            return 25;
+            return axeEquipped
+                    ?
+                    50
+                    :
+                    25;
         }
 
 
-        // ==========================
-        // STEIN
-        // ==========================
-
         if (
-                type
-                        ==
-                        ItemType.STONE
+                type == ItemType.STONE
         ) {
 
-            if (
-                    axeEquipped
-            ) {
-
-                return 10;
-            }
-
-
-            return 30;
+            return axeEquipped
+                    ?
+                    10
+                    :
+                    30;
         }
 
 
-        // ==========================
-        // BEEREN
-        // ==========================
-
         if (
-                type
-                        ==
-                        ItemType.BERRIES
+                type == ItemType.BERRIES
         ) {
 
             return 10;
         }
 
 
-        // ==========================
-        // WASSER
-        // ==========================
-
         if (
-                type
-                        ==
-                        ItemType.WATER
+                type == ItemType.WATER
         ) {
 
             return 1;
