@@ -18,15 +18,18 @@ import org.example.hotbar.HotbarSystem;
 import org.example.interaction.InteractionSystem;
 import org.example.inventory.Inventory;
 import org.example.player.Player;
+import org.example.survival.ConsumableSystem;
 import org.example.survival.PlayerStats;
 import org.example.tools.ToolDurabilitySystem;
 import org.example.ui.InventoryHud;
 import org.example.ui.InventoryMenuSystem;
 import org.example.ui.SurvivalHud;
 import org.example.ui.ToolView;
+import org.example.world.BerryBush;
 import org.example.world.HarvestableResource;
 import org.example.world.Rock;
 import org.example.world.Tree;
+import org.example.world.WaterSource;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -53,18 +56,25 @@ public class Main extends SimpleApplication {
 
     private ToolDurabilitySystem toolDurabilitySystem;
 
+    private ConsumableSystem consumableSystem;
+
+
     private final List<HarvestableResource> resources =
             new ArrayList<>();
 
 
-    public static void main(String[] args) {
+    public static void main(
+            String[] args
+    ) {
 
         Main game =
                 new Main();
 
 
         AppSettings settings =
-                new AppSettings(true);
+                new AppSettings(
+                        true
+                );
 
 
         settings.setTitle(
@@ -123,6 +133,8 @@ public class Main extends SimpleApplication {
 
         createInventoryMenuSystem();
 
+        createConsumableSystem();
+
         createInteractionSystem();
 
         createCrosshair();
@@ -172,7 +184,8 @@ public class Main extends SimpleApplication {
                 new Player(
                         cam,
                         inputManager,
-                        bulletAppState.getPhysicsSpace()
+                        bulletAppState
+                                .getPhysicsSpace()
                 );
 
 
@@ -285,6 +298,18 @@ public class Main extends SimpleApplication {
     }
 
 
+    private void createConsumableSystem() {
+
+        consumableSystem =
+                new ConsumableSystem(
+                        inputManager,
+                        hotbarSystem,
+                        playerStats,
+                        inventoryMenuSystem
+                );
+    }
+
+
     private void createInteractionSystem() {
 
         new InteractionSystem(
@@ -310,7 +335,8 @@ public class Main extends SimpleApplication {
         addResource(
                 new Tree(
                         assetManager,
-                        bulletAppState.getPhysicsSpace(),
+                        bulletAppState
+                                .getPhysicsSpace(),
                         new Vector3f(
                                 0,
                                 0,
@@ -323,7 +349,8 @@ public class Main extends SimpleApplication {
         addResource(
                 new Tree(
                         assetManager,
-                        bulletAppState.getPhysicsSpace(),
+                        bulletAppState
+                                .getPhysicsSpace(),
                         new Vector3f(
                                 5,
                                 0,
@@ -336,7 +363,8 @@ public class Main extends SimpleApplication {
         addResource(
                 new Tree(
                         assetManager,
-                        bulletAppState.getPhysicsSpace(),
+                        bulletAppState
+                                .getPhysicsSpace(),
                         new Vector3f(
                                 -5,
                                 0,
@@ -349,7 +377,8 @@ public class Main extends SimpleApplication {
         addResource(
                 new Tree(
                         assetManager,
-                        bulletAppState.getPhysicsSpace(),
+                        bulletAppState
+                                .getPhysicsSpace(),
                         new Vector3f(
                                 7,
                                 0,
@@ -362,7 +391,8 @@ public class Main extends SimpleApplication {
         addResource(
                 new Tree(
                         assetManager,
-                        bulletAppState.getPhysicsSpace(),
+                        bulletAppState
+                                .getPhysicsSpace(),
                         new Vector3f(
                                 -7,
                                 0,
@@ -379,7 +409,8 @@ public class Main extends SimpleApplication {
         addResource(
                 new Rock(
                         assetManager,
-                        bulletAppState.getPhysicsSpace(),
+                        bulletAppState
+                                .getPhysicsSpace(),
                         new Vector3f(
                                 3,
                                 0,
@@ -392,7 +423,8 @@ public class Main extends SimpleApplication {
         addResource(
                 new Rock(
                         assetManager,
-                        bulletAppState.getPhysicsSpace(),
+                        bulletAppState
+                                .getPhysicsSpace(),
                         new Vector3f(
                                 -3,
                                 0,
@@ -405,7 +437,8 @@ public class Main extends SimpleApplication {
         addResource(
                 new Rock(
                         assetManager,
-                        bulletAppState.getPhysicsSpace(),
+                        bulletAppState
+                                .getPhysicsSpace(),
                         new Vector3f(
                                 4,
                                 0,
@@ -418,11 +451,74 @@ public class Main extends SimpleApplication {
         addResource(
                 new Rock(
                         assetManager,
-                        bulletAppState.getPhysicsSpace(),
+                        bulletAppState
+                                .getPhysicsSpace(),
                         new Vector3f(
                                 -4,
                                 0,
                                 -7
+                        )
+                )
+        );
+
+
+        // ==========================
+        // BEERENSTRÄUCHER
+        // ==========================
+
+        addResource(
+                new BerryBush(
+                        assetManager,
+                        bulletAppState
+                                .getPhysicsSpace(),
+                        new Vector3f(
+                                2,
+                                0,
+                                -2
+                        )
+                )
+        );
+
+
+        addResource(
+                new BerryBush(
+                        assetManager,
+                        bulletAppState
+                                .getPhysicsSpace(),
+                        new Vector3f(
+                                -2,
+                                0,
+                                -3
+                        )
+                )
+        );
+
+
+        addResource(
+                new BerryBush(
+                        assetManager,
+                        bulletAppState
+                                .getPhysicsSpace(),
+                        new Vector3f(
+                                6,
+                                0,
+                                1
+                        )
+                )
+        );
+
+
+        // ==========================
+        // WASSERQUELLE
+        // ==========================
+
+        addResource(
+                new WaterSource(
+                        assetManager,
+                        new Vector3f(
+                                0,
+                                0,
+                                -9
                         )
                 )
         );

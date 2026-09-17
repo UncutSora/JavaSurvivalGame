@@ -15,6 +15,16 @@ public enum ItemType {
     STONE_AXE(
             "Steinaxt",
             1
+    ),
+
+    BERRIES(
+            "Beeren",
+            20
+    ),
+
+    WATER(
+            "Wasser",
+            10
     );
 
 
