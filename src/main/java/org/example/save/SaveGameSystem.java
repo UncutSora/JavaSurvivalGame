@@ -37,7 +37,7 @@ public class SaveGameSystem implements ActionListener {
 
 
     private static final int SAVE_VERSION =
-            9;
+            11;
 
 
     private final Player player;
@@ -570,6 +570,14 @@ public class SaveGameSystem implements ActionListener {
         saveCeilings(
                 properties
         );
+
+        saveRoofs(
+                properties
+        );
+
+        saveStairs(
+                properties
+        );
     }
 
 
@@ -907,6 +915,103 @@ public class SaveGameSystem implements ActionListener {
             properties.setProperty(prefix + "x", Float.toString(position.x));
             properties.setProperty(prefix + "y", Float.toString(position.y));
             properties.setProperty(prefix + "z", Float.toString(position.z));
+        }
+    }
+
+
+    private void saveRoofs(Properties properties) {
+
+        int roofCount = buildingSystem.getRoofCount();
+        properties.setProperty(
+                "building.roof.count",
+                Integer.toString(roofCount)
+        );
+
+        for (int i = 0; i < roofCount; i++) {
+            Vector3f position = buildingSystem.getRoofPosition(i);
+            Quaternion rotation = buildingSystem.getRoofRotation(i);
+            String prefix = "building.roof." + i + ".";
+
+            properties.setProperty(prefix + "x", Float.toString(position.x));
+            properties.setProperty(prefix + "y", Float.toString(position.y));
+            properties.setProperty(prefix + "z", Float.toString(position.z));
+            properties.setProperty(prefix + "rotX", Float.toString(rotation.getX()));
+            properties.setProperty(prefix + "rotY", Float.toString(rotation.getY()));
+            properties.setProperty(prefix + "rotZ", Float.toString(rotation.getZ()));
+            properties.setProperty(prefix + "rotW", Float.toString(rotation.getW()));
+        }
+    }
+
+
+    private void saveStairs(Properties properties) {
+
+        int stairsCount =
+                buildingSystem.getStairsCount();
+
+        properties.setProperty(
+                "building.stairs.count",
+                Integer.toString(
+                        stairsCount
+                )
+        );
+
+        for (
+                int i = 0;
+                i < stairsCount;
+                i++
+        ) {
+
+            Vector3f position =
+                    buildingSystem.getStairsPosition(
+                            i
+                    );
+
+            Quaternion rotation =
+                    buildingSystem.getStairsRotation(
+                            i
+                    );
+
+            String prefix =
+                    "building.stairs."
+                            +
+                            i
+                            +
+                            ".";
+
+            properties.setProperty(
+                    prefix + "x",
+                    Float.toString(position.x)
+            );
+
+            properties.setProperty(
+                    prefix + "y",
+                    Float.toString(position.y)
+            );
+
+            properties.setProperty(
+                    prefix + "z",
+                    Float.toString(position.z)
+            );
+
+            properties.setProperty(
+                    prefix + "rotX",
+                    Float.toString(rotation.getX())
+            );
+
+            properties.setProperty(
+                    prefix + "rotY",
+                    Float.toString(rotation.getY())
+            );
+
+            properties.setProperty(
+                    prefix + "rotZ",
+                    Float.toString(rotation.getZ())
+            );
+
+            properties.setProperty(
+                    prefix + "rotW",
+                    Float.toString(rotation.getW())
+            );
         }
     }
 
@@ -1386,6 +1491,14 @@ public class SaveGameSystem implements ActionListener {
         loadCeilings(
                 properties
         );
+
+        loadRoofs(
+                properties
+        );
+
+        loadStairs(
+                properties
+        );
     }
 
 
@@ -1724,6 +1837,121 @@ public class SaveGameSystem implements ActionListener {
             float z = readFloat(properties, prefix + "z", 0f);
 
             buildingSystem.loadCeiling(new Vector3f(x, y, z));
+        }
+    }
+
+
+    private void loadRoofs(Properties properties) {
+
+        int roofCount = readInt(
+                properties,
+                "building.roof.count",
+                0
+        );
+
+        for (int i = 0; i < roofCount; i++) {
+            String prefix = "building.roof." + i + ".";
+
+            float x = readFloat(properties, prefix + "x", 0f);
+            float y = readFloat(properties, prefix + "y", 4.12f);
+            float z = readFloat(properties, prefix + "z", 0f);
+            float rotX = readFloat(properties, prefix + "rotX", 0f);
+            float rotY = readFloat(properties, prefix + "rotY", 0f);
+            float rotZ = readFloat(properties, prefix + "rotZ", 0f);
+            float rotW = readFloat(properties, prefix + "rotW", 1f);
+
+            buildingSystem.loadRoof(
+                    new Vector3f(x, y, z),
+                    new Quaternion(rotX, rotY, rotZ, rotW)
+            );
+        }
+    }
+
+
+    private void loadStairs(Properties properties) {
+
+        int stairsCount =
+                readInt(
+                        properties,
+                        "building.stairs.count",
+                        0
+                );
+
+        for (
+                int i = 0;
+                i < stairsCount;
+                i++
+        ) {
+
+            String prefix =
+                    "building.stairs."
+                            +
+                            i
+                            +
+                            ".";
+
+            float x =
+                    readFloat(
+                            properties,
+                            prefix + "x",
+                            0f
+                    );
+
+            float y =
+                    readFloat(
+                            properties,
+                            prefix + "y",
+                            1.62f
+                    );
+
+            float z =
+                    readFloat(
+                            properties,
+                            prefix + "z",
+                            0f
+                    );
+
+            float rotX =
+                    readFloat(
+                            properties,
+                            prefix + "rotX",
+                            0f
+                    );
+
+            float rotY =
+                    readFloat(
+                            properties,
+                            prefix + "rotY",
+                            0f
+                    );
+
+            float rotZ =
+                    readFloat(
+                            properties,
+                            prefix + "rotZ",
+                            0f
+                    );
+
+            float rotW =
+                    readFloat(
+                            properties,
+                            prefix + "rotW",
+                            1f
+                    );
+
+            buildingSystem.loadStairs(
+                    new Vector3f(
+                            x,
+                            y,
+                            z
+                    ),
+                    new Quaternion(
+                            rotX,
+                            rotY,
+                            rotZ,
+                            rotW
+                    )
+            );
         }
     }
 

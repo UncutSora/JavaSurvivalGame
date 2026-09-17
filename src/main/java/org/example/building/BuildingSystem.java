@@ -58,6 +58,15 @@ public class BuildingSystem implements ActionListener {
     private static final String SELECT_CEILING =
             "SelectCeiling";
 
+    private static final String SELECT_ROOF =
+            "SelectRoof";
+
+    private static final String SELECT_STAIRS =
+            "SelectStairs";
+
+    private static final String ROTATE_BUILDING =
+            "RotateBuilding";
+
     private static final String TOGGLE_DEMOLISH =
             "ToggleDemolishMode";
 
@@ -76,6 +85,12 @@ public class BuildingSystem implements ActionListener {
 
     public static final int CEILING_WOOD_COST =
             4;
+
+    public static final int ROOF_WOOD_COST =
+            4;
+
+    public static final int STAIRS_WOOD_COST =
+            5;
 
 
     private static final float BUILD_DISTANCE =
@@ -103,7 +118,9 @@ public class BuildingSystem implements ActionListener {
         WALL,
         DOOR_FRAME,
         DOOR,
-        CEILING
+        CEILING,
+        ROOF,
+        STAIRS
     }
 
 
@@ -141,6 +158,12 @@ public class BuildingSystem implements ActionListener {
     private final Geometry ceilingPreview;
     private final Material ceilingPreviewMaterial;
 
+    private final Geometry roofPreview;
+    private final Material roofPreviewMaterial;
+
+    private final Geometry stairsPreview;
+    private final Material stairsPreviewMaterial;
+
 
     private final BitmapText buildText;
 
@@ -158,6 +181,12 @@ public class BuildingSystem implements ActionListener {
             new ArrayList<>();
 
     private final List<Geometry> placedCeilings =
+            new ArrayList<>();
+
+    private final List<Geometry> placedRoofs =
+            new ArrayList<>();
+
+    private final List<Geometry> placedStairs =
             new ArrayList<>();
 
     private final List<Quaternion> doorClosedRotations =
@@ -198,6 +227,18 @@ public class BuildingSystem implements ActionListener {
 
     private int nextCeilingId =
             1;
+
+    private int nextRoofId =
+            1;
+
+    private int nextStairsId =
+            1;
+
+    private int roofRotationSteps =
+            0;
+
+    private int stairsRotationSteps =
+            0;
 
     private long lastDoorAnimationTimeNanos =
             System.nanoTime();
@@ -398,6 +439,40 @@ public class BuildingSystem implements ActionListener {
 
 
         // ==========================
+        // DACH-VORSCHAU
+        // ==========================
+
+        roofPreviewMaterial = createPreviewMaterial();
+
+        roofPreview = new Geometry(
+                "RoofPreview",
+                new Box(1.72f, 0.12f, 1.5f)
+        );
+
+        roofPreview.setMaterial(roofPreviewMaterial);
+        roofPreview.setQueueBucket(RenderQueue.Bucket.Transparent);
+        roofPreview.setCullHint(Spatial.CullHint.Always);
+        rootNode.attachChild(roofPreview);
+
+
+        // ==========================
+        // TREPPEN-VORSCHAU
+        // ==========================
+
+        stairsPreviewMaterial = createPreviewMaterial();
+
+        stairsPreview = new Geometry(
+                "StairsPreview",
+                new Box(1.20f, 0.12f, 2.12f)
+        );
+
+        stairsPreview.setMaterial(stairsPreviewMaterial);
+        stairsPreview.setQueueBucket(RenderQueue.Bucket.Transparent);
+        stairsPreview.setCullHint(Spatial.CullHint.Always);
+        rootNode.attachChild(stairsPreview);
+
+
+        // ==========================
         // HUD
         // ==========================
 
@@ -498,6 +573,27 @@ public class BuildingSystem implements ActionListener {
                 )
         );
 
+        inputManager.addMapping(
+                SELECT_ROOF,
+                new KeyTrigger(
+                        KeyInput.KEY_6
+                )
+        );
+
+        inputManager.addMapping(
+                SELECT_STAIRS,
+                new KeyTrigger(
+                        KeyInput.KEY_7
+                )
+        );
+
+        inputManager.addMapping(
+                ROTATE_BUILDING,
+                new KeyTrigger(
+                        KeyInput.KEY_R
+                )
+        );
+
 
         inputManager.addMapping(
                 TOGGLE_DEMOLISH,
@@ -523,6 +619,9 @@ public class BuildingSystem implements ActionListener {
                 SELECT_DOOR_FRAME,
                 SELECT_DOOR,
                 SELECT_CEILING,
+                SELECT_ROOF,
+                SELECT_STAIRS,
+                ROTATE_BUILDING,
                 INTERACT_DOOR,
                 TOGGLE_DEMOLISH,
                 PLACE_BUILDING
@@ -722,6 +821,61 @@ public class BuildingSystem implements ActionListener {
         }
 
         if (
+                name.equals(SELECT_ROOF)
+                        &&
+                        isPressed
+        ) {
+            selectedBuildType = BuildType.ROOF;
+            return;
+        }
+
+        if (
+                name.equals(SELECT_STAIRS)
+                        &&
+                        isPressed
+        ) {
+            selectedBuildType = BuildType.STAIRS;
+            return;
+        }
+
+        if (
+                name.equals(ROTATE_BUILDING)
+                        &&
+                        isPressed
+        ) {
+
+            if (selectedBuildType == BuildType.ROOF) {
+                roofRotationSteps =
+                        (roofRotationSteps + 1) % 4;
+
+                System.out.println(
+                        "Dach gedreht: "
+                                +
+                                (roofRotationSteps * 90)
+                                +
+                                " Grad."
+                );
+
+                return;
+            }
+
+            if (selectedBuildType == BuildType.STAIRS) {
+                stairsRotationSteps =
+                        (stairsRotationSteps + 1) % 4;
+
+                System.out.println(
+                        "Treppe gedreht: "
+                                +
+                                (stairsRotationSteps * 90)
+                                +
+                                " Grad."
+                );
+
+                return;
+            }
+        }
+
+        if (
                 name.equals(
                         PLACE_BUILDING
                 )
@@ -793,6 +947,18 @@ public class BuildingSystem implements ActionListener {
                 updateCeilingPreview();
 
                 break;
+
+            case ROOF:
+
+                updateRoofPreview();
+
+                break;
+
+            case STAIRS:
+
+                updateStairsPreview();
+
+                break;
         }
 
 
@@ -801,6 +967,12 @@ public class BuildingSystem implements ActionListener {
 
 
     private void updateFoundationPreview() {
+
+        stairsPreview.setCullHint(Spatial.CullHint.Always);
+
+
+        roofPreview.setCullHint(Spatial.CullHint.Always);
+
 
         wallPreview.setCullHint(
                 Spatial.CullHint.Always
@@ -871,6 +1043,12 @@ public class BuildingSystem implements ActionListener {
 
     private void updateWallPreview() {
 
+        stairsPreview.setCullHint(Spatial.CullHint.Always);
+
+
+        roofPreview.setCullHint(Spatial.CullHint.Always);
+
+
         foundationPreview.setCullHint(
                 Spatial.CullHint.Always
         );
@@ -892,7 +1070,7 @@ public class BuildingSystem implements ActionListener {
 
 
         EdgeTransform edge =
-                calculateCurrentEdgeTransform();
+                calculateCurrentWallTransform();
 
 
         if (
@@ -942,6 +1120,12 @@ public class BuildingSystem implements ActionListener {
 
 
     private void updateDoorFramePreview() {
+
+        stairsPreview.setCullHint(Spatial.CullHint.Always);
+
+
+        roofPreview.setCullHint(Spatial.CullHint.Always);
+
 
         foundationPreview.setCullHint(
                 Spatial.CullHint.Always
@@ -1014,6 +1198,12 @@ public class BuildingSystem implements ActionListener {
 
     private void updateDoorPreview() {
 
+        stairsPreview.setCullHint(Spatial.CullHint.Always);
+
+
+        roofPreview.setCullHint(Spatial.CullHint.Always);
+
+
         foundationPreview.setCullHint(
                 Spatial.CullHint.Always
         );
@@ -1084,6 +1274,12 @@ public class BuildingSystem implements ActionListener {
 
     private void updateCeilingPreview() {
 
+        stairsPreview.setCullHint(Spatial.CullHint.Always);
+
+
+        roofPreview.setCullHint(Spatial.CullHint.Always);
+
+
         foundationPreview.setCullHint(Spatial.CullHint.Always);
         wallPreview.setCullHint(Spatial.CullHint.Always);
         doorFramePreview.setCullHint(Spatial.CullHint.Always);
@@ -1108,6 +1304,298 @@ public class BuildingSystem implements ActionListener {
                         && !ceilingExistsAt(position.x, position.y, position.z);
 
         setPreviewColor(ceilingPreviewMaterial, valid);
+    }
+
+
+    private void updateRoofPreview() {
+
+        stairsPreview.setCullHint(Spatial.CullHint.Always);
+
+
+        foundationPreview.setCullHint(Spatial.CullHint.Always);
+        wallPreview.setCullHint(Spatial.CullHint.Always);
+        doorFramePreview.setCullHint(Spatial.CullHint.Always);
+        doorPreview.setCullHint(Spatial.CullHint.Always);
+        ceilingPreview.setCullHint(Spatial.CullHint.Always);
+
+        Geometry ceiling = getNearestCeilingToBuildTarget();
+
+        if (ceiling == null) {
+            roofPreview.setCullHint(Spatial.CullHint.Always);
+            return;
+        }
+
+        Vector3f position = ceiling.getLocalTranslation().clone();
+        position.y += 1.0f;
+
+        Quaternion rotation =
+                createRoofRotation();
+
+        roofPreview.setLocalTranslation(position);
+        roofPreview.setLocalRotation(rotation);
+        roofPreview.setCullHint(Spatial.CullHint.Inherit);
+
+        boolean valid =
+                inventory.hasItem(ItemType.WOOD, ROOF_WOOD_COST)
+                        && !roofExistsAt(position.x, position.y, position.z);
+
+        setPreviewColor(roofPreviewMaterial, valid);
+    }
+
+
+    private void updateStairsPreview() {
+
+        foundationPreview.setCullHint(Spatial.CullHint.Always);
+        wallPreview.setCullHint(Spatial.CullHint.Always);
+        doorFramePreview.setCullHint(Spatial.CullHint.Always);
+        doorPreview.setCullHint(Spatial.CullHint.Always);
+        ceilingPreview.setCullHint(Spatial.CullHint.Always);
+        roofPreview.setCullHint(Spatial.CullHint.Always);
+
+        Geometry foundation =
+                getNearestFoundationForStairs();
+
+        if (foundation == null) {
+            stairsPreview.setCullHint(Spatial.CullHint.Always);
+            return;
+        }
+
+        Vector3f supportPosition =
+                foundation.getLocalTranslation().clone();
+
+        Quaternion yawRotation =
+                createYawRotation(stairsRotationSteps);
+
+        Vector3f uphillDirection =
+                yawRotation.mult(
+                        new Vector3f(0f, 0f, 1f)
+                );
+
+        /*
+         * Die Treppe spannt jetzt exakt über eine 3x3-Bauzelle:
+         * unten an einer Fundamentkante, oben an der gegenüberliegenden
+         * Deckenkante. Deshalb liegt ihr Mittelpunkt horizontal exakt
+         * auf dem Mittelpunkt des Fundaments.
+         */
+        Vector3f position =
+                supportPosition.clone();
+
+        position.y =
+                1.62f;
+
+        Quaternion rotation =
+                createStairsRotation();
+
+        stairsPreview.setLocalTranslation(position);
+        stairsPreview.setLocalRotation(rotation);
+        stairsPreview.setCullHint(Spatial.CullHint.Inherit);
+
+        boolean valid =
+                inventory.hasItem(ItemType.WOOD, STAIRS_WOOD_COST)
+                        &&
+                        !stairsExistsAt(position);
+
+        setPreviewColor(
+                stairsPreviewMaterial,
+                valid
+        );
+    }
+
+
+    private Geometry getNearestFoundationForStairs() {
+
+        if (
+                placedFoundations.isEmpty()
+        ) {
+
+            return null;
+        }
+
+        Vector3f target =
+                getHorizontalBuildTarget();
+
+        Geometry nearest =
+                null;
+
+        float nearestDistance =
+                Float.MAX_VALUE;
+
+        for (
+                Geometry foundation
+                :
+                placedFoundations
+        ) {
+
+            Vector3f position =
+                    foundation.getLocalTranslation();
+
+            float dx =
+                    position.x - target.x;
+
+            float dz =
+                    position.z - target.z;
+
+            float horizontalDistance =
+                    dx * dx
+                            +
+                            dz * dz;
+
+            if (
+                    horizontalDistance
+                            <
+                            nearestDistance
+            ) {
+
+                nearestDistance =
+                        horizontalDistance;
+
+                nearest =
+                        foundation;
+            }
+        }
+
+        /*
+         * Treppen ragen bewusst vor das Fundament.
+         * Deshalb braucht die Auswahl mehr Toleranz als Wände/Decken,
+         * besonders wenn der Spieler auf Wand oder obere Kante zielt.
+         */
+        if (
+                nearestDistance > 144f
+        ) {
+
+            return null;
+        }
+
+        return nearest;
+    }
+
+
+    private Quaternion createRoofRotation() {
+
+        Quaternion slopeRotation =
+                new Quaternion();
+
+        slopeRotation.fromAngles(
+                0f,
+                0f,
+                (float) Math.toRadians(30f)
+        );
+
+        Quaternion yawRotation =
+                createYawRotation(roofRotationSteps);
+
+        return yawRotation.mult(
+                slopeRotation
+        );
+    }
+
+
+    private Quaternion createStairsRotation() {
+
+        Quaternion slopeRotation =
+                new Quaternion();
+
+        slopeRotation.fromAngles(
+                -(float) Math.toRadians(45f),
+                0f,
+                0f
+        );
+
+        Quaternion yawRotation =
+                createYawRotation(stairsRotationSteps);
+
+        return yawRotation.mult(
+                slopeRotation
+        );
+    }
+
+
+    private Quaternion createYawRotation(
+            int rotationSteps
+    ) {
+
+        Quaternion rotation =
+                new Quaternion();
+
+        rotation.fromAngles(
+                0f,
+                (float) Math.toRadians(
+                        rotationSteps * 90f
+                ),
+                0f
+        );
+
+        return rotation;
+    }
+
+
+    private boolean stairsExistsAt(
+            Vector3f position
+    ) {
+
+        for (
+                Geometry stairs
+                :
+                placedStairs
+        ) {
+
+            if (
+                    stairs.getLocalTranslation()
+                            .distanceSquared(
+                                    position
+                            )
+                            <
+                            0.05f
+            ) {
+
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+
+    private Geometry getNearestCeilingToBuildTarget() {
+
+        if (placedCeilings.isEmpty()) {
+            return null;
+        }
+
+        Vector3f target = getHorizontalBuildTarget();
+        Geometry nearest = null;
+        float nearestDistance = Float.MAX_VALUE;
+
+        for (Geometry ceiling : placedCeilings) {
+            float distance = ceiling.getLocalTranslation().distanceSquared(target);
+
+            if (distance < nearestDistance) {
+                nearest = ceiling;
+                nearestDistance = distance;
+            }
+        }
+
+        if (nearestDistance > 64f) {
+            return null;
+        }
+
+        return nearest;
+    }
+
+
+    private boolean roofExistsAt(float x, float y, float z) {
+
+        for (Geometry roof : placedRoofs) {
+            Vector3f position = roof.getLocalTranslation();
+
+            if (Math.abs(position.x - x) < 0.1f
+                    && Math.abs(position.y - y) < 0.1f
+                    && Math.abs(position.z - z) < 0.1f) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
 
@@ -1560,6 +2048,110 @@ public class BuildingSystem implements ActionListener {
                     door.getWorldRotation()
             );
         }
+    }
+
+
+    private EdgeTransform calculateCurrentWallTransform() {
+
+        EdgeTransform stackedWall =
+                getStackedWallTransformFromCrosshair();
+
+        if (
+                stackedWall != null
+        ) {
+
+            return stackedWall;
+        }
+
+        return calculateCurrentEdgeTransform();
+    }
+
+
+    private EdgeTransform getStackedWallTransformFromCrosshair() {
+
+        if (
+                placedWalls.isEmpty()
+        ) {
+
+            return null;
+        }
+
+        Ray ray =
+                new Ray(
+                        camera.getLocation(),
+                        camera.getDirection()
+                );
+
+        Geometry nearestWall =
+                null;
+
+        float nearestDistance =
+                Float.MAX_VALUE;
+
+        for (
+                Geometry wall
+                :
+                placedWalls
+        ) {
+
+            CollisionResults results =
+                    new CollisionResults();
+
+            wall.collideWith(
+                    ray,
+                    results
+            );
+
+            if (
+                    results.size() == 0
+            ) {
+
+                continue;
+            }
+
+            float distance =
+                    results
+                            .getClosestCollision()
+                            .getDistance();
+
+            if (
+                    distance <= BUILD_DISTANCE
+                            &&
+                            distance < nearestDistance
+            ) {
+
+                nearestDistance =
+                        distance;
+
+                nearestWall =
+                        wall;
+            }
+        }
+
+        if (
+                nearestWall == null
+        ) {
+
+            return null;
+        }
+
+        Vector3f position =
+                nearestWall
+                        .getLocalTranslation()
+                        .clone();
+
+        position.y +=
+                3f;
+
+        Quaternion rotation =
+                nearestWall
+                        .getLocalRotation()
+                        .clone();
+
+        return new EdgeTransform(
+                position,
+                rotation
+        );
     }
 
 
@@ -2068,7 +2660,7 @@ public class BuildingSystem implements ActionListener {
 
                 break;
 
-            default:
+            case CEILING:
 
                 selectedName =
                         "Decke";
@@ -2077,11 +2669,31 @@ public class BuildingSystem implements ActionListener {
                         CEILING_WOOD_COST;
 
                 break;
+
+            case ROOF:
+
+                selectedName =
+                        "Schrägdach";
+
+                cost =
+                        ROOF_WOOD_COST;
+
+                break;
+
+            default:
+
+                selectedName =
+                        "Treppe";
+
+                cost =
+                        STAIRS_WOOD_COST;
+
+                break;
         }
 
 
         buildText.setText(
-                "BAUMODUS | [1] Fundament | [2] Wand | [3] Türrahmen | [4] Tür | [5] Decke | "
+                "BAUMODUS | [1] Fundament | [2] Wand | [3] Türrahmen | [4] Tür | [5] Decke | [6] Schrägdach | [7] Treppe | "
                         +
                         selectedName
                         +
@@ -2134,6 +2746,18 @@ public class BuildingSystem implements ActionListener {
             case CEILING:
 
                 placeCeiling();
+
+                break;
+
+            case ROOF:
+
+                placeRoof();
+
+                break;
+
+            case STAIRS:
+
+                placeStairs();
 
                 break;
         }
@@ -2190,7 +2814,7 @@ public class BuildingSystem implements ActionListener {
     private void placeWall() {
 
         EdgeTransform edge =
-                calculateCurrentEdgeTransform();
+                calculateCurrentWallTransform();
 
 
         if (
@@ -2331,6 +2955,165 @@ public class BuildingSystem implements ActionListener {
         createAndAttachCeiling(position);
         inventory.removeItem(ItemType.WOOD, CEILING_WOOD_COST);
         System.out.println("Decke gebaut.");
+    }
+
+
+    private void placeRoof() {
+
+        Geometry ceiling = getNearestCeilingToBuildTarget();
+
+        if (ceiling == null
+                || !inventory.hasItem(ItemType.WOOD, ROOF_WOOD_COST)) {
+            return;
+        }
+
+        Vector3f position = ceiling.getLocalTranslation().clone();
+        position.y += 1.0f;
+
+        if (roofExistsAt(position.x, position.y, position.z)) {
+            return;
+        }
+
+        Quaternion rotation =
+                createRoofRotation();
+
+        createAndAttachRoof(position, rotation);
+        inventory.removeItem(ItemType.WOOD, ROOF_WOOD_COST);
+        System.out.println("Schrägdach gebaut.");
+    }
+
+
+    private void placeStairs() {
+
+        Geometry foundation =
+                getNearestFoundationForStairs();
+
+        if (
+                foundation == null
+                        ||
+                        !inventory.hasItem(
+                                ItemType.WOOD,
+                                STAIRS_WOOD_COST
+                        )
+        ) {
+
+            return;
+        }
+
+        Vector3f supportPosition =
+                foundation.getLocalTranslation().clone();
+
+        Quaternion yawRotation =
+                createYawRotation(
+                        stairsRotationSteps
+                );
+
+        Vector3f uphillDirection =
+                yawRotation.mult(
+                        new Vector3f(
+                                0f,
+                                0f,
+                                1f
+                        )
+                );
+
+        /*
+         * Gleicher Anker wie bei der Vorschau:
+         * Mittelpunkt der Treppe liegt auf dem Fundamentmittelpunkt.
+         */
+        Vector3f position =
+                supportPosition.clone();
+
+        position.y =
+                1.62f;
+
+        if (
+                stairsExistsAt(
+                        position
+                )
+        ) {
+
+            return;
+        }
+
+        createAndAttachStairs(
+                position,
+                createStairsRotation()
+        );
+
+        inventory.removeItem(
+                ItemType.WOOD,
+                STAIRS_WOOD_COST
+        );
+
+        System.out.println(
+                "Treppe gebaut."
+        );
+    }
+
+
+    private void createAndAttachStairs(
+            Vector3f position,
+            Quaternion rotation
+    ) {
+
+        Geometry stairs =
+                new Geometry(
+                        "Stairs_"
+                                +
+                                nextStairsId,
+                        new Box(
+                                1.20f,
+                                0.12f,
+                                2.35f
+                        )
+                );
+
+        stairs.setMaterial(
+                createWoodMaterial()
+        );
+
+        stairs.setLocalTranslation(
+                position
+        );
+
+        stairs.setLocalRotation(
+                rotation
+        );
+
+        rootNode.attachChild(
+                stairs
+        );
+
+        addPhysics(
+                stairs
+        );
+
+        placedStairs.add(
+                stairs
+        );
+
+        nextStairsId++;
+    }
+
+
+    private void createAndAttachRoof(
+            Vector3f position,
+            Quaternion rotation
+    ) {
+
+        Geometry roof = new Geometry(
+                "Roof_" + nextRoofId,
+                new Box(1.72f, 0.12f, 1.5f)
+        );
+
+        roof.setMaterial(createWoodMaterial());
+        roof.setLocalTranslation(position);
+        roof.setLocalRotation(rotation);
+        rootNode.attachChild(roof);
+        addPhysics(roof);
+        placedRoofs.add(roof);
+        nextRoofId++;
     }
 
 
@@ -2812,6 +3595,14 @@ public class BuildingSystem implements ActionListener {
         ceilingPreview.setCullHint(
                 Spatial.CullHint.Always
         );
+
+        roofPreview.setCullHint(
+                Spatial.CullHint.Always
+        );
+
+        stairsPreview.setCullHint(
+                Spatial.CullHint.Always
+        );
     }
 
 
@@ -2978,6 +3769,36 @@ public class BuildingSystem implements ActionListener {
     }
 
 
+    public int getRoofCount() {
+        return placedRoofs.size();
+    }
+
+
+    public Vector3f getRoofPosition(int index) {
+        return placedRoofs.get(index).getLocalTranslation().clone();
+    }
+
+
+    public Quaternion getRoofRotation(int index) {
+        return placedRoofs.get(index).getLocalRotation().clone();
+    }
+
+
+    public int getStairsCount() {
+        return placedStairs.size();
+    }
+
+
+    public Vector3f getStairsPosition(int index) {
+        return placedStairs.get(index).getLocalTranslation().clone();
+    }
+
+
+    public Quaternion getStairsRotation(int index) {
+        return placedStairs.get(index).getLocalRotation().clone();
+    }
+
+
     public void clearBuildings() {
 
         for (
@@ -3032,6 +3853,14 @@ public class BuildingSystem implements ActionListener {
             removeGeometryWithPhysics(ceiling);
         }
 
+        for (Geometry roof : placedRoofs) {
+            removeGeometryWithPhysics(roof);
+        }
+
+        for (Geometry stairs : placedStairs) {
+            removeGeometryWithPhysics(stairs);
+        }
+
         placedFoundations.clear();
 
         placedWalls.clear();
@@ -3041,6 +3870,10 @@ public class BuildingSystem implements ActionListener {
         placedDoors.clear();
 
         placedCeilings.clear();
+
+        placedRoofs.clear();
+
+        placedStairs.clear();
 
         doorClosedRotations.clear();
 
@@ -3064,6 +3897,12 @@ public class BuildingSystem implements ActionListener {
                 1;
 
         nextCeilingId =
+                1;
+
+        nextRoofId =
+                1;
+
+        nextStairsId =
                 1;
     }
 
@@ -3125,6 +3964,25 @@ public class BuildingSystem implements ActionListener {
 
     public void loadCeiling(Vector3f position) {
         createAndAttachCeiling(position.clone());
+    }
+
+
+    public void loadRoof(
+            Vector3f position,
+            Quaternion rotation
+    ) {
+        createAndAttachRoof(position.clone(), rotation.clone());
+    }
+
+
+    public void loadStairs(
+            Vector3f position,
+            Quaternion rotation
+    ) {
+        createAndAttachStairs(
+                position.clone(),
+                rotation.clone()
+        );
     }
 
 
@@ -3256,6 +4114,32 @@ public class BuildingSystem implements ActionListener {
                 removeGeometryWithPhysics(wall);
                 inventory.addItem(ItemType.WOOD, WALL_WOOD_COST);
                 System.out.println("Wand abgerissen. +" + WALL_WOOD_COST + " Holz.");
+                return;
+            }
+
+            int stairsIndex = findGeometryIndex(placedStairs, hit);
+            if (stairsIndex >= 0) {
+                if (!inventory.canAddItem(ItemType.WOOD, STAIRS_WOOD_COST)) {
+                    System.out.println("Nicht genug Platz im Inventar.");
+                    return;
+                }
+                Geometry stairs = placedStairs.remove(stairsIndex);
+                removeGeometryWithPhysics(stairs);
+                inventory.addItem(ItemType.WOOD, STAIRS_WOOD_COST);
+                System.out.println("Treppe abgerissen. +" + STAIRS_WOOD_COST + " Holz.");
+                return;
+            }
+
+            int roofIndex = findGeometryIndex(placedRoofs, hit);
+            if (roofIndex >= 0) {
+                if (!inventory.canAddItem(ItemType.WOOD, ROOF_WOOD_COST)) {
+                    System.out.println("Nicht genug Platz im Inventar.");
+                    return;
+                }
+                Geometry roof = placedRoofs.remove(roofIndex);
+                removeGeometryWithPhysics(roof);
+                inventory.addItem(ItemType.WOOD, ROOF_WOOD_COST);
+                System.out.println("Schrägdach abgerissen. +" + ROOF_WOOD_COST + " Holz.");
                 return;
             }
 
