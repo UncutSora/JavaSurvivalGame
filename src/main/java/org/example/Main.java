@@ -138,10 +138,6 @@ public class Main extends SimpleApplication {
         );
 
 
-        /*
-         * Bewegung der normalen FlyCam deaktivieren.
-         * Die Mausrotation bleibt erhalten.
-         */
         flyCam.setMoveSpeed(
                 0f
         );
@@ -223,7 +219,8 @@ public class Main extends SimpleApplication {
 
         hotbarSystem =
                 new HotbarSystem(
-                        inputManager
+                        inputManager,
+                        inventory
                 );
     }
 

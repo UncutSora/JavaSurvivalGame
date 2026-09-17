@@ -12,72 +12,51 @@ import com.jme3.scene.Geometry;
 import com.jme3.scene.Node;
 import com.jme3.scene.Spatial;
 import com.jme3.scene.shape.Quad;
+
 import org.example.hotbar.HotbarSystem;
 import org.example.inventory.Inventory;
+import org.example.inventory.InventorySlot;
 import org.example.inventory.ItemType;
 import org.example.tools.ToolDurabilitySystem;
 
 public class InventoryHud {
 
-    private static final float SLOT_SIZE =
-            92f;
-
-    private static final float INNER_SLOT_SIZE =
-            84f;
-
-    private static final float SLOT_GAP =
-            10f;
-
+    private static final float SLOT_WIDTH = 130f;
+    private static final float SLOT_HEIGHT = 82f;
+    private static final float SLOT_GAP = 10f;
 
     private final Inventory inventory;
-
     private final HotbarSystem hotbarSystem;
+    private final ToolDurabilitySystem toolDurabilitySystem;
 
-    private final ToolDurabilitySystem
-            toolDurabilitySystem;
-
-
-    private final Material[] slotBorderMaterials =
+    private final Material[] borderMaterials =
             new Material[3];
 
-
-    private final BitmapText[] amountTexts =
+    private final BitmapText[] slotTexts =
             new BitmapText[3];
 
-
-    private final Node axeIconNode =
-            new Node(
-                    "AxeIcon"
-            );
-
+    private final BitmapText selectedText;
 
     private final Node durabilityNode =
-            new Node(
-                    "AxeDurability"
-            );
-
+            new Node("HotbarDurability");
 
     private final Geometry durabilityFill;
 
     private final BitmapText durabilityText;
 
-    private final BitmapText selectedItemText;
-
-
-    private final ColorRGBA normalBorderColor =
+    private final ColorRGBA normalBorder =
             new ColorRGBA(
+                    0.28f,
                     0.3f,
-                    0.3f,
-                    0.3f,
+                    0.33f,
                     1f
             );
 
-
-    private final ColorRGBA selectedBorderColor =
+    private final ColorRGBA selectedBorder =
             new ColorRGBA(
                     1f,
-                    0.75f,
-                    0.2f,
+                    0.72f,
+                    0.15f,
                     1f
             );
 
@@ -94,10 +73,8 @@ public class InventoryHud {
         this.inventory =
                 inventory;
 
-
         this.hotbarSystem =
                 hotbarSystem;
-
 
         this.toolDurabilitySystem =
                 toolDurabilitySystem;
@@ -110,9 +87,9 @@ public class InventoryHud {
 
 
         float totalWidth =
-                SLOT_SIZE * 3
+                SLOT_WIDTH * 3f
                         +
-                        SLOT_GAP * 2;
+                        SLOT_GAP * 2f;
 
 
         float startX =
@@ -122,179 +99,68 @@ public class InventoryHud {
 
 
         float startY =
-                24f;
+                20f;
 
 
-        // ==========================
-        // SLOT 1 - HOLZ
-        // ==========================
+        for (
+                int i = 0;
+                i < 3;
+                i++
+        ) {
 
-        createSlot(
-                assetManager,
-                guiNode,
-                font,
-                0,
-                1,
-                "Holz",
-                startX,
-                startY
-        );
+            float x =
+                    startX
+                            +
+                            i
+                                    *
+                                    (SLOT_WIDTH + SLOT_GAP);
 
 
-        createWoodIcon(
-                assetManager,
-                guiNode,
-                startX,
-                startY
-        );
+            createSlot(
+                    assetManager,
+                    guiNode,
+                    font,
+                    i,
+                    x,
+                    startY
+            );
+        }
 
 
-        // ==========================
-        // SLOT 2 - STEIN
-        // ==========================
-
-        float slot2X =
-                startX
-                        +
-                        SLOT_SIZE
-                        +
-                        SLOT_GAP;
-
-
-        createSlot(
-                assetManager,
-                guiNode,
-                font,
-                1,
-                2,
-                "Stein",
-                slot2X,
-                startY
-        );
-
-
-        createStoneIcon(
-                assetManager,
-                guiNode,
-                slot2X,
-                startY
-        );
-
-
-        // ==========================
-        // SLOT 3 - STEINAXT
-        // ==========================
-
-        float slot3X =
-                startX
-                        +
-                        (SLOT_SIZE + SLOT_GAP) * 2;
-
-
-        createSlot(
-                assetManager,
-                guiNode,
-                font,
-                2,
-                3,
-                "Steinaxt",
-                slot3X,
-                startY
-        );
-
-
-        createAxeIcon(
-                assetManager,
-                guiNode,
-                slot3X,
-                startY
-        );
-
-
-        // ==========================
-        // AUSGEWÄHLTES ITEM
-        // ==========================
-
-        selectedItemText =
+        selectedText =
                 new BitmapText(
                         font
                 );
 
 
-        selectedItemText.setSize(
-                17f
+        selectedText.setSize(
+                16f
         );
 
 
-        selectedItemText.setColor(
+        selectedText.setColor(
                 ColorRGBA.White
         );
 
 
-        selectedItemText.setLocalTranslation(
+        selectedText.setLocalTranslation(
                 startX,
                 startY
                         +
-                        SLOT_SIZE
+                        SLOT_HEIGHT
                         +
-                        30f,
+                        28f,
                 10f
         );
 
 
         guiNode.attachChild(
-                selectedItemText
+                selectedText
         );
 
 
         // ==========================
-        // CRAFTING-HINWEIS
-        // ==========================
-
-        BitmapText craftingHint =
-                new BitmapText(
-                        font
-                );
-
-
-        craftingHint.setText(
-                "[C] Steinaxt craften"
-        );
-
-
-        craftingHint.setSize(
-                15f
-        );
-
-
-        craftingHint.setColor(
-                new ColorRGBA(
-                        0.9f,
-                        0.9f,
-                        0.9f,
-                        1f
-                )
-        );
-
-
-        craftingHint.setLocalTranslation(
-                startX,
-                startY
-                        +
-                        SLOT_SIZE
-                        +
-                        55f,
-                10f
-        );
-
-
-        guiNode.attachChild(
-                craftingHint
-        );
-
-
-        // ==========================
-        // HALTBARKEITSANZEIGE
+        // HALTBARKEIT
         // ==========================
 
         durabilityText =
@@ -315,7 +181,7 @@ public class InventoryHud {
 
         durabilityText.setLocalTranslation(
                 0f,
-                28f,
+                27f,
                 3f
         );
 
@@ -327,7 +193,7 @@ public class InventoryHud {
 
         Geometry durabilityBackground =
                 new Geometry(
-                        "DurabilityBackground",
+                        "HotbarDurabilityBackground",
                         new Quad(
                                 180f,
                                 10f
@@ -336,12 +202,12 @@ public class InventoryHud {
 
 
         durabilityBackground.setMaterial(
-                createGuiMaterial(
+                createMaterial(
                         assetManager,
                         new ColorRGBA(
-                                0.15f,
-                                0.15f,
-                                0.15f,
+                                0.1f,
+                                0.1f,
+                                0.1f,
                                 0.9f
                         )
                 )
@@ -353,13 +219,6 @@ public class InventoryHud {
         );
 
 
-        durabilityBackground.setLocalTranslation(
-                0f,
-                0f,
-                1f
-        );
-
-
         durabilityNode.attachChild(
                 durabilityBackground
         );
@@ -367,7 +226,7 @@ public class InventoryHud {
 
         durabilityFill =
                 new Geometry(
-                        "DurabilityFill",
+                        "HotbarDurabilityFill",
                         new Quad(
                                 176f,
                                 6f
@@ -376,7 +235,7 @@ public class InventoryHud {
 
 
         durabilityFill.setMaterial(
-                createGuiMaterial(
+                createMaterial(
                         assetManager,
                         new ColorRGBA(
                                 0.2f,
@@ -406,16 +265,12 @@ public class InventoryHud {
 
 
         durabilityNode.setLocalTranslation(
-                startX
-                        +
-                        totalWidth / 2f
-                        -
-                        90f,
+                camera.getWidth() / 2f - 90f,
                 startY
                         +
-                        SLOT_SIZE
+                        SLOT_HEIGHT
                         +
-                        72f,
+                        48f,
                 10f
         );
 
@@ -433,29 +288,27 @@ public class InventoryHud {
             AssetManager assetManager,
             Node guiNode,
             BitmapFont font,
-            int arrayIndex,
-            int slotNumber,
-            String itemName,
+            int index,
             float x,
             float y
     ) {
 
         Geometry border =
                 new Geometry(
-                        "SlotBorder"
+                        "HotbarBorder"
                                 +
-                                slotNumber,
+                                index,
                         new Quad(
-                                SLOT_SIZE,
-                                SLOT_SIZE
+                                SLOT_WIDTH,
+                                SLOT_HEIGHT
                         )
                 );
 
 
         Material borderMaterial =
-                createGuiMaterial(
+                createMaterial(
                         assetManager,
-                        normalBorderColor
+                        normalBorder
                 );
 
 
@@ -481,30 +334,30 @@ public class InventoryHud {
         );
 
 
-        slotBorderMaterials[arrayIndex] =
+        borderMaterials[index] =
                 borderMaterial;
 
 
         Geometry background =
                 new Geometry(
-                        "SlotBackground"
+                        "HotbarBackground"
                                 +
-                                slotNumber,
+                                index,
                         new Quad(
-                                INNER_SLOT_SIZE,
-                                INNER_SLOT_SIZE
+                                SLOT_WIDTH - 6f,
+                                SLOT_HEIGHT - 6f
                         )
                 );
 
 
         background.setMaterial(
-                createGuiMaterial(
+                createMaterial(
                         assetManager,
                         new ColorRGBA(
+                                0.05f,
+                                0.055f,
                                 0.06f,
-                                0.06f,
-                                0.06f,
-                                0.82f
+                                0.9f
                         )
                 )
         );
@@ -516,8 +369,8 @@ public class InventoryHud {
 
 
         background.setLocalTranslation(
-                x + 4f,
-                y + 4f,
+                x + 3f,
+                y + 3f,
                 2f
         );
 
@@ -527,349 +380,40 @@ public class InventoryHud {
         );
 
 
-        BitmapText slotNumberText =
+        BitmapText text =
                 new BitmapText(
                         font
                 );
 
 
-        slotNumberText.setText(
-                String.valueOf(
-                        slotNumber
-                )
+        text.setSize(
+                15f
         );
 
 
-        slotNumberText.setSize(
-                17f
-        );
-
-
-        slotNumberText.setColor(
+        text.setColor(
                 ColorRGBA.White
         );
 
 
-        slotNumberText.setLocalTranslation(
-                x + 9f,
-                y + SLOT_SIZE - 9f,
-                6f
-        );
-
-
-        guiNode.attachChild(
-                slotNumberText
-        );
-
-
-        BitmapText itemNameText =
-                new BitmapText(
-                        font
-                );
-
-
-        itemNameText.setText(
-                itemName
-        );
-
-
-        itemNameText.setSize(
-                13f
-        );
-
-
-        itemNameText.setColor(
-                new ColorRGBA(
-                        0.85f,
-                        0.85f,
-                        0.85f,
-                        1f
-                )
-        );
-
-
-        itemNameText.setLocalTranslation(
-                x + 8f,
-                y + 18f,
-                6f
-        );
-
-
-        guiNode.attachChild(
-                itemNameText
-        );
-
-
-        BitmapText amountText =
-                new BitmapText(
-                        font
-                );
-
-
-        amountText.setSize(
-                16f
-        );
-
-
-        amountText.setColor(
-                ColorRGBA.White
-        );
-
-
-        amountText.setLocalTranslation(
-                x + SLOT_SIZE - 34f,
-                y + 18f,
-                7f
-        );
-
-
-        guiNode.attachChild(
-                amountText
-        );
-
-
-        amountTexts[arrayIndex] =
-                amountText;
-    }
-
-
-    private void createWoodIcon(
-            AssetManager assetManager,
-            Node guiNode,
-            float x,
-            float y
-    ) {
-
-        Material material =
-                createGuiMaterial(
-                        assetManager,
-                        new ColorRGBA(
-                                0.48f,
-                                0.27f,
-                                0.12f,
-                                1f
-                        )
-                );
-
-
-        Geometry log1 =
-                new Geometry(
-                        "WoodIcon1",
-                        new Quad(
-                                15f,
-                                46f
-                        )
-                );
-
-
-        log1.setMaterial(
-                material
-        );
-
-
-        log1.setQueueBucket(
-                RenderQueue.Bucket.Gui
-        );
-
-
-        log1.setLocalTranslation(
-                x + 29f,
-                y + 30f,
+        text.setLocalTranslation(
+                x + 10f,
+                y + SLOT_HEIGHT - 10f,
                 5f
         );
 
 
         guiNode.attachChild(
-                log1
+                text
         );
 
 
-        Geometry log2 =
-                new Geometry(
-                        "WoodIcon2",
-                        new Quad(
-                                15f,
-                                46f
-                        )
-                );
-
-
-        log2.setMaterial(
-                material
-        );
-
-
-        log2.setQueueBucket(
-                RenderQueue.Bucket.Gui
-        );
-
-
-        log2.setLocalTranslation(
-                x + 49f,
-                y + 30f,
-                5f
-        );
-
-
-        guiNode.attachChild(
-                log2
-        );
+        slotTexts[index] =
+                text;
     }
 
 
-    private void createStoneIcon(
-            AssetManager assetManager,
-            Node guiNode,
-            float x,
-            float y
-    ) {
-
-        Material material =
-                createGuiMaterial(
-                        assetManager,
-                        new ColorRGBA(
-                                0.48f,
-                                0.5f,
-                                0.53f,
-                                1f
-                        )
-                );
-
-
-        Geometry stone =
-                new Geometry(
-                        "StoneIcon",
-                        new Quad(
-                                42f,
-                                34f
-                        )
-                );
-
-
-        stone.setMaterial(
-                material
-        );
-
-
-        stone.setQueueBucket(
-                RenderQueue.Bucket.Gui
-        );
-
-
-        stone.setLocalTranslation(
-                x + 25f,
-                y + 38f,
-                5f
-        );
-
-
-        guiNode.attachChild(
-                stone
-        );
-    }
-
-
-    private void createAxeIcon(
-            AssetManager assetManager,
-            Node guiNode,
-            float x,
-            float y
-    ) {
-
-        Geometry handle =
-                new Geometry(
-                        "AxeIconHandle",
-                        new Quad(
-                                10f,
-                                50f
-                        )
-                );
-
-
-        handle.setMaterial(
-                createGuiMaterial(
-                        assetManager,
-                        new ColorRGBA(
-                                0.48f,
-                                0.28f,
-                                0.12f,
-                                1f
-                        )
-                )
-        );
-
-
-        handle.setQueueBucket(
-                RenderQueue.Bucket.Gui
-        );
-
-
-        handle.setLocalTranslation(
-                36f,
-                22f,
-                0f
-        );
-
-
-        axeIconNode.attachChild(
-                handle
-        );
-
-
-        Geometry head =
-                new Geometry(
-                        "AxeIconHead",
-                        new Quad(
-                                42f,
-                                22f
-                        )
-                );
-
-
-        head.setMaterial(
-                createGuiMaterial(
-                        assetManager,
-                        new ColorRGBA(
-                                0.55f,
-                                0.57f,
-                                0.6f,
-                                1f
-                        )
-                )
-        );
-
-
-        head.setQueueBucket(
-                RenderQueue.Bucket.Gui
-        );
-
-
-        head.setLocalTranslation(
-                19f,
-                59f,
-                1f
-        );
-
-
-        axeIconNode.attachChild(
-                head
-        );
-
-
-        axeIconNode.setLocalTranslation(
-                x,
-                y,
-                5f
-        );
-
-
-        guiNode.attachChild(
-                axeIconNode
-        );
-    }
-
-
-    private Material createGuiMaterial(
+    private Material createMaterial(
             AssetManager assetManager,
             ColorRGBA color
     ) {
@@ -900,122 +444,131 @@ public class InventoryHud {
 
     public void update() {
 
-        int wood =
-                inventory.getAmount(
-                        ItemType.WOOD
-                );
-
-
-        int stone =
-                inventory.getAmount(
-                        ItemType.STONE
-                );
-
-
-        int axes =
-                inventory.getAmount(
-                        ItemType.STONE_AXE
-                );
-
-
-        amountTexts[0].setText(
-                "x" + wood
-        );
-
-
-        amountTexts[1].setText(
-                "x" + stone
-        );
-
-
-        amountTexts[2].setText(
-                "x" + axes
-        );
-
-
-        int selectedSlot =
+        int selected =
                 hotbarSystem
                         .getSelectedSlot();
 
 
-        // ==========================
-        // AUSWAHLRAHMEN
-        // ==========================
-
         for (
                 int i = 0;
-                i < slotBorderMaterials.length;
+                i < 3;
                 i++
         ) {
 
+            InventorySlot slot =
+                    inventory.getSlot(
+                            i
+                    );
+
+
             if (
-                    i
-                            ==
-                            selectedSlot - 1
+                    slot.isEmpty()
             ) {
 
-                slotBorderMaterials[i]
+                slotTexts[i].setText(
+                        (i + 1)
+                                +
+                                "\n\nLeer"
+                );
+            }
+
+            else {
+
+                slotTexts[i].setText(
+                        (i + 1)
+                                +
+                                "\n"
+                                +
+                                slot
+                                        .getItemType()
+                                        .getDisplayName()
+                                +
+                                "\nx"
+                                +
+                                slot.getAmount()
+                );
+            }
+
+
+            if (
+                    selected
+                            ==
+                            i + 1
+            ) {
+
+                borderMaterials[i]
                         .setColor(
                                 "Color",
-                                selectedBorderColor
+                                selectedBorder
                         );
             }
 
             else {
 
-                slotBorderMaterials[i]
+                borderMaterials[i]
                         .setColor(
                                 "Color",
-                                normalBorderColor
+                                normalBorder
                         );
             }
         }
 
 
-        // ==========================
-        // AXT
-        // ==========================
+        ItemType selectedType =
+                hotbarSystem
+                        .getSelectedItemType();
 
-        if (axes > 0) {
 
-            axeIconNode.setCullHint(
-                    Spatial.CullHint.Inherit
+        if (
+                selectedType == null
+        ) {
+
+            selectedText.setText(
+                    "Ausgewählt: Leer"
             );
+        }
 
+        else {
+
+            selectedText.setText(
+                    "Ausgewählt: "
+                            +
+                            selectedType
+                                    .getDisplayName()
+            );
+        }
+
+
+        if (
+                selectedType
+                        ==
+                        ItemType.STONE_AXE
+                        &&
+                        toolDurabilitySystem
+                                .hasUsableStoneAxe()
+        ) {
 
             durabilityNode.setCullHint(
                     Spatial.CullHint.Inherit
             );
 
 
-            int durability =
-                    toolDurabilitySystem
-                            .getStoneAxeDurability();
-
-
-            int maxDurability =
-                    toolDurabilitySystem
-                            .getStoneAxeMaxDurability();
-
-
             durabilityText.setText(
                     "Axt-Haltbarkeit: "
                             +
-                            durability
+                            toolDurabilitySystem
+                                    .getStoneAxeDurability()
                             +
                             " / "
                             +
-                            maxDurability
+                            toolDurabilitySystem
+                                    .getStoneAxeMaxDurability()
             );
 
 
-            float durabilityPercent =
-                    toolDurabilitySystem
-                            .getStoneAxeDurabilityPercent();
-
-
             durabilityFill.setLocalScale(
-                    durabilityPercent,
+                    toolDurabilitySystem
+                            .getStoneAxeDurabilityPercent(),
                     1f,
                     1f
             );
@@ -1023,67 +576,9 @@ public class InventoryHud {
 
         else {
 
-            axeIconNode.setCullHint(
-                    Spatial.CullHint.Always
-            );
-
-
             durabilityNode.setCullHint(
                     Spatial.CullHint.Always
             );
-        }
-
-
-        // ==========================
-        // AUSGEWÄHLTES ITEM
-        // ==========================
-
-        switch (selectedSlot) {
-
-            case 1:
-
-                selectedItemText.setText(
-                        "Ausgewählt: Holz"
-                );
-
-                break;
-
-
-            case 2:
-
-                selectedItemText.setText(
-                        "Ausgewählt: Stein"
-                );
-
-                break;
-
-
-            case 3:
-
-                if (axes > 0) {
-
-                    selectedItemText.setText(
-                            "Ausgewählt: Steinaxt"
-                    );
-                }
-
-                else {
-
-                    selectedItemText.setText(
-                            "Steinaxt nicht vorhanden"
-                    );
-                }
-
-                break;
-
-
-            default:
-
-                selectedItemText.setText(
-                        ""
-                );
-
-                break;
         }
     }
 }

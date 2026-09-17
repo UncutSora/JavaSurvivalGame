@@ -6,15 +6,27 @@ import java.util.List;
 
 public class Inventory {
 
-    public static final int SLOT_COUNT = 16;
+    public static final int SLOT_COUNT =
+            16;
+
+
+    public static final int HOTBAR_SLOT_COUNT =
+            3;
+
 
     private final List<InventorySlot> slots =
-            new ArrayList<>(SLOT_COUNT);
+            new ArrayList<>(
+                    SLOT_COUNT
+            );
 
 
     public Inventory() {
 
-        for (int i = 0; i < SLOT_COUNT; i++) {
+        for (
+                int i = 0;
+                i < SLOT_COUNT;
+                i++
+        ) {
 
             slots.add(
                     new InventorySlot()
@@ -38,13 +50,35 @@ public class Inventory {
         }
 
 
+        /*
+         * Erst prüfen, ob wirklich genug
+         * Platz für die komplette Menge da ist.
+         */
+
+        if (
+                !canAddItem(
+                        itemType,
+                        amount
+                )
+        ) {
+
+            return false;
+        }
+
+
         int remaining =
                 amount;
 
 
-        // Vorhandene Stacks auffüllen
+        /*
+         * Vorhandene Stacks auffüllen.
+         */
 
-        for (InventorySlot slot : slots) {
+        for (
+                InventorySlot slot
+                :
+                slots
+        ) {
 
             if (
                     slot.canStack(
@@ -71,11 +105,19 @@ public class Inventory {
         }
 
 
-        // Leere Slots verwenden
+        /*
+         * Danach leere Slots verwenden.
+         */
 
-        for (InventorySlot slot : slots) {
+        for (
+                InventorySlot slot
+                :
+                slots
+        ) {
 
-            if (slot.isEmpty()) {
+            if (
+                    slot.isEmpty()
+            ) {
 
                 int added =
                         slot.add(
@@ -96,9 +138,7 @@ public class Inventory {
         }
 
 
-        // Inventar voll
-
-        return false;
+        return remaining <= 0;
     }
 
 
@@ -121,7 +161,11 @@ public class Inventory {
                 0;
 
 
-        for (InventorySlot slot : slots) {
+        for (
+                InventorySlot slot
+                :
+                slots
+        ) {
 
             freeSpace +=
                     slot.getFreeSpace(
@@ -129,7 +173,9 @@ public class Inventory {
                     );
 
 
-            if (freeSpace >= amount) {
+            if (
+                    freeSpace >= amount
+            ) {
 
                 return true;
             }
@@ -148,7 +194,11 @@ public class Inventory {
                 0;
 
 
-        for (InventorySlot slot : slots) {
+        for (
+                InventorySlot slot
+                :
+                slots
+        ) {
 
             if (
                     !slot.isEmpty()
@@ -211,7 +261,11 @@ public class Inventory {
                 amount;
 
 
-        for (InventorySlot slot : slots) {
+        for (
+                InventorySlot slot
+                :
+                slots
+        ) {
 
             if (
                     slot.isEmpty()
@@ -235,7 +289,9 @@ public class Inventory {
                     removed;
 
 
-            if (remaining <= 0) {
+            if (
+                    remaining <= 0
+            ) {
 
                 return true;
             }
@@ -243,6 +299,168 @@ public class Inventory {
 
 
         return false;
+    }
+
+
+    /*
+     * Drag & Drop.
+     *
+     * Leerer Zielslot:
+     * kompletter Stack wird verschoben.
+     *
+     * Gleiches Item:
+     * Stacks werden zusammengeführt.
+     *
+     * Unterschiedliche Items:
+     * Slots werden getauscht.
+     */
+
+    public boolean moveStack(
+            int fromIndex,
+            int toIndex
+    ) {
+
+        if (
+                !isValidSlot(
+                        fromIndex
+                )
+                        ||
+                        !isValidSlot(
+                                toIndex
+                        )
+        ) {
+
+            return false;
+        }
+
+
+        if (
+                fromIndex == toIndex
+        ) {
+
+            return false;
+        }
+
+
+        InventorySlot source =
+                slots.get(
+                        fromIndex
+                );
+
+
+        InventorySlot target =
+                slots.get(
+                        toIndex
+                );
+
+
+        if (
+                source.isEmpty()
+        ) {
+
+            return false;
+        }
+
+
+        // ==========================
+        // ZIEL IST LEER
+        // ==========================
+
+        if (
+                target.isEmpty()
+        ) {
+
+            target.setStack(
+                    source.getItemType(),
+                    source.getAmount()
+            );
+
+
+            source.clear();
+
+
+            return true;
+        }
+
+
+        // ==========================
+        // GLEICHES ITEM
+        // ==========================
+
+        if (
+                source.getItemType()
+                        ==
+                        target.getItemType()
+        ) {
+
+            int moved =
+                    target.add(
+                            source.getItemType(),
+                            source.getAmount()
+                    );
+
+
+            if (
+                    moved <= 0
+            ) {
+
+                return false;
+            }
+
+
+            source.remove(
+                    moved
+            );
+
+
+            return true;
+        }
+
+
+        // ==========================
+        // UNTERSCHIEDLICHE ITEMS
+        // → STACKS TAUSCHEN
+        // ==========================
+
+        ItemType sourceType =
+                source.getItemType();
+
+
+        int sourceAmount =
+                source.getAmount();
+
+
+        ItemType targetType =
+                target.getItemType();
+
+
+        int targetAmount =
+                target.getAmount();
+
+
+        source.setStack(
+                targetType,
+                targetAmount
+        );
+
+
+        target.setStack(
+                sourceType,
+                sourceAmount
+        );
+
+
+        return true;
+    }
+
+
+    private boolean isValidSlot(
+            int index
+    ) {
+
+        return index >= 0
+                &&
+                index < slots.size();
     }
 
 
@@ -259,9 +477,9 @@ public class Inventory {
     ) {
 
         if (
-                index < 0
-                        ||
-                        index >= slots.size()
+                !isValidSlot(
+                        index
+                )
         ) {
 
             throw new IndexOutOfBoundsException(

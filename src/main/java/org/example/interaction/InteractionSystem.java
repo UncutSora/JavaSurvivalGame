@@ -10,6 +10,7 @@ import com.jme3.math.Ray;
 import com.jme3.renderer.Camera;
 import com.jme3.scene.Geometry;
 import com.jme3.scene.Node;
+
 import org.example.hotbar.HotbarSystem;
 import org.example.inventory.Inventory;
 import org.example.inventory.ItemType;
@@ -23,6 +24,7 @@ import java.util.List;
 public class InteractionSystem implements ActionListener {
 
     private final Camera camera;
+
     private final Node rootNode;
 
     private final List<HarvestableResource> resources;
@@ -99,6 +101,12 @@ public class InteractionSystem implements ActionListener {
             boolean isPressed,
             float tpf
     ) {
+
+        /*
+         * Solange das Inventar geöffnet ist,
+         * darf der Spieler nichts in der Welt
+         * schlagen oder abbauen.
+         */
 
         if (
                 inventoryMenuSystem.isOpen()
@@ -197,7 +205,9 @@ public class InteractionSystem implements ActionListener {
                         );
 
 
-                if (axeEquipped) {
+                if (
+                        axeEquipped
+                ) {
 
                     toolView.swing();
                 }
@@ -218,14 +228,22 @@ public class InteractionSystem implements ActionListener {
                 );
 
 
-                if (axeEquipped) {
+                /*
+                 * Axt verliert Haltbarkeit.
+                 */
+
+                if (
+                        axeEquipped
+                ) {
 
                     boolean axeBroken =
                             toolDurabilitySystem
                                     .useStoneAxe();
 
 
-                    if (axeBroken) {
+                    if (
+                            axeBroken
+                    ) {
 
                         System.out.println(
                                 "Die Steinaxt ist zerbrochen!"
@@ -249,7 +267,13 @@ public class InteractionSystem implements ActionListener {
                 }
 
 
-                if (destroyed) {
+                /*
+                 * Ressource zerstört.
+                 */
+
+                if (
+                        destroyed
+                ) {
 
                     boolean added =
                             inventory.addItem(
@@ -258,7 +282,9 @@ public class InteractionSystem implements ActionListener {
                             );
 
 
-                    if (added) {
+                    if (
+                            added
+                    ) {
 
                         System.out.println(
                                 resource
@@ -316,13 +342,19 @@ public class InteractionSystem implements ActionListener {
             boolean axeEquipped
     ) {
 
+        // ==========================
+        // BAUM
+        // ==========================
+
         if (
                 resource.getItemType()
                         ==
                         ItemType.WOOD
         ) {
 
-            if (axeEquipped) {
+            if (
+                    axeEquipped
+            ) {
 
                 return 50;
             }
@@ -332,13 +364,24 @@ public class InteractionSystem implements ActionListener {
         }
 
 
+        // ==========================
+        // STEIN
+        // ==========================
+
         if (
                 resource.getItemType()
                         ==
                         ItemType.STONE
         ) {
 
-            if (axeEquipped) {
+            /*
+             * Axt ist das falsche Werkzeug
+             * für Stein.
+             */
+
+            if (
+                    axeEquipped
+            ) {
 
                 return 10;
             }

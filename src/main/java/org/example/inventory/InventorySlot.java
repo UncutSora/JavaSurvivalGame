@@ -43,6 +43,11 @@ public class InventorySlot {
             ItemType type
     ) {
 
+        if (type == null) {
+            return 0;
+        }
+
+
         if (isEmpty()) {
 
             return type.getMaxStack();
@@ -145,6 +150,35 @@ public class InventorySlot {
 
 
         return amountToRemove;
+    }
+
+
+    public void setStack(
+            ItemType type,
+            int newAmount
+    ) {
+
+        if (
+                type == null
+                        ||
+                        newAmount <= 0
+        ) {
+
+            clear();
+
+            return;
+        }
+
+
+        itemType =
+                type;
+
+
+        amount =
+                Math.min(
+                        newAmount,
+                        type.getMaxStack()
+                );
     }
 
 

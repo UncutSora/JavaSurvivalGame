@@ -6,11 +6,14 @@ import com.jme3.font.BitmapText;
 import com.jme3.input.FlyByCamera;
 import com.jme3.input.InputManager;
 import com.jme3.input.KeyInput;
+import com.jme3.input.MouseInput;
 import com.jme3.input.controls.ActionListener;
 import com.jme3.input.controls.KeyTrigger;
+import com.jme3.input.controls.MouseButtonTrigger;
 import com.jme3.material.Material;
 import com.jme3.material.RenderState;
 import com.jme3.math.ColorRGBA;
+import com.jme3.math.Vector2f;
 import com.jme3.renderer.Camera;
 import com.jme3.renderer.queue.RenderQueue;
 import com.jme3.scene.Geometry;
@@ -24,14 +27,23 @@ import org.example.player.Player;
 
 public class InventoryMenuSystem implements ActionListener {
 
-    private static final int COLUMNS = 4;
+    private static final int COLUMNS =
+            4;
 
-    private static final float PANEL_WIDTH = 740f;
-    private static final float PANEL_HEIGHT = 455f;
+    private static final float PANEL_WIDTH =
+            740f;
 
-    private static final float SLOT_WIDTH = 155f;
-    private static final float SLOT_HEIGHT = 72f;
-    private static final float SLOT_GAP = 12f;
+    private static final float PANEL_HEIGHT =
+            455f;
+
+    private static final float SLOT_WIDTH =
+            155f;
+
+    private static final float SLOT_HEIGHT =
+            72f;
+
+    private static final float SLOT_GAP =
+            12f;
 
 
     private final InputManager inputManager;
@@ -55,7 +67,27 @@ public class InventoryMenuSystem implements ActionListener {
                     ];
 
 
-    private boolean open = false;
+    private final float[] slotX =
+            new float[
+                    Inventory.SLOT_COUNT
+                    ];
+
+
+    private final float[] slotY =
+            new float[
+                    Inventory.SLOT_COUNT
+                    ];
+
+
+    private BitmapText dragText;
+
+
+    private int draggedFromIndex =
+            -1;
+
+
+    private boolean open =
+            false;
 
 
     public InventoryMenuSystem(
@@ -112,9 +144,18 @@ public class InventoryMenuSystem implements ActionListener {
         );
 
 
+        inputManager.addMapping(
+                "InventoryDrag",
+                new MouseButtonTrigger(
+                        MouseInput.BUTTON_LEFT
+                )
+        );
+
+
         inputManager.addListener(
                 this,
-                "ToggleInventory"
+                "ToggleInventory",
+                "InventoryDrag"
         );
     }
 
@@ -141,10 +182,6 @@ public class InventoryMenuSystem implements ActionListener {
                         -
                         PANEL_HEIGHT / 2f;
 
-
-        // ==========================
-        // HAUPTFENSTER
-        // ==========================
 
         Geometry panel =
                 new Geometry(
@@ -186,10 +223,6 @@ public class InventoryMenuSystem implements ActionListener {
         );
 
 
-        // ==========================
-        // TITEL
-        // ==========================
-
         BitmapText title =
                 new BitmapText(
                         font
@@ -227,10 +260,6 @@ public class InventoryMenuSystem implements ActionListener {
         );
 
 
-        // ==========================
-        // SCHLIESS-HINWEIS
-        // ==========================
-
         BitmapText hint =
                 new BitmapText(
                         font
@@ -238,31 +267,27 @@ public class InventoryMenuSystem implements ActionListener {
 
 
         hint.setText(
-                "[I] Inventar schließen"
+                "Ziehen = verschieben / stapeln / tauschen     [I] schließen"
         );
 
 
         hint.setSize(
-                15f
+                14f
         );
 
 
         hint.setColor(
                 new ColorRGBA(
-                        0.75f,
-                        0.75f,
-                        0.75f,
+                        0.72f,
+                        0.72f,
+                        0.72f,
                         1f
                 )
         );
 
 
         hint.setLocalTranslation(
-                panelX
-                        +
-                        PANEL_WIDTH
-                        -
-                        190f,
+                panelX + 250f,
                 panelY
                         +
                         PANEL_HEIGHT
@@ -276,10 +301,6 @@ public class InventoryMenuSystem implements ActionListener {
                 hint
         );
 
-
-        // ==========================
-        // 4 x 4 INVENTAR
-        // ==========================
 
         float gridWidth =
                 COLUMNS * SLOT_WIDTH
@@ -319,7 +340,7 @@ public class InventoryMenuSystem implements ActionListener {
                     i % COLUMNS;
 
 
-            float slotX =
+            float currentX =
                     gridStartX
                             +
                             column
@@ -327,7 +348,7 @@ public class InventoryMenuSystem implements ActionListener {
                                     (SLOT_WIDTH + SLOT_GAP);
 
 
-            float slotY =
+            float currentY =
                     gridTop
                             -
                             SLOT_HEIGHT
@@ -337,19 +358,54 @@ public class InventoryMenuSystem implements ActionListener {
                                     (SLOT_HEIGHT + SLOT_GAP);
 
 
+            slotX[i] =
+                    currentX;
+
+
+            slotY[i] =
+                    currentY;
+
+
             createSlot(
                     assetManager,
                     font,
                     i,
-                    slotX,
-                    slotY
+                    currentX,
+                    currentY
             );
         }
 
 
-        // ==========================
-        // FOOTER
-        // ==========================
+        dragText =
+                new BitmapText(
+                        font
+                );
+
+
+        dragText.setSize(
+                18f
+        );
+
+
+        dragText.setColor(
+                new ColorRGBA(
+                        1f,
+                        0.85f,
+                        0.25f,
+                        1f
+                )
+        );
+
+
+        dragText.setCullHint(
+                Spatial.CullHint.Always
+        );
+
+
+        menuNode.attachChild(
+                dragText
+        );
+
 
         BitmapText footer =
                 new BitmapText(
@@ -358,20 +414,20 @@ public class InventoryMenuSystem implements ActionListener {
 
 
         footer.setText(
-                "16 Inventarplätze  |  Holz/Stein bis 99  |  Werkzeuge einzeln"
+                "Slots 1 - 3 = HOTBAR     |     Slots 4 - 16 = Rucksack"
         );
 
 
         footer.setSize(
-                14f
+                15f
         );
 
 
         footer.setColor(
                 new ColorRGBA(
-                        0.65f,
-                        0.65f,
-                        0.65f,
+                        0.75f,
+                        0.75f,
+                        0.75f,
                         1f
                 )
         );
@@ -398,10 +454,6 @@ public class InventoryMenuSystem implements ActionListener {
             float y
     ) {
 
-        // ==========================
-        // SLOT-RAHMEN
-        // ==========================
-
         Geometry border =
                 new Geometry(
                         "InventorySlotBorder"
@@ -414,15 +466,40 @@ public class InventoryMenuSystem implements ActionListener {
                 );
 
 
+        ColorRGBA borderColor;
+
+
+        if (
+                index
+                        <
+                        Inventory.HOTBAR_SLOT_COUNT
+        ) {
+
+            borderColor =
+                    new ColorRGBA(
+                            0.7f,
+                            0.52f,
+                            0.12f,
+                            1f
+                    );
+        }
+
+        else {
+
+            borderColor =
+                    new ColorRGBA(
+                            0.28f,
+                            0.3f,
+                            0.33f,
+                            1f
+                    );
+        }
+
+
         border.setMaterial(
                 createMaterial(
                         assetManager,
-                        new ColorRGBA(
-                                0.28f,
-                                0.3f,
-                                0.33f,
-                                1f
-                        )
+                        borderColor
                 )
         );
 
@@ -443,10 +520,6 @@ public class InventoryMenuSystem implements ActionListener {
                 border
         );
 
-
-        // ==========================
-        // SLOT-HINTERGRUND
-        // ==========================
 
         Geometry background =
                 new Geometry(
@@ -490,10 +563,6 @@ public class InventoryMenuSystem implements ActionListener {
         );
 
 
-        // ==========================
-        // SLOT-TEXT
-        // ==========================
-
         BitmapText text =
                 new BitmapText(
                         font
@@ -501,7 +570,7 @@ public class InventoryMenuSystem implements ActionListener {
 
 
         text.setSize(
-                15f
+                14f
         );
 
 
@@ -512,7 +581,7 @@ public class InventoryMenuSystem implements ActionListener {
 
         text.setLocalTranslation(
                 x + 10f,
-                y + SLOT_HEIGHT - 12f,
+                y + SLOT_HEIGHT - 10f,
                 4f
         );
 
@@ -572,7 +641,184 @@ public class InventoryMenuSystem implements ActionListener {
         ) {
 
             toggle();
+
+            return;
         }
+
+
+        if (
+                !name.equals(
+                        "InventoryDrag"
+                )
+                        ||
+                        !open
+        ) {
+
+            return;
+        }
+
+
+        if (isPressed) {
+
+            startDrag();
+        }
+
+        else {
+
+            finishDrag();
+        }
+    }
+
+
+    private void startDrag() {
+
+        Vector2f cursor =
+                inputManager
+                        .getCursorPosition()
+                        .clone();
+
+
+        int slotIndex =
+                findSlotAt(
+                        cursor
+                );
+
+
+        if (
+                slotIndex < 0
+        ) {
+
+            return;
+        }
+
+
+        InventorySlot slot =
+                inventory.getSlot(
+                        slotIndex
+                );
+
+
+        if (
+                slot.isEmpty()
+        ) {
+
+            return;
+        }
+
+
+        draggedFromIndex =
+                slotIndex;
+
+
+        dragText.setText(
+                slot
+                        .getItemType()
+                        .getDisplayName()
+                        +
+                        " x"
+                        +
+                        slot.getAmount()
+        );
+
+
+        dragText.setCullHint(
+                Spatial.CullHint.Inherit
+        );
+    }
+
+
+    private void finishDrag() {
+
+        if (
+                draggedFromIndex < 0
+        ) {
+
+            return;
+        }
+
+
+        Vector2f cursor =
+                inputManager
+                        .getCursorPosition()
+                        .clone();
+
+
+        int targetIndex =
+                findSlotAt(
+                        cursor
+                );
+
+
+        if (
+                targetIndex >= 0
+        ) {
+
+            inventory.moveStack(
+                    draggedFromIndex,
+                    targetIndex
+            );
+        }
+
+
+        draggedFromIndex =
+                -1;
+
+
+        dragText.setCullHint(
+                Spatial.CullHint.Always
+        );
+
+
+        update();
+    }
+
+
+    private int findSlotAt(
+            Vector2f cursor
+    ) {
+
+        for (
+                int i = 0;
+                i < Inventory.SLOT_COUNT;
+                i++
+        ) {
+
+            boolean insideX =
+                    cursor.x
+                            >=
+                            slotX[i]
+                            &&
+                            cursor.x
+                                    <=
+                                    slotX[i]
+                                            +
+                                            SLOT_WIDTH;
+
+
+            boolean insideY =
+                    cursor.y
+                            >=
+                            slotY[i]
+                            &&
+                            cursor.y
+                                    <=
+                                    slotY[i]
+                                            +
+                                            SLOT_HEIGHT;
+
+
+            if (
+                    insideX
+                            &&
+                            insideY
+            ) {
+
+                return i;
+            }
+        }
+
+
+        return -1;
     }
 
 
@@ -584,28 +830,20 @@ public class InventoryMenuSystem implements ActionListener {
 
         if (open) {
 
-            // Inventar anzeigen
-
             menuNode.setCullHint(
                     Spatial.CullHint.Inherit
             );
 
-
-            // Maus anzeigen
 
             inputManager.setCursorVisible(
                     true
             );
 
 
-            // Kamera deaktivieren
-
             flyCam.setEnabled(
                     false
             );
 
-
-            // Spieler stoppen
 
             player.setInputEnabled(
                     false
@@ -617,28 +855,23 @@ public class InventoryMenuSystem implements ActionListener {
 
         else {
 
-            // Inventar verstecken
+            cancelDrag();
+
 
             menuNode.setCullHint(
                     Spatial.CullHint.Always
             );
 
 
-            // Maus wieder verstecken
-
             inputManager.setCursorVisible(
                     false
             );
 
 
-            // Kamera aktivieren
-
             flyCam.setEnabled(
                     true
             );
 
-
-            // Spielersteuerung aktivieren
 
             player.setInputEnabled(
                     true
@@ -647,11 +880,40 @@ public class InventoryMenuSystem implements ActionListener {
     }
 
 
+    private void cancelDrag() {
+
+        draggedFromIndex =
+                -1;
+
+
+        dragText.setCullHint(
+                Spatial.CullHint.Always
+        );
+    }
+
+
     public void update() {
 
         if (!open) {
 
             return;
+        }
+
+
+        if (
+                draggedFromIndex >= 0
+        ) {
+
+            Vector2f cursor =
+                    inputManager
+                            .getCursorPosition();
+
+
+            dragText.setLocalTranslation(
+                    cursor.x + 15f,
+                    cursor.y + 18f,
+                    100f
+            );
         }
 
 
@@ -667,16 +929,36 @@ public class InventoryMenuSystem implements ActionListener {
                     );
 
 
-            // ==========================
-            // LEERER SLOT
-            // ==========================
+            String slotTitle;
 
-            if (slot.isEmpty()) {
 
-                slotTexts[i].setText(
+            if (
+                    i
+                            <
+                            Inventory.HOTBAR_SLOT_COUNT
+            ) {
+
+                slotTitle =
+                        "HOTBAR "
+                                +
+                                (i + 1);
+            }
+
+            else {
+
+                slotTitle =
                         "Slot "
                                 +
-                                (i + 1)
+                                (i + 1);
+            }
+
+
+            if (
+                    slot.isEmpty()
+            ) {
+
+                slotTexts[i].setText(
+                        slotTitle
                                 +
                                 "\n\nLeer"
                 );
@@ -686,14 +968,8 @@ public class InventoryMenuSystem implements ActionListener {
             }
 
 
-            // ==========================
-            // BELEGTER SLOT
-            // ==========================
-
             slotTexts[i].setText(
-                    "Slot "
-                            +
-                            (i + 1)
+                    slotTitle
                             +
                             "\n"
                             +

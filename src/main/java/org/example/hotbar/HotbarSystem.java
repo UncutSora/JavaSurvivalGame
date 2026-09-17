@@ -4,16 +4,28 @@ import com.jme3.input.InputManager;
 import com.jme3.input.KeyInput;
 import com.jme3.input.controls.ActionListener;
 import com.jme3.input.controls.KeyTrigger;
+
+import org.example.inventory.Inventory;
+import org.example.inventory.InventorySlot;
 import org.example.inventory.ItemType;
 
 public class HotbarSystem implements ActionListener {
 
-    private int selectedSlot = 1;
+    private final Inventory inventory;
+
+
+    private int selectedSlot =
+            1;
 
 
     public HotbarSystem(
-            InputManager inputManager
+            InputManager inputManager,
+            Inventory inventory
     ) {
+
+        this.inventory =
+                inventory;
+
 
         inputManager.addMapping(
                 "Hotbar1",
@@ -56,6 +68,7 @@ public class HotbarSystem implements ActionListener {
     ) {
 
         if (!isPressed) {
+
             return;
         }
 
@@ -63,15 +76,26 @@ public class HotbarSystem implements ActionListener {
         switch (name) {
 
             case "Hotbar1":
-                selectedSlot = 1;
+
+                selectedSlot =
+                        1;
+
                 break;
+
 
             case "Hotbar2":
-                selectedSlot = 2;
+
+                selectedSlot =
+                        2;
+
                 break;
 
+
             case "Hotbar3":
-                selectedSlot = 3;
+
+                selectedSlot =
+                        3;
+
                 break;
         }
     }
@@ -83,21 +107,46 @@ public class HotbarSystem implements ActionListener {
     }
 
 
+    public InventorySlot getSelectedInventorySlot() {
+
+        return inventory.getSlot(
+                selectedSlot - 1
+        );
+    }
+
+
     public ItemType getSelectedItemType() {
 
-        switch (selectedSlot) {
+        InventorySlot slot =
+                getSelectedInventorySlot();
 
-            case 1:
-                return ItemType.WOOD;
 
-            case 2:
-                return ItemType.STONE;
+        if (
+                slot.isEmpty()
+        ) {
 
-            case 3:
-                return ItemType.STONE_AXE;
-
-            default:
-                return ItemType.WOOD;
+            return null;
         }
+
+
+        return slot.getItemType();
+    }
+
+
+    public int getSelectedAmount() {
+
+        InventorySlot slot =
+                getSelectedInventorySlot();
+
+
+        if (
+                slot.isEmpty()
+        ) {
+
+            return 0;
+        }
+
+
+        return slot.getAmount();
     }
 }
