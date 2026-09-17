@@ -390,7 +390,8 @@ public class Main extends SimpleApplication {
                         inputManager,
                         flyCam,
                         player,
-                        inventory
+                        inventory,
+                        toolDurabilitySystem
                 );
     }
 
