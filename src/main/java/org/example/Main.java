@@ -3,8 +3,6 @@ package org.example;
 import com.jme3.app.SimpleApplication;
 import com.jme3.bullet.BulletAppState;
 import com.jme3.bullet.control.RigidBodyControl;
-import com.jme3.light.AmbientLight;
-import com.jme3.light.DirectionalLight;
 import com.jme3.material.Material;
 import com.jme3.math.ColorRGBA;
 import com.jme3.math.Vector3f;
@@ -21,12 +19,13 @@ import org.example.player.Player;
 import org.example.save.SaveGameSystem;
 import org.example.survival.ConsumableSystem;
 import org.example.survival.PlayerStats;
+import org.example.time.DayNightSystem;
 import org.example.tools.ToolDurabilitySystem;
 import org.example.ui.InventoryHud;
 import org.example.ui.InventoryMenuSystem;
 import org.example.ui.SurvivalHud;
+import org.example.ui.TimeHud;
 import org.example.ui.ToolView;
-
 import org.example.world.BerryBush;
 import org.example.world.HarvestableResource;
 import org.example.world.Rock;
@@ -41,50 +40,70 @@ public class Main extends SimpleApplication {
     private BulletAppState bulletAppState;
 
     private Player player;
+
     private PlayerStats playerStats;
 
     private SurvivalHud survivalHud;
 
     private Inventory inventory;
+
     private InventoryHud inventoryHud;
+
     private InventoryMenuSystem inventoryMenuSystem;
 
     private HotbarSystem hotbarSystem;
 
     private ToolView toolView;
+
     private ToolDurabilitySystem toolDurabilitySystem;
 
     private ConsumableSystem consumableSystem;
 
     private SaveGameSystem saveGameSystem;
 
+    private DayNightSystem dayNightSystem;
+
+    private TimeHud timeHud;
+
+
     private final List<HarvestableResource> resources =
             new ArrayList<>();
 
 
-    public static void main(String[] args) {
+    public static void main(
+            String[] args
+    ) {
 
-        Main game = new Main();
+        Main game =
+                new Main();
+
 
         AppSettings settings =
-                new AppSettings(true);
+                new AppSettings(
+                        true
+                );
+
 
         settings.setTitle(
                 "Java Survival Game"
         );
+
 
         settings.setResolution(
                 1280,
                 720
         );
 
+
         game.setSettings(
                 settings
         );
 
+
         game.setShowSettings(
                 false
         );
+
 
         game.start();
     }
@@ -97,7 +116,7 @@ public class Main extends SimpleApplication {
 
         createGround();
 
-        createLight();
+        createDayNightSystem();
 
         createResources();
 
@@ -127,17 +146,9 @@ public class Main extends SimpleApplication {
 
         createInteractionSystem();
 
+        createTimeHud();
+
         createCrosshair();
-
-
-        viewPort.setBackgroundColor(
-                new ColorRGBA(
-                        0.5f,
-                        0.75f,
-                        1f,
-                        1f
-                )
-        );
 
 
         flyCam.setMoveSpeed(
@@ -161,9 +172,32 @@ public class Main extends SimpleApplication {
         bulletAppState =
                 new BulletAppState();
 
+
         stateManager.attach(
                 bulletAppState
         );
+    }
+
+
+    private void createDayNightSystem() {
+
+        dayNightSystem =
+                new DayNightSystem(
+                        rootNode,
+                        viewPort
+                );
+    }
+
+
+    private void createTimeHud() {
+
+        timeHud =
+                new TimeHud(
+                        assetManager,
+                        guiNode,
+                        cam,
+                        dayNightSystem
+                );
     }
 
 
@@ -173,7 +207,8 @@ public class Main extends SimpleApplication {
                 new Player(
                         cam,
                         inputManager,
-                        bulletAppState.getPhysicsSpace()
+                        bulletAppState
+                                .getPhysicsSpace()
                 );
 
 
@@ -465,7 +500,7 @@ public class Main extends SimpleApplication {
 
 
         // ==========================
-        // BEERENSTRÄUCHER
+        // BEEREN
         // ==========================
 
         addResource(
@@ -511,7 +546,7 @@ public class Main extends SimpleApplication {
 
 
         // ==========================
-        // WASSERQUELLE
+        // WASSER
         // ==========================
 
         addResource(
@@ -701,52 +736,28 @@ public class Main extends SimpleApplication {
     }
 
 
-    private void createLight() {
-
-        DirectionalLight sun =
-                new DirectionalLight();
-
-
-        sun.setDirection(
-                new Vector3f(
-                        -1f,
-                        -2f,
-                        -1f
-                ).normalizeLocal()
-        );
-
-
-        sun.setColor(
-                ColorRGBA.White
-        );
-
-
-        rootNode.addLight(
-                sun
-        );
-
-
-        AmbientLight ambient =
-                new AmbientLight();
-
-
-        ambient.setColor(
-                ColorRGBA.White.mult(
-                        0.4f
-                )
-        );
-
-
-        rootNode.addLight(
-                ambient
-        );
-    }
-
-
     @Override
     public void simpleUpdate(
             float tpf
     ) {
+
+        if (
+                dayNightSystem != null
+        ) {
+
+            dayNightSystem.update(
+                    tpf
+            );
+        }
+
+
+        if (
+                timeHud != null
+        ) {
+
+            timeHud.update();
+        }
+
 
         if (
                 player != null
