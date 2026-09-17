@@ -83,11 +83,9 @@ public class BuildingSystem implements ActionListener {
 
     private final Material foundationPreviewMaterial;
 
-
     private final Geometry wallPreview;
 
     private final Material wallPreviewMaterial;
-
 
     private final BitmapText buildText;
 
@@ -145,7 +143,7 @@ public class BuildingSystem implements ActionListener {
 
 
         // ==========================
-        // FUNDAMENT-VORSCHAU
+        // FUNDAMENT PREVIEW
         // ==========================
 
         foundationPreview =
@@ -184,7 +182,7 @@ public class BuildingSystem implements ActionListener {
 
 
         // ==========================
-        // WAND-VORSCHAU
+        // WALL PREVIEW
         // ==========================
 
         wallPreview =
@@ -434,22 +432,18 @@ public class BuildingSystem implements ActionListener {
         }
 
 
-        switch (
+        if (
                 selectedBuildType
+                        ==
+                        BuildType.FOUNDATION
         ) {
 
-            case FOUNDATION:
+            updateFoundationPreview();
+        }
 
-                updateFoundationPreview();
+        else {
 
-                break;
-
-
-            case WALL:
-
-                updateWallPreview();
-
-                break;
+            updateWallPreview();
         }
 
 
@@ -598,19 +592,12 @@ public class BuildingSystem implements ActionListener {
                 new Quaternion();
 
 
-        /*
-         * Entscheiden, an welche Kante
-         * des Fundaments die Wand kommt.
-         */
         if (
                 absoluteX
                         >
                         absoluteZ
         ) {
 
-            /*
-             * Ost / West
-             */
             float direction =
                     dx >= 0f
                             ?
@@ -641,9 +628,6 @@ public class BuildingSystem implements ActionListener {
 
         else {
 
-            /*
-             * Nord / Süd
-             */
             float direction =
                     dz >= 0f
                             ?
@@ -654,7 +638,9 @@ public class BuildingSystem implements ActionListener {
 
             wallPosition.set(
                     foundationPosition.x,
+
                     1.62f,
+
                     foundationPosition.z
                             +
                             direction * 1.5f
@@ -796,11 +782,6 @@ public class BuildingSystem implements ActionListener {
         }
 
 
-        /*
-         * Wand-Snapping funktioniert nur,
-         * wenn man halbwegs in der Nähe
-         * eines Fundaments schaut.
-         */
         if (
                 nearestDistance
                         >
@@ -1413,7 +1394,7 @@ public class BuildingSystem implements ActionListener {
 
 
     // ==========================
-    // SAVE-API FUNDAMENTE
+    // FUNDAMENT SAVE API
     // ==========================
 
     public int getFoundationCount() {
@@ -1435,7 +1416,47 @@ public class BuildingSystem implements ActionListener {
     }
 
 
-    public void clearFoundations() {
+    // ==========================
+    // WAND SAVE API
+    // ==========================
+
+    public int getWallCount() {
+
+        return placedWalls.size();
+    }
+
+
+    public Vector3f getWallPosition(
+            int index
+    ) {
+
+        return placedWalls
+                .get(
+                        index
+                )
+                .getLocalTranslation()
+                .clone();
+    }
+
+
+    public Quaternion getWallRotation(
+            int index
+    ) {
+
+        return placedWalls
+                .get(
+                        index
+                )
+                .getLocalRotation()
+                .clone();
+    }
+
+
+    // ==========================
+    // LOAD / CLEAR
+    // ==========================
+
+    public void clearBuildings() {
 
         for (
                 Geometry foundation
@@ -1449,11 +1470,38 @@ public class BuildingSystem implements ActionListener {
         }
 
 
+        for (
+                Geometry wall
+                :
+                placedWalls
+        ) {
+
+            removeGeometryWithPhysics(
+                    wall
+            );
+        }
+
+
         placedFoundations.clear();
+
+        placedWalls.clear();
 
 
         nextFoundationId =
                 1;
+
+        nextWallId =
+                1;
+    }
+
+
+    /*
+     * Für Kompatibilität mit unserem
+     * bisherigen SaveGameSystem.
+     */
+    public void clearFoundations() {
+
+        clearBuildings();
     }
 
 
@@ -1463,6 +1511,18 @@ public class BuildingSystem implements ActionListener {
 
         createAndAttachFoundation(
                 position.clone()
+        );
+    }
+
+
+    public void loadWall(
+            Vector3f position,
+            Quaternion rotation
+    ) {
+
+        createAndAttachWall(
+                position.clone(),
+                rotation.clone()
         );
     }
 

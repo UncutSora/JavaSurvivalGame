@@ -4,6 +4,7 @@ import com.jme3.input.InputManager;
 import com.jme3.input.KeyInput;
 import com.jme3.input.controls.ActionListener;
 import com.jme3.input.controls.KeyTrigger;
+import com.jme3.math.Quaternion;
 import com.jme3.math.Vector3f;
 
 import org.example.building.BuildingSystem;
@@ -36,7 +37,7 @@ public class SaveGameSystem implements ActionListener {
 
 
     private static final int SAVE_VERSION =
-            4;
+            5;
 
 
     private final Player player;
@@ -170,9 +171,123 @@ public class SaveGameSystem implements ActionListener {
         );
 
 
-        // ==========================
-        // SPIELERPOSITION
-        // ==========================
+        savePlayer(
+                properties
+        );
+
+
+        saveStats(
+                properties
+        );
+
+
+        saveTime(
+                properties
+        );
+
+
+        saveInventory(
+                properties
+        );
+
+
+        saveTools(
+                properties
+        );
+
+
+        saveWorld(
+                properties
+        );
+
+
+        saveBuildings(
+                properties
+        );
+
+
+        try {
+
+            Files.createDirectories(
+                    saveFile.getParent()
+            );
+
+
+            try (
+                    OutputStream outputStream =
+                            Files.newOutputStream(
+                                    saveFile
+                            )
+            ) {
+
+                properties.store(
+                        outputStream,
+                        "Java Survival Game Save"
+                );
+            }
+
+
+            System.out.println(
+                    "================================"
+            );
+
+
+            System.out.println(
+                    "SPIEL GESPEICHERT"
+            );
+
+
+            System.out.println(
+                    "Tag: "
+                            +
+                            dayNightSystem.getDay()
+            );
+
+
+            System.out.println(
+                    "Uhrzeit: "
+                            +
+                            dayNightSystem.getFormattedTime()
+            );
+
+
+            System.out.println(
+                    "Fundamente: "
+                            +
+                            buildingSystem.getFoundationCount()
+            );
+
+
+            System.out.println(
+                    "Wände: "
+                            +
+                            buildingSystem.getWallCount()
+            );
+
+
+            System.out.println(
+                    "================================"
+            );
+
+        }
+
+        catch (
+                IOException exception
+        ) {
+
+            System.out.println(
+                    "FEHLER BEIM SPEICHERN!"
+            );
+
+
+            exception.printStackTrace();
+        }
+    }
+
+
+    private void savePlayer(
+            Properties properties
+    ) {
 
         Vector3f position =
                 player.getPosition();
@@ -200,11 +315,12 @@ public class SaveGameSystem implements ActionListener {
                         position.z
                 )
         );
+    }
 
 
-        // ==========================
-        // SPIELERWERTE
-        // ==========================
+    private void saveStats(
+            Properties properties
+    ) {
 
         properties.setProperty(
                 "stats.health",
@@ -244,11 +360,12 @@ public class SaveGameSystem implements ActionListener {
                         playerStats.isSprintExhausted()
                 )
         );
+    }
 
 
-        // ==========================
-        // TAG / UHRZEIT
-        // ==========================
+    private void saveTime(
+            Properties properties
+    ) {
 
         properties.setProperty(
                 "time.day",
@@ -264,11 +381,12 @@ public class SaveGameSystem implements ActionListener {
                         dayNightSystem.getMinuteOfDay()
                 )
         );
+    }
 
 
-        // ==========================
-        // INVENTAR
-        // ==========================
+    private void saveInventory(
+            Properties properties
+    ) {
 
         for (
                 int i = 0;
@@ -325,11 +443,12 @@ public class SaveGameSystem implements ActionListener {
                     )
             );
         }
+    }
 
 
-        // ==========================
-        // AXT-HALTBARKEIT
-        // ==========================
+    private void saveTools(
+            Properties properties
+    ) {
 
         properties.setProperty(
                 "tools.stoneAxeDurability",
@@ -338,11 +457,12 @@ public class SaveGameSystem implements ActionListener {
                                 .getStoneAxeDurability()
                 )
         );
+    }
 
 
-        // ==========================
-        // RESSOURCEN / WELT
-        // ==========================
+    private void saveWorld(
+            Properties properties
+    ) {
 
         for (
                 HarvestableResource resource
@@ -373,10 +493,15 @@ public class SaveGameSystem implements ActionListener {
                     )
             );
         }
+    }
 
+
+    private void saveBuildings(
+            Properties properties
+    ) {
 
         // ==========================
-        // GEBÄUDE
+        // FUNDAMENTE
         // ==========================
 
         int foundationCount =
@@ -397,7 +522,7 @@ public class SaveGameSystem implements ActionListener {
                 i++
         ) {
 
-            Vector3f foundationPosition =
+            Vector3f position =
                     buildingSystem
                             .getFoundationPosition(
                                     i
@@ -415,7 +540,7 @@ public class SaveGameSystem implements ActionListener {
             properties.setProperty(
                     prefix + "x",
                     Float.toString(
-                            foundationPosition.x
+                            position.x
                     )
             );
 
@@ -423,7 +548,7 @@ public class SaveGameSystem implements ActionListener {
             properties.setProperty(
                     prefix + "y",
                     Float.toString(
-                            foundationPosition.y
+                            position.y
                     )
             );
 
@@ -431,84 +556,110 @@ public class SaveGameSystem implements ActionListener {
             properties.setProperty(
                     prefix + "z",
                     Float.toString(
-                            foundationPosition.z
+                            position.z
                     )
             );
         }
 
 
         // ==========================
-        // DATEI SCHREIBEN
+        // WÄNDE
         // ==========================
 
-        try {
-
-            Files.createDirectories(
-                    saveFile.getParent()
-            );
+        int wallCount =
+                buildingSystem.getWallCount();
 
 
-            try (
-                    OutputStream outputStream =
-                            Files.newOutputStream(
-                                    saveFile
-                            )
-            ) {
-
-                properties.store(
-                        outputStream,
-                        "Java Survival Game Save"
-                );
-            }
+        properties.setProperty(
+                "building.wall.count",
+                Integer.toString(
+                        wallCount
+                )
+        );
 
 
-            System.out.println(
-                    "================================"
-            );
-
-
-            System.out.println(
-                    "SPIEL GESPEICHERT"
-            );
-
-
-            System.out.println(
-                    "Tag: "
-                            +
-                            dayNightSystem.getDay()
-            );
-
-
-            System.out.println(
-                    "Uhrzeit: "
-                            +
-                            dayNightSystem.getFormattedTime()
-            );
-
-
-            System.out.println(
-                    "Fundamente gespeichert: "
-                            +
-                            foundationCount
-            );
-
-
-            System.out.println(
-                    "================================"
-            );
-
-        }
-
-        catch (
-                IOException exception
+        for (
+                int i = 0;
+                i < wallCount;
+                i++
         ) {
 
-            System.out.println(
-                    "FEHLER BEIM SPEICHERN!"
+            Vector3f position =
+                    buildingSystem
+                            .getWallPosition(
+                                    i
+                            );
+
+
+            Quaternion rotation =
+                    buildingSystem
+                            .getWallRotation(
+                                    i
+                            );
+
+
+            String prefix =
+                    "building.wall."
+                            +
+                            i
+                            +
+                            ".";
+
+
+            properties.setProperty(
+                    prefix + "x",
+                    Float.toString(
+                            position.x
+                    )
             );
 
 
-            exception.printStackTrace();
+            properties.setProperty(
+                    prefix + "y",
+                    Float.toString(
+                            position.y
+                    )
+            );
+
+
+            properties.setProperty(
+                    prefix + "z",
+                    Float.toString(
+                            position.z
+                    )
+            );
+
+
+            properties.setProperty(
+                    prefix + "rotX",
+                    Float.toString(
+                            rotation.getX()
+                    )
+            );
+
+
+            properties.setProperty(
+                    prefix + "rotY",
+                    Float.toString(
+                            rotation.getY()
+                    )
+            );
+
+
+            properties.setProperty(
+                    prefix + "rotZ",
+                    Float.toString(
+                            rotation.getZ()
+                    )
+            );
+
+
+            properties.setProperty(
+                    prefix + "rotW",
+                    Float.toString(
+                            rotation.getW()
+                    )
+            );
         }
     }
 
@@ -563,9 +714,74 @@ public class SaveGameSystem implements ActionListener {
         }
 
 
-        // ==========================
-        // SPIELERPOSITION
-        // ==========================
+        loadPlayer(
+                properties
+        );
+
+
+        loadStats(
+                properties
+        );
+
+
+        loadTime(
+                properties
+        );
+
+
+        loadInventory(
+                properties
+        );
+
+
+        loadTools(
+                properties
+        );
+
+
+        loadWorld(
+                properties
+        );
+
+
+        loadBuildings(
+                properties
+        );
+
+
+        System.out.println(
+                "================================"
+        );
+
+
+        System.out.println(
+                "SPIELSTAND GELADEN"
+        );
+
+
+        System.out.println(
+                "Fundamente: "
+                        +
+                        buildingSystem.getFoundationCount()
+        );
+
+
+        System.out.println(
+                "Wände: "
+                        +
+                        buildingSystem.getWallCount()
+        );
+
+
+        System.out.println(
+                "================================"
+        );
+    }
+
+
+    private void loadPlayer(
+            Properties properties
+    ) {
 
         Vector3f currentPosition =
                 player.getPosition();
@@ -604,11 +820,12 @@ public class SaveGameSystem implements ActionListener {
                                 z
                         )
                 );
+    }
 
 
-        // ==========================
-        // SPIELERWERTE
-        // ==========================
+    private void loadStats(
+            Properties properties
+    ) {
 
         float health =
                 readFloat(
@@ -658,13 +875,14 @@ public class SaveGameSystem implements ActionListener {
                 stamina,
                 exhausted
         );
+    }
 
 
-        // ==========================
-        // TAG / UHRZEIT
-        // ==========================
+    private void loadTime(
+            Properties properties
+    ) {
 
-        int savedDay =
+        int day =
                 readInt(
                         properties,
                         "time.day",
@@ -672,7 +890,7 @@ public class SaveGameSystem implements ActionListener {
                 );
 
 
-        float savedMinuteOfDay =
+        float minuteOfDay =
                 readFloat(
                         properties,
                         "time.minuteOfDay",
@@ -681,14 +899,15 @@ public class SaveGameSystem implements ActionListener {
 
 
         dayNightSystem.loadState(
-                savedDay,
-                savedMinuteOfDay
+                day,
+                minuteOfDay
         );
+    }
 
 
-        // ==========================
-        // INVENTAR LEEREN
-        // ==========================
+    private void loadInventory(
+            Properties properties
+    ) {
 
         for (
                 int i = 0;
@@ -703,10 +922,6 @@ public class SaveGameSystem implements ActionListener {
                     .clear();
         }
 
-
-        // ==========================
-        // INVENTAR LADEN
-        // ==========================
 
         for (
                 int i = 0;
@@ -777,11 +992,12 @@ public class SaveGameSystem implements ActionListener {
                 );
             }
         }
+    }
 
 
-        // ==========================
-        // AXT-HALTBARKEIT
-        // ==========================
+    private void loadTools(
+            Properties properties
+    ) {
 
         int durability =
                 readInt(
@@ -796,11 +1012,12 @@ public class SaveGameSystem implements ActionListener {
                 .loadStoneAxeDurability(
                         durability
                 );
+    }
 
 
-        // ==========================
-        // RESSOURCEN / WELT
-        // ==========================
+    private void loadWorld(
+            Properties properties
+    ) {
 
         for (
                 HarvestableResource resource
@@ -838,14 +1055,19 @@ public class SaveGameSystem implements ActionListener {
                     harvested
             );
         }
+    }
+
+
+    private void loadBuildings(
+            Properties properties
+    ) {
+
+        buildingSystem.clearBuildings();
 
 
         // ==========================
-        // GEBÄUDE LADEN
+        // FUNDAMENTE
         // ==========================
-
-        buildingSystem.clearFoundations();
-
 
         int foundationCount =
                 readInt(
@@ -869,7 +1091,7 @@ public class SaveGameSystem implements ActionListener {
                             ".";
 
 
-            float foundationX =
+            float x =
                     readFloat(
                             properties,
                             prefix + "x",
@@ -877,7 +1099,7 @@ public class SaveGameSystem implements ActionListener {
                     );
 
 
-            float foundationY =
+            float y =
                     readFloat(
                             properties,
                             prefix + "y",
@@ -885,7 +1107,7 @@ public class SaveGameSystem implements ActionListener {
                     );
 
 
-            float foundationZ =
+            float z =
                     readFloat(
                             properties,
                             prefix + "z",
@@ -895,48 +1117,114 @@ public class SaveGameSystem implements ActionListener {
 
             buildingSystem.loadFoundation(
                     new Vector3f(
-                            foundationX,
-                            foundationY,
-                            foundationZ
+                            x,
+                            y,
+                            z
                     )
             );
         }
 
 
-        System.out.println(
-                "================================"
-        );
+        // ==========================
+        // WÄNDE
+        // ==========================
+
+        int wallCount =
+                readInt(
+                        properties,
+                        "building.wall.count",
+                        0
+                );
 
 
-        System.out.println(
-                "SPIELSTAND GELADEN"
-        );
+        for (
+                int i = 0;
+                i < wallCount;
+                i++
+        ) {
+
+            String prefix =
+                    "building.wall."
+                            +
+                            i
+                            +
+                            ".";
 
 
-        System.out.println(
-                "Tag: "
-                        +
-                        dayNightSystem.getDay()
-        );
+            float x =
+                    readFloat(
+                            properties,
+                            prefix + "x",
+                            0f
+                    );
 
 
-        System.out.println(
-                "Uhrzeit: "
-                        +
-                        dayNightSystem.getFormattedTime()
-        );
+            float y =
+                    readFloat(
+                            properties,
+                            prefix + "y",
+                            1.62f
+                    );
 
 
-        System.out.println(
-                "Fundamente geladen: "
-                        +
-                        foundationCount
-        );
+            float z =
+                    readFloat(
+                            properties,
+                            prefix + "z",
+                            0f
+                    );
 
 
-        System.out.println(
-                "================================"
-        );
+            float rotX =
+                    readFloat(
+                            properties,
+                            prefix + "rotX",
+                            0f
+                    );
+
+
+            float rotY =
+                    readFloat(
+                            properties,
+                            prefix + "rotY",
+                            0f
+                    );
+
+
+            float rotZ =
+                    readFloat(
+                            properties,
+                            prefix + "rotZ",
+                            0f
+                    );
+
+
+            float rotW =
+                    readFloat(
+                            properties,
+                            prefix + "rotW",
+                            1f
+                    );
+
+
+            Quaternion rotation =
+                    new Quaternion(
+                            rotX,
+                            rotY,
+                            rotZ,
+                            rotW
+                    );
+
+
+            buildingSystem.loadWall(
+                    new Vector3f(
+                            x,
+                            y,
+                            z
+                    ),
+                    rotation
+            );
+        }
     }
 
 
