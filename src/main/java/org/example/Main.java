@@ -35,6 +35,7 @@ import org.example.world.WaterSource;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 public class Main extends SimpleApplication {
 
@@ -71,6 +72,76 @@ public class Main extends SimpleApplication {
 
     private final List<HarvestableResource> resources =
             new ArrayList<>();
+
+
+    // =========================================================
+    // WELT
+    // =========================================================
+
+    private static final float WORLD_SIZE =
+            1000f;
+
+
+    private static final float WORLD_HALF_SIZE =
+            WORLD_SIZE / 2f;
+
+
+    /*
+     * Gleicher Seed =
+     * gleiche Welt bei jedem Spielstart.
+     *
+     * Wichtig für Save/Load.
+     */
+    private static final long WORLD_SEED =
+            20260917L;
+
+
+    // =========================================================
+    // RESSOURCENMENGEN
+    // =========================================================
+
+    private static final int TREE_COUNT =
+            3500;
+
+
+    private static final int ROCK_COUNT =
+            1600;
+
+
+    private static final int BERRY_BUSH_COUNT =
+            900;
+
+
+    private static final int WATER_SOURCE_COUNT =
+            60;
+
+
+    // =========================================================
+    // GENERIERUNGS-EINSTELLUNGEN
+    // =========================================================
+
+    private static final float SAFE_SPAWN_RADIUS =
+            20f;
+
+
+    private static final float WORLD_BORDER_MARGIN =
+            20f;
+
+
+    private static final float TREE_MIN_DISTANCE =
+            2.2f;
+
+
+    private static final float ROCK_MIN_DISTANCE =
+            1.8f;
+
+
+    private static final float BERRY_MIN_DISTANCE =
+            1.5f;
+
+
+    private static final float WATER_MIN_DISTANCE =
+            10f;
 
 
     public static void main(
@@ -172,6 +243,10 @@ public class Main extends SimpleApplication {
     }
 
 
+    // =========================================================
+    // PHYSIK
+    // =========================================================
+
     private void setupPhysics() {
 
         bulletAppState =
@@ -183,6 +258,10 @@ public class Main extends SimpleApplication {
         );
     }
 
+
+    // =========================================================
+    // TAG / NACHT
+    // =========================================================
 
     private void createDayNightSystem() {
 
@@ -206,6 +285,10 @@ public class Main extends SimpleApplication {
     }
 
 
+    // =========================================================
+    // SPIELER
+    // =========================================================
+
     private void createPlayer() {
 
         player =
@@ -228,6 +311,10 @@ public class Main extends SimpleApplication {
     }
 
 
+    // =========================================================
+    // SURVIVAL
+    // =========================================================
+
     private void createPlayerStats() {
 
         playerStats =
@@ -248,6 +335,10 @@ public class Main extends SimpleApplication {
                 );
     }
 
+
+    // =========================================================
+    // INVENTAR
+    // =========================================================
 
     private void createInventory() {
 
@@ -289,6 +380,25 @@ public class Main extends SimpleApplication {
     }
 
 
+    private void createInventoryMenuSystem() {
+
+        inventoryMenuSystem =
+                new InventoryMenuSystem(
+                        assetManager,
+                        guiNode,
+                        cam,
+                        inputManager,
+                        flyCam,
+                        player,
+                        inventory
+                );
+    }
+
+
+    // =========================================================
+    // TOOLS / CRAFTING / ITEMS
+    // =========================================================
+
     private void createToolView() {
 
         toolView =
@@ -311,21 +421,6 @@ public class Main extends SimpleApplication {
     }
 
 
-    private void createInventoryMenuSystem() {
-
-        inventoryMenuSystem =
-                new InventoryMenuSystem(
-                        assetManager,
-                        guiNode,
-                        cam,
-                        inputManager,
-                        flyCam,
-                        player,
-                        inventory
-                );
-    }
-
-
     private void createConsumableSystem() {
 
         consumableSystem =
@@ -337,6 +432,10 @@ public class Main extends SimpleApplication {
                 );
     }
 
+
+    // =========================================================
+    // BUILDING
+    // =========================================================
 
     private void createBuildingSystem() {
 
@@ -355,6 +454,10 @@ public class Main extends SimpleApplication {
     }
 
 
+    // =========================================================
+    // SAVE
+    // =========================================================
+
     private void createSaveGameSystem() {
 
         saveGameSystem =
@@ -370,6 +473,10 @@ public class Main extends SimpleApplication {
                 );
     }
 
+
+    // =========================================================
+    // INTERACTION
+    // =========================================================
 
     private void createInteractionSystem() {
 
@@ -388,208 +495,503 @@ public class Main extends SimpleApplication {
     }
 
 
+    // =========================================================
+    // WELTGENERIERUNG
+    // =========================================================
+
     private void createResources() {
 
-        // 25 BÄUME
-
-        addTree("tree_01", 0f, 0f, 0f);
-        addTree("tree_02", 5f, 0f, -3f);
-        addTree("tree_03", -5f, 0f, -4f);
-        addTree("tree_04", 7f, 0f, 4f);
-        addTree("tree_05", -7f, 0f, 3f);
-
-        addTree("tree_06", 10f, 0f, 0f);
-        addTree("tree_07", -10f, 0f, -1f);
-        addTree("tree_08", 12f, 0f, -6f);
-        addTree("tree_09", -12f, 0f, -7f);
-        addTree("tree_10", 9f, 0f, 9f);
-
-        addTree("tree_11", -9f, 0f, 10f);
-        addTree("tree_12", 14f, 0f, 5f);
-        addTree("tree_13", -14f, 0f, 6f);
-        addTree("tree_14", 15f, 0f, -10f);
-        addTree("tree_15", -15f, 0f, -11f);
-
-        addTree("tree_16", 4f, 0f, 13f);
-        addTree("tree_17", -4f, 0f, 14f);
-        addTree("tree_18", 17f, 0f, 1f);
-        addTree("tree_19", -17f, 0f, 2f);
-        addTree("tree_20", 18f, 0f, 11f);
-
-        addTree("tree_21", -18f, 0f, 12f);
-        addTree("tree_22", 3f, 0f, -15f);
-        addTree("tree_23", -3f, 0f, -16f);
-        addTree("tree_24", 11f, 0f, -17f);
-        addTree("tree_25", -11f, 0f, -18f);
+        Random random =
+                new Random(
+                        WORLD_SEED
+                );
 
 
-        // 12 STEINE
-
-        addRock("rock_01", 3f, 0f, 3f);
-        addRock("rock_02", -3f, 0f, 2f);
-        addRock("rock_03", 4f, 0f, -6f);
-        addRock("rock_04", -4f, 0f, -7f);
-
-        addRock("rock_05", 8f, 0f, -10f);
-        addRock("rock_06", -8f, 0f, -9f);
-        addRock("rock_07", 13f, 0f, 10f);
-        addRock("rock_08", -13f, 0f, 11f);
-
-        addRock("rock_09", 16f, 0f, -4f);
-        addRock("rock_10", -16f, 0f, -5f);
-        addRock("rock_11", 6f, 0f, 17f);
-        addRock("rock_12", -6f, 0f, 18f);
-
-
-        // 6 BEERENSTRÄUCHER
-
-        addBerryBush(
-                "berry_01",
-                2f,
-                0f,
-                -2f
-        );
-
-        addBerryBush(
-                "berry_02",
-                -2f,
-                0f,
-                -3f
-        );
-
-        addBerryBush(
-                "berry_03",
-                6f,
-                0f,
-                1f
-        );
-
-        addBerryBush(
-                "berry_04",
-                -8f,
-                0f,
-                7f
-        );
-
-        addBerryBush(
-                "berry_05",
-                12f,
-                0f,
-                12f
-        );
-
-        addBerryBush(
-                "berry_06",
-                -12f,
-                0f,
-                -13f
+        generateTrees(
+                random
         );
 
 
-        // 2 WASSERQUELLEN
-
-        addWaterSource(
-                "water_01",
-                0f,
-                0f,
-                -9f
+        generateRocks(
+                random
         );
 
-        addWaterSource(
-                "water_02",
-                14f,
-                0f,
-                14f
+
+        generateBerryBushes(
+                random
+        );
+
+
+        generateWaterSources(
+                random
+        );
+
+
+        System.out.println(
+                "================================"
+        );
+
+
+        System.out.println(
+                "WELT GENERIERT"
+        );
+
+
+        System.out.println(
+                "Weltgröße: "
+                        +
+                        (int) WORLD_SIZE
+                        +
+                        " x "
+                        +
+                        (int) WORLD_SIZE
+        );
+
+
+        System.out.println(
+                "Bäume: "
+                        +
+                        TREE_COUNT
+        );
+
+
+        System.out.println(
+                "Steine: "
+                        +
+                        ROCK_COUNT
+        );
+
+
+        System.out.println(
+                "Beerensträucher: "
+                        +
+                        BERRY_BUSH_COUNT
+        );
+
+
+        System.out.println(
+                "Wasserstellen: "
+                        +
+                        WATER_SOURCE_COUNT
+        );
+
+
+        System.out.println(
+                "Ressourcen gesamt: "
+                        +
+                        resources.size()
+        );
+
+
+        System.out.println(
+                "================================"
         );
     }
 
 
-    private void addTree(
-            String id,
-            float x,
-            float y,
-            float z
+    // =========================================================
+    // BÄUME
+    // =========================================================
+
+    private void generateTrees(
+            Random random
     ) {
 
-        addResource(
-                new Tree(
-                        id,
-                        assetManager,
-                        bulletAppState.getPhysicsSpace(),
-                        new Vector3f(
-                                x,
-                                y,
-                                z
-                        )
-                )
-        );
+        for (
+                int i = 1;
+                i <= TREE_COUNT;
+                i++
+        ) {
+
+            Vector3f position =
+                    generateResourcePosition(
+                            random,
+                            TREE_MIN_DISTANCE
+                    );
+
+
+            Tree tree =
+                    new Tree(
+                            createId(
+                                    "tree",
+                                    i
+                            ),
+                            assetManager,
+                            bulletAppState
+                                    .getPhysicsSpace(),
+                            position
+                    );
+
+
+            addResource(
+                    tree
+            );
+        }
     }
 
 
-    private void addRock(
-            String id,
-            float x,
-            float y,
-            float z
+    // =========================================================
+    // STEINE
+    // =========================================================
+
+    private void generateRocks(
+            Random random
     ) {
 
-        addResource(
-                new Rock(
-                        id,
-                        assetManager,
-                        bulletAppState.getPhysicsSpace(),
-                        new Vector3f(
-                                x,
-                                y,
-                                z
-                        )
-                )
-        );
+        for (
+                int i = 1;
+                i <= ROCK_COUNT;
+                i++
+        ) {
+
+            Vector3f position =
+                    generateResourcePosition(
+                            random,
+                            ROCK_MIN_DISTANCE
+                    );
+
+
+            Rock rock =
+                    new Rock(
+                            createId(
+                                    "rock",
+                                    i
+                            ),
+                            assetManager,
+                            bulletAppState
+                                    .getPhysicsSpace(),
+                            position
+                    );
+
+
+            addResource(
+                    rock
+            );
+        }
     }
 
 
-    private void addBerryBush(
-            String id,
-            float x,
-            float y,
-            float z
+    // =========================================================
+    // BEEREN
+    // =========================================================
+
+    private void generateBerryBushes(
+            Random random
     ) {
 
-        addResource(
-                new BerryBush(
-                        id,
-                        assetManager,
-                        bulletAppState.getPhysicsSpace(),
-                        new Vector3f(
-                                x,
-                                y,
-                                z
-                        )
-                )
-        );
+        for (
+                int i = 1;
+                i <= BERRY_BUSH_COUNT;
+                i++
+        ) {
+
+            Vector3f position =
+                    generateResourcePosition(
+                            random,
+                            BERRY_MIN_DISTANCE
+                    );
+
+
+            BerryBush berryBush =
+                    new BerryBush(
+                            createId(
+                                    "berry",
+                                    i
+                            ),
+                            assetManager,
+                            bulletAppState
+                                    .getPhysicsSpace(),
+                            position
+                    );
+
+
+            addResource(
+                    berryBush
+            );
+        }
     }
 
 
-    private void addWaterSource(
-            String id,
-            float x,
-            float y,
-            float z
+    // =========================================================
+    // WASSER
+    // =========================================================
+
+    private void generateWaterSources(
+            Random random
     ) {
 
-        addResource(
-                new WaterSource(
-                        id,
-                        assetManager,
-                        new Vector3f(
-                                x,
-                                y,
-                                z
-                        )
-                )
+        for (
+                int i = 1;
+                i <= WATER_SOURCE_COUNT;
+                i++
+        ) {
+
+            Vector3f position =
+                    generateResourcePosition(
+                            random,
+                            WATER_MIN_DISTANCE
+                    );
+
+
+            WaterSource waterSource =
+                    new WaterSource(
+                            createId(
+                                    "water",
+                                    i
+                            ),
+                            assetManager,
+                            position
+                    );
+
+
+            addResource(
+                    waterSource
+            );
+        }
+    }
+
+
+    // =========================================================
+    // POSITION GENERIEREN
+    // =========================================================
+
+    private Vector3f generateResourcePosition(
+            Random random,
+            float minimumDistance
+    ) {
+
+        int attempts =
+                0;
+
+
+        while (
+                attempts < 300
+        ) {
+
+            attempts++;
+
+
+            float x =
+                    randomRange(
+                            random,
+                            -WORLD_HALF_SIZE
+                                    +
+                                    WORLD_BORDER_MARGIN,
+                            WORLD_HALF_SIZE
+                                    -
+                                    WORLD_BORDER_MARGIN
+                    );
+
+
+            float z =
+                    randomRange(
+                            random,
+                            -WORLD_HALF_SIZE
+                                    +
+                                    WORLD_BORDER_MARGIN,
+                            WORLD_HALF_SIZE
+                                    -
+                                    WORLD_BORDER_MARGIN
+                    );
+
+
+            Vector3f candidate =
+                    new Vector3f(
+                            x,
+                            0f,
+                            z
+                    );
+
+
+            // ==========================
+            // SPAWN FREI HALTEN
+            // ==========================
+
+            float spawnDistanceSquared =
+                    candidate.x
+                            *
+                            candidate.x
+
+                            +
+
+                            candidate.z
+                                    *
+                                    candidate.z;
+
+
+            if (
+                    spawnDistanceSquared
+                            <
+                            SAFE_SPAWN_RADIUS
+                                    *
+                                    SAFE_SPAWN_RADIUS
+            ) {
+
+                continue;
+            }
+
+
+            // ==========================
+            // ABSTAND ZU ANDEREN
+            // ==========================
+
+            if (
+                    isFarEnoughFromResources(
+                            candidate,
+                            minimumDistance
+                    )
+            ) {
+
+                return candidate;
+            }
+        }
+
+
+        /*
+         * Fallback:
+         * Falls nach sehr vielen Versuchen
+         * kein freier Platz gefunden wurde.
+         */
+        return generateFallbackPosition(
+                random
         );
     }
 
+
+    private Vector3f generateFallbackPosition(
+            Random random
+    ) {
+
+        float x =
+                randomRange(
+                        random,
+                        -WORLD_HALF_SIZE
+                                +
+                                WORLD_BORDER_MARGIN,
+                        WORLD_HALF_SIZE
+                                -
+                                WORLD_BORDER_MARGIN
+                );
+
+
+        float z =
+                randomRange(
+                        random,
+                        -WORLD_HALF_SIZE
+                                +
+                                WORLD_BORDER_MARGIN,
+                        WORLD_HALF_SIZE
+                                -
+                                WORLD_BORDER_MARGIN
+                );
+
+
+        return new Vector3f(
+                x,
+                0f,
+                z
+        );
+    }
+
+
+    // =========================================================
+    // ABSTANDS-CHECK
+    // =========================================================
+
+    private boolean isFarEnoughFromResources(
+            Vector3f candidate,
+            float minimumDistance
+    ) {
+
+        float minimumDistanceSquared =
+                minimumDistance
+                        *
+                        minimumDistance;
+
+
+        for (
+                HarvestableResource resource
+                :
+                resources
+        ) {
+
+            Vector3f resourcePosition =
+                    resource
+                            .getNode()
+                            .getWorldTranslation();
+
+
+            float dx =
+                    resourcePosition.x
+                            -
+                            candidate.x;
+
+
+            float dz =
+                    resourcePosition.z
+                            -
+                            candidate.z;
+
+
+            float distanceSquared =
+                    dx * dx
+                            +
+                            dz * dz;
+
+
+            if (
+                    distanceSquared
+                            <
+                            minimumDistanceSquared
+            ) {
+
+                return false;
+            }
+        }
+
+
+        return true;
+    }
+
+
+    // =========================================================
+    // RANDOM
+    // =========================================================
+
+    private float randomRange(
+            Random random,
+            float min,
+            float max
+    ) {
+
+        return min
+                +
+                random.nextFloat()
+                        *
+                        (max - min);
+    }
+
+
+    // =========================================================
+    // SAVE-ID
+    // =========================================================
+
+    private String createId(
+            String type,
+            int number
+    ) {
+
+        return String.format(
+                "%s_%04d",
+                type,
+                number
+        );
+    }
+
+
+    // =========================================================
+    // RESOURCE REGISTRIEREN
+    // =========================================================
 
     private void addResource(
             HarvestableResource resource
@@ -606,13 +1008,23 @@ public class Main extends SimpleApplication {
     }
 
 
+    // =========================================================
+    // BODEN
+    // =========================================================
+
     private void createGround() {
 
+        /*
+         * Box verwendet Halbgrößen.
+         *
+         * 500 links + 500 rechts
+         * = 1000 Einheiten Gesamtgröße.
+         */
         Box groundBox =
                 new Box(
-                        35f,
+                        WORLD_HALF_SIZE,
                         0.1f,
-                        35f
+                        WORLD_HALF_SIZE
                 );
 
 
@@ -693,6 +1105,10 @@ public class Main extends SimpleApplication {
     }
 
 
+    // =========================================================
+    // CROSSHAIR
+    // =========================================================
+
     private void createCrosshair() {
 
         Material crosshairMaterial =
@@ -762,6 +1178,10 @@ public class Main extends SimpleApplication {
         );
     }
 
+
+    // =========================================================
+    // UPDATE
+    // =========================================================
 
     @Override
     public void simpleUpdate(
