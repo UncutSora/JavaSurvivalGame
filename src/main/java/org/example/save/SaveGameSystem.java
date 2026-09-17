@@ -11,6 +11,7 @@ import org.example.inventory.InventorySlot;
 import org.example.inventory.ItemType;
 import org.example.player.Player;
 import org.example.survival.PlayerStats;
+import org.example.time.DayNightSystem;
 import org.example.tools.ToolDurabilitySystem;
 import org.example.world.HarvestableResource;
 
@@ -32,8 +33,9 @@ public class SaveGameSystem implements ActionListener {
     private static final String LOAD_MAPPING =
             "LoadGame";
 
+
     private static final int SAVE_VERSION =
-            2;
+            3;
 
 
     private final Player player;
@@ -45,6 +47,8 @@ public class SaveGameSystem implements ActionListener {
     private final ToolDurabilitySystem toolDurabilitySystem;
 
     private final List<HarvestableResource> resources;
+
+    private final DayNightSystem dayNightSystem;
 
 
     private final Path saveFile =
@@ -60,7 +64,8 @@ public class SaveGameSystem implements ActionListener {
             PlayerStats playerStats,
             Inventory inventory,
             ToolDurabilitySystem toolDurabilitySystem,
-            List<HarvestableResource> resources
+            List<HarvestableResource> resources,
+            DayNightSystem dayNightSystem
     ) {
 
         this.player =
@@ -77,6 +82,9 @@ public class SaveGameSystem implements ActionListener {
 
         this.resources =
                 resources;
+
+        this.dayNightSystem =
+                dayNightSystem;
 
 
         inputManager.addMapping(
@@ -110,9 +118,7 @@ public class SaveGameSystem implements ActionListener {
             float tpf
     ) {
 
-        if (
-                !isPressed
-        ) {
+        if (!isPressed) {
 
             return;
         }
@@ -232,6 +238,26 @@ public class SaveGameSystem implements ActionListener {
 
 
         // ==========================
+        // TAG / UHRZEIT
+        // ==========================
+
+        properties.setProperty(
+                "time.day",
+                Integer.toString(
+                        dayNightSystem.getDay()
+                )
+        );
+
+
+        properties.setProperty(
+                "time.minuteOfDay",
+                Float.toString(
+                        dayNightSystem.getMinuteOfDay()
+                )
+        );
+
+
+        // ==========================
         // INVENTAR
         // ==========================
 
@@ -341,7 +367,7 @@ public class SaveGameSystem implements ActionListener {
 
 
         // ==========================
-        // DATEI SCHREIBEN
+        // DATEI SPEICHERN
         // ==========================
 
         try {
@@ -371,7 +397,21 @@ public class SaveGameSystem implements ActionListener {
 
 
             System.out.println(
-                    "SPIEL + WELT GESPEICHERT"
+                    "SPIEL GESPEICHERT"
+            );
+
+
+            System.out.println(
+                    "Tag: "
+                            +
+                            dayNightSystem.getDay()
+            );
+
+
+            System.out.println(
+                    "Uhrzeit: "
+                            +
+                            dayNightSystem.getFormattedTime()
             );
 
 
@@ -550,6 +590,32 @@ public class SaveGameSystem implements ActionListener {
 
 
         // ==========================
+        // TAG / UHRZEIT LADEN
+        // ==========================
+
+        int savedDay =
+                readInt(
+                        properties,
+                        "time.day",
+                        dayNightSystem.getDay()
+                );
+
+
+        float savedMinuteOfDay =
+                readFloat(
+                        properties,
+                        "time.minuteOfDay",
+                        dayNightSystem.getMinuteOfDay()
+                );
+
+
+        dayNightSystem.loadState(
+                savedDay,
+                savedMinuteOfDay
+        );
+
+
+        // ==========================
         // INVENTAR LEEREN
         // ==========================
 
@@ -709,7 +775,21 @@ public class SaveGameSystem implements ActionListener {
 
 
         System.out.println(
-                "SPIEL + WELT GELADEN"
+                "SPIELSTAND GELADEN"
+        );
+
+
+        System.out.println(
+                "Tag: "
+                        +
+                        dayNightSystem.getDay()
+        );
+
+
+        System.out.println(
+                "Uhrzeit: "
+                        +
+                        dayNightSystem.getFormattedTime()
         );
 
 

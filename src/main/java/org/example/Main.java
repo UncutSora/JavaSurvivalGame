@@ -342,7 +342,8 @@ public class Main extends SimpleApplication {
                         playerStats,
                         inventory,
                         toolDurabilitySystem,
-                        resources
+                        resources,
+                        dayNightSystem
                 );
     }
 
