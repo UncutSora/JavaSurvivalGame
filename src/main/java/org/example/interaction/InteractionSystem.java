@@ -14,6 +14,7 @@ import org.example.hotbar.HotbarSystem;
 import org.example.inventory.Inventory;
 import org.example.inventory.ItemType;
 import org.example.tools.ToolDurabilitySystem;
+import org.example.ui.InventoryMenuSystem;
 import org.example.ui.ToolView;
 import org.example.world.HarvestableResource;
 
@@ -22,7 +23,6 @@ import java.util.List;
 public class InteractionSystem implements ActionListener {
 
     private final Camera camera;
-
     private final Node rootNode;
 
     private final List<HarvestableResource> resources;
@@ -33,9 +33,9 @@ public class InteractionSystem implements ActionListener {
 
     private final ToolView toolView;
 
-    private final ToolDurabilitySystem
-            toolDurabilitySystem;
+    private final ToolDurabilitySystem toolDurabilitySystem;
 
+    private final InventoryMenuSystem inventoryMenuSystem;
 
     private final float interactionDistance =
             4f;
@@ -49,7 +49,8 @@ public class InteractionSystem implements ActionListener {
             Inventory inventory,
             HotbarSystem hotbarSystem,
             ToolView toolView,
-            ToolDurabilitySystem toolDurabilitySystem
+            ToolDurabilitySystem toolDurabilitySystem,
+            InventoryMenuSystem inventoryMenuSystem
     ) {
 
         this.camera =
@@ -73,6 +74,9 @@ public class InteractionSystem implements ActionListener {
         this.toolDurabilitySystem =
                 toolDurabilitySystem;
 
+        this.inventoryMenuSystem =
+                inventoryMenuSystem;
+
 
         inputManager.addMapping(
                 "Attack",
@@ -95,6 +99,14 @@ public class InteractionSystem implements ActionListener {
             boolean isPressed,
             float tpf
     ) {
+
+        if (
+                inventoryMenuSystem.isOpen()
+        ) {
+
+            return;
+        }
+
 
         if (
                 name.equals("Attack")
@@ -185,19 +197,11 @@ public class InteractionSystem implements ActionListener {
                         );
 
 
-                /*
-                 * Axtanimation starten.
-                 */
-
                 if (axeEquipped) {
 
                     toolView.swing();
                 }
 
-
-                /*
-                 * Ressource bekommt Schaden.
-                 */
 
                 boolean destroyed =
                         resource.takeDamage(
@@ -213,10 +217,6 @@ public class InteractionSystem implements ActionListener {
                                 " Schaden"
                 );
 
-
-                /*
-                 * Axt verliert Haltbarkeit.
-                 */
 
                 if (axeEquipped) {
 
@@ -249,25 +249,32 @@ public class InteractionSystem implements ActionListener {
                 }
 
 
-                /*
-                 * Ressource wurde zerstört.
-                 */
-
                 if (destroyed) {
 
-                    inventory.addItem(
-                            resource.getItemType(),
-                            resource.getYield()
-                    );
+                    boolean added =
+                            inventory.addItem(
+                                    resource.getItemType(),
+                                    resource.getYield()
+                            );
 
 
-                    System.out.println(
-                            resource
-                                    .getItemType()
-                                    .getDisplayName()
-                                    +
-                                    " gesammelt!"
-                    );
+                    if (added) {
+
+                        System.out.println(
+                                resource
+                                        .getItemType()
+                                        .getDisplayName()
+                                        +
+                                        " gesammelt!"
+                        );
+                    }
+
+                    else {
+
+                        System.out.println(
+                                "Inventar voll!"
+                        );
+                    }
                 }
 
                 else {
@@ -309,20 +316,11 @@ public class InteractionSystem implements ActionListener {
             boolean axeEquipped
     ) {
 
-        // ==========================
-        // BAUM
-        // ==========================
-
         if (
                 resource.getItemType()
                         ==
                         ItemType.WOOD
         ) {
-
-            /*
-             * Steinaxt ist gut
-             * zum Fällen von Bäumen.
-             */
 
             if (axeEquipped) {
 
@@ -330,28 +328,15 @@ public class InteractionSystem implements ActionListener {
             }
 
 
-            /*
-             * Mit bloßer Hand.
-             */
-
             return 25;
         }
 
-
-        // ==========================
-        // STEIN
-        // ==========================
 
         if (
                 resource.getItemType()
                         ==
                         ItemType.STONE
         ) {
-
-            /*
-             * Axt ist für Stein
-             * das falsche Werkzeug.
-             */
 
             if (axeEquipped) {
 

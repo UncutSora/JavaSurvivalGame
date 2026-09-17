@@ -44,6 +44,9 @@ public class Player implements ActionListener {
 
     private boolean moving;
 
+    private boolean inputEnabled =
+            true;
+
 
     public Player(
             Camera camera,
@@ -175,6 +178,12 @@ public class Player implements ActionListener {
             float tpf
     ) {
 
+        if (!inputEnabled) {
+
+            return;
+        }
+
+
         switch (name) {
 
             case "PlayerForward":
@@ -233,9 +242,29 @@ public class Player implements ActionListener {
             float tpf
     ) {
 
-        // ==========================
-        // KAMERA-VORWÄRTSRICHTUNG
-        // ==========================
+        if (!inputEnabled) {
+
+            moving =
+                    false;
+
+
+            walkDirection.set(
+                    0f,
+                    0f,
+                    0f
+            );
+
+
+            character.setWalkDirection(
+                    walkDirection
+            );
+
+
+            updateCamera();
+
+            return;
+        }
+
 
         Vector3f cameraForward =
                 camera
@@ -257,10 +286,6 @@ public class Player implements ActionListener {
         }
 
 
-        // ==========================
-        // KAMERA-SEITENRICHTUNG
-        // ==========================
-
         Vector3f cameraLeft =
                 camera
                         .getLeft()
@@ -280,10 +305,6 @@ public class Player implements ActionListener {
             cameraLeft.normalizeLocal();
         }
 
-
-        // ==========================
-        // BEWEGUNG ZURÜCKSETZEN
-        // ==========================
 
         walkDirection.set(
                 0f,
@@ -330,29 +351,17 @@ public class Player implements ActionListener {
                         0.001f;
 
 
-        // ==========================
-        // GESCHWINDIGKEIT
-        // ==========================
-
         if (moving) {
 
             walkDirection.normalizeLocal();
 
 
-            float currentSpeed;
-
-
-            if (isSprinting()) {
-
-                currentSpeed =
-                        SPRINT_SPEED;
-            }
-
-            else {
-
-                currentSpeed =
-                        WALK_SPEED;
-            }
+            float currentSpeed =
+                    isSprinting()
+                            ?
+                            SPRINT_SPEED
+                            :
+                            WALK_SPEED;
 
 
             walkDirection.multLocal(
@@ -366,9 +375,11 @@ public class Player implements ActionListener {
         );
 
 
-        // ==========================
-        // KAMERA FOLGT SPIELER
-        // ==========================
+        updateCamera();
+    }
+
+
+    private void updateCamera() {
 
         Vector3f playerPosition =
                 character
@@ -385,6 +396,55 @@ public class Player implements ActionListener {
     }
 
 
+    public void setInputEnabled(
+            boolean enabled
+    ) {
+
+        inputEnabled =
+                enabled;
+
+
+        if (!enabled) {
+
+            forward =
+                    false;
+
+            backward =
+                    false;
+
+            left =
+                    false;
+
+            right =
+                    false;
+
+            sprintKeyPressed =
+                    false;
+
+            moving =
+                    false;
+
+
+            walkDirection.set(
+                    0f,
+                    0f,
+                    0f
+            );
+
+
+            character.setWalkDirection(
+                    walkDirection
+            );
+        }
+    }
+
+
+    public boolean isInputEnabled() {
+
+        return inputEnabled;
+    }
+
+
     public boolean isMoving() {
 
         return moving;
@@ -393,7 +453,9 @@ public class Player implements ActionListener {
 
     public boolean isSprinting() {
 
-        return sprintKeyPressed
+        return inputEnabled
+                &&
+                sprintKeyPressed
                 &&
                 canSprint
                 &&

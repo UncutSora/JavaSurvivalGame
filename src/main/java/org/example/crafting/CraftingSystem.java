@@ -9,10 +9,14 @@ import org.example.inventory.ItemType;
 
 public class CraftingSystem implements ActionListener {
 
-    private final Inventory inventory;
+    private static final int AXE_WOOD_COST =
+            3;
 
-    private static final int AXE_WOOD_COST = 3;
-    private static final int AXE_STONE_COST = 2;
+    private static final int AXE_STONE_COST =
+            2;
+
+
+    private final Inventory inventory;
 
 
     public CraftingSystem(
@@ -20,7 +24,8 @@ public class CraftingSystem implements ActionListener {
             Inventory inventory
     ) {
 
-        this.inventory = inventory;
+        this.inventory =
+                inventory;
 
 
         inputManager.addMapping(
@@ -46,7 +51,9 @@ public class CraftingSystem implements ActionListener {
     ) {
 
         if (
-                name.equals("CraftStoneAxe")
+                name.equals(
+                        "CraftStoneAxe"
+                )
                         &&
                         isPressed
         ) {
@@ -72,14 +79,33 @@ public class CraftingSystem implements ActionListener {
                 );
 
 
-        if (!hasWood || !hasStone) {
+        if (
+                !hasWood
+                        ||
+                        !hasStone
+        ) {
 
             System.out.println(
                     "Nicht genug Materialien!"
             );
 
             System.out.println(
-                    "Steinaxt benötigt: 3 Holz + 2 Stein"
+                    "Benötigt: 3 Holz + 2 Stein"
+            );
+
+            return;
+        }
+
+
+        if (
+                !inventory.canAddItem(
+                        ItemType.STONE_AXE,
+                        1
+                )
+        ) {
+
+            System.out.println(
+                    "Inventar ist voll!"
             );
 
             return;
