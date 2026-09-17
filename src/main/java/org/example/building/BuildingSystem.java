@@ -55,6 +55,9 @@ public class BuildingSystem implements ActionListener {
     private static final String INTERACT_DOOR =
             "InteractDoor";
 
+    private static final String TOGGLE_DEMOLISH =
+            "ToggleDemolishMode";
+
 
     public static final int FOUNDATION_WOOD_COST =
             5;
@@ -162,6 +165,9 @@ public class BuildingSystem implements ActionListener {
 
 
     private boolean active =
+            false;
+
+    private boolean demolishActive =
             false;
 
 
@@ -454,6 +460,14 @@ public class BuildingSystem implements ActionListener {
 
 
         inputManager.addMapping(
+                TOGGLE_DEMOLISH,
+                new KeyTrigger(
+                        KeyInput.KEY_X
+                )
+        );
+
+
+        inputManager.addMapping(
                 PLACE_BUILDING,
                 new MouseButtonTrigger(
                         MouseInput.BUTTON_LEFT
@@ -469,6 +483,7 @@ public class BuildingSystem implements ActionListener {
                 SELECT_DOOR_FRAME,
                 SELECT_DOOR,
                 INTERACT_DOOR,
+                TOGGLE_DEMOLISH,
                 PLACE_BUILDING
         );
     }
@@ -497,10 +512,43 @@ public class BuildingSystem implements ActionListener {
             }
 
 
+            if (demolishActive) {
+                demolishActive = false;
+            }
+
             setActive(
                     !active
             );
 
+
+            return;
+        }
+
+
+        if (
+                name.equals(
+                        TOGGLE_DEMOLISH
+                )
+                        &&
+                        isPressed
+        ) {
+
+            if (
+                    inventoryMenuSystem.isOpen()
+            ) {
+
+                return;
+            }
+
+            demolishActive =
+                    !demolishActive;
+
+            if (demolishActive) {
+                setActive(false);
+                System.out.println("Abreißmodus aktiviert. Linksklick auf ein Bauteil zum Entfernen.");
+            } else {
+                System.out.println("Abreißmodus deaktiviert.");
+            }
 
             return;
         }
@@ -524,6 +572,21 @@ public class BuildingSystem implements ActionListener {
             }
 
 
+            return;
+        }
+
+
+        if (
+                demolishActive
+                        &&
+                        name.equals(
+                                PLACE_BUILDING
+                        )
+                        &&
+                        isPressed
+        ) {
+
+            demolishTarget();
             return;
         }
 
@@ -2841,6 +2904,143 @@ public class BuildingSystem implements ActionListener {
 
 
         frame.removeFromParent();
+    }
+
+
+    private void demolishTarget() {
+
+        if (inventoryMenuSystem.isOpen()) {
+            return;
+        }
+
+        Ray ray = new Ray(
+                camera.getLocation(),
+                camera.getDirection()
+        );
+
+        CollisionResults results = new CollisionResults();
+        rootNode.collideWith(ray, results);
+
+        for (int i = 0; i < results.size(); i++) {
+
+            Spatial hit = results.getCollision(i).getGeometry();
+
+            if (results.getCollision(i).getDistance() > BUILD_DISTANCE) {
+                break;
+            }
+
+            int doorIndex = findDoorIndex(hit);
+            if (doorIndex >= 0) {
+                if (!inventory.canAddItem(ItemType.WOOD, DOOR_WOOD_COST)) {
+                    System.out.println("Nicht genug Platz im Inventar.");
+                    return;
+                }
+                removeDoorAt(doorIndex);
+                inventory.addItem(ItemType.WOOD, DOOR_WOOD_COST);
+                System.out.println("Tür abgerissen. +" + DOOR_WOOD_COST + " Holz.");
+                return;
+            }
+
+            int frameIndex = findDoorFrameIndex(hit);
+            if (frameIndex >= 0) {
+                Node frame = placedDoorFrames.get(frameIndex);
+                int linkedDoorIndex = findDoorIndexForFrame(frame);
+                int refund = DOOR_FRAME_WOOD_COST + (linkedDoorIndex >= 0 ? DOOR_WOOD_COST : 0);
+
+                if (!inventory.canAddItem(ItemType.WOOD, refund)) {
+                    System.out.println("Nicht genug Platz im Inventar.");
+                    return;
+                }
+
+                if (linkedDoorIndex >= 0) {
+                    removeDoorAt(linkedDoorIndex);
+                }
+                removeDoorFrameAt(frameIndex);
+                inventory.addItem(ItemType.WOOD, refund);
+                System.out.println("Türrahmen abgerissen. +" + refund + " Holz.");
+                return;
+            }
+
+            int wallIndex = findGeometryIndex(placedWalls, hit);
+            if (wallIndex >= 0) {
+                if (!inventory.canAddItem(ItemType.WOOD, WALL_WOOD_COST)) {
+                    System.out.println("Nicht genug Platz im Inventar.");
+                    return;
+                }
+                Geometry wall = placedWalls.remove(wallIndex);
+                removeGeometryWithPhysics(wall);
+                inventory.addItem(ItemType.WOOD, WALL_WOOD_COST);
+                System.out.println("Wand abgerissen. +" + WALL_WOOD_COST + " Holz.");
+                return;
+            }
+
+            int foundationIndex = findGeometryIndex(placedFoundations, hit);
+            if (foundationIndex >= 0) {
+                if (!inventory.canAddItem(ItemType.WOOD, FOUNDATION_WOOD_COST)) {
+                    System.out.println("Nicht genug Platz im Inventar.");
+                    return;
+                }
+                Geometry foundation = placedFoundations.remove(foundationIndex);
+                removeGeometryWithPhysics(foundation);
+                inventory.addItem(ItemType.WOOD, FOUNDATION_WOOD_COST);
+                System.out.println("Fundament abgerissen. +" + FOUNDATION_WOOD_COST + " Holz.");
+                return;
+            }
+        }
+    }
+
+
+    private int findGeometryIndex(List<Geometry> geometries, Spatial hit) {
+        for (int i = 0; i < geometries.size(); i++) {
+            if (geometries.get(i) == hit) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+
+    private int findDoorIndex(Spatial hit) {
+        return findGeometryIndex(placedDoors, hit);
+    }
+
+
+    private int findDoorFrameIndex(Spatial hit) {
+        for (int i = 0; i < placedDoorFrames.size(); i++) {
+            Node frame = placedDoorFrames.get(i);
+            if (hit == frame || hit.getParent() == frame) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+
+    private int findDoorIndexForFrame(Node frame) {
+        Vector3f framePosition = frame.getLocalTranslation();
+        for (int i = 0; i < placedDoors.size(); i++) {
+            Vector3f doorFramePosition = placedDoors.get(i).getUserData("framePosition");
+            if (doorFramePosition != null && doorFramePosition.distanceSquared(framePosition) < 0.05f) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+
+    private void removeDoorAt(int index) {
+        Geometry door = placedDoors.remove(index);
+        removeGeometryWithPhysics(door);
+        doorClosedRotations.remove(index);
+        doorOpenStates.remove(index);
+        doorTargetOpenStates.remove(index);
+        doorAnimationProgress.remove(index);
+    }
+
+
+    private void removeDoorFrameAt(int index) {
+        Node frame = placedDoorFrames.remove(index);
+        removeDoorFrameWithPhysics(frame);
     }
 
 
