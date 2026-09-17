@@ -17,7 +17,12 @@ import org.example.interaction.InteractionSystem;
 import org.example.inventory.Inventory;
 import org.example.player.Player;
 import org.example.ui.InventoryHud;
+import org.example.world.HarvestableResource;
+import org.example.world.Rock;
 import org.example.world.Tree;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class Main extends SimpleApplication {
 
@@ -25,20 +30,28 @@ public class Main extends SimpleApplication {
 
     private Player player;
 
-    private Tree tree;
-
     private Inventory inventory;
 
     private InventoryHud inventoryHud;
 
 
-    public static void main(String[] args) {
+    private final List<HarvestableResource>
+            resources =
+            new ArrayList<>();
 
-        Main game = new Main();
+
+    public static void main(
+            String[] args
+    ) {
+
+        Main game =
+                new Main();
 
 
         AppSettings settings =
-                new AppSettings(true);
+                new AppSettings(
+                        true
+                );
 
 
         settings.setTitle(
@@ -52,9 +65,15 @@ public class Main extends SimpleApplication {
         );
 
 
-        game.setSettings(settings);
+        game.setSettings(
+                settings
+        );
 
-        game.setShowSettings(false);
+
+        game.setShowSettings(
+                false
+        );
+
 
         game.start();
     }
@@ -69,7 +88,7 @@ public class Main extends SimpleApplication {
 
         createLight();
 
-        createTree();
+        createResources();
 
         createPlayer();
 
@@ -90,12 +109,19 @@ public class Main extends SimpleApplication {
         );
 
 
-        flyCam.setMoveSpeed(0f);
+        flyCam.setMoveSpeed(
+                0f
+        );
 
 
-        setDisplayFps(false);
+        setDisplayFps(
+                false
+        );
 
-        setDisplayStatView(false);
+
+        setDisplayStatView(
+                false
+        );
     }
 
 
@@ -107,6 +133,158 @@ public class Main extends SimpleApplication {
 
         stateManager.attach(
                 bulletAppState
+        );
+    }
+
+
+    private void createResources() {
+
+        // ====================
+        // BÄUME
+        // ====================
+
+        addResource(
+                new Tree(
+                        assetManager,
+                        bulletAppState
+                                .getPhysicsSpace(),
+                        new Vector3f(
+                                0,
+                                0,
+                                0
+                        )
+                )
+        );
+
+
+        addResource(
+                new Tree(
+                        assetManager,
+                        bulletAppState
+                                .getPhysicsSpace(),
+                        new Vector3f(
+                                5,
+                                0,
+                                -3
+                        )
+                )
+        );
+
+
+        addResource(
+                new Tree(
+                        assetManager,
+                        bulletAppState
+                                .getPhysicsSpace(),
+                        new Vector3f(
+                                -5,
+                                0,
+                                -4
+                        )
+                )
+        );
+
+
+        addResource(
+                new Tree(
+                        assetManager,
+                        bulletAppState
+                                .getPhysicsSpace(),
+                        new Vector3f(
+                                7,
+                                0,
+                                4
+                        )
+                )
+        );
+
+
+        addResource(
+                new Tree(
+                        assetManager,
+                        bulletAppState
+                                .getPhysicsSpace(),
+                        new Vector3f(
+                                -7,
+                                0,
+                                3
+                        )
+                )
+        );
+
+
+        // ====================
+        // STEINE
+        // ====================
+
+        addResource(
+                new Rock(
+                        assetManager,
+                        bulletAppState
+                                .getPhysicsSpace(),
+                        new Vector3f(
+                                3,
+                                0,
+                                3
+                        )
+                )
+        );
+
+
+        addResource(
+                new Rock(
+                        assetManager,
+                        bulletAppState
+                                .getPhysicsSpace(),
+                        new Vector3f(
+                                -3,
+                                0,
+                                2
+                        )
+                )
+        );
+
+
+        addResource(
+                new Rock(
+                        assetManager,
+                        bulletAppState
+                                .getPhysicsSpace(),
+                        new Vector3f(
+                                4,
+                                0,
+                                -6
+                        )
+                )
+        );
+
+
+        addResource(
+                new Rock(
+                        assetManager,
+                        bulletAppState
+                                .getPhysicsSpace(),
+                        new Vector3f(
+                                -4,
+                                0,
+                                -7
+                        )
+                )
+        );
+    }
+
+
+    private void addResource(
+            HarvestableResource resource
+    ) {
+
+        resources.add(
+                resource
+        );
+
+
+        rootNode.attachChild(
+                resource.getNode()
         );
     }
 
@@ -124,6 +302,40 @@ public class Main extends SimpleApplication {
                         cam,
                         inventory
                 );
+    }
+
+
+    private void createPlayer() {
+
+        player =
+                new Player(
+                        cam,
+                        inputManager,
+                        bulletAppState
+                                .getPhysicsSpace()
+                );
+
+
+        cam.lookAt(
+                new Vector3f(
+                        0,
+                        1.5f,
+                        0
+                ),
+                Vector3f.UNIT_Y
+        );
+    }
+
+
+    private void createInteractionSystem() {
+
+        new InteractionSystem(
+                cam,
+                inputManager,
+                rootNode,
+                resources,
+                inventory
+        );
     }
 
 
@@ -179,7 +391,9 @@ public class Main extends SimpleApplication {
         );
 
 
-        ground.setMaterial(material);
+        ground.setMaterial(
+                material
+        );
 
 
         ground.setLocalTranslation(
@@ -195,7 +409,9 @@ public class Main extends SimpleApplication {
 
 
         RigidBodyControl physics =
-                new RigidBodyControl(0f);
+                new RigidBodyControl(
+                        0f
+                );
 
 
         ground.addControl(
@@ -205,62 +421,9 @@ public class Main extends SimpleApplication {
 
         bulletAppState
                 .getPhysicsSpace()
-                .add(physics);
-    }
-
-
-    private void createTree() {
-
-        tree =
-                new Tree(
-                        assetManager,
-                        bulletAppState
-                                .getPhysicsSpace(),
-                        new Vector3f(
-                                0,
-                                0,
-                                0
-                        )
+                .add(
+                        physics
                 );
-
-
-        rootNode.attachChild(
-                tree.getNode()
-        );
-    }
-
-
-    private void createPlayer() {
-
-        player =
-                new Player(
-                        cam,
-                        inputManager,
-                        bulletAppState
-                                .getPhysicsSpace()
-                );
-
-
-        cam.lookAt(
-                new Vector3f(
-                        0,
-                        1.5f,
-                        0
-                ),
-                Vector3f.UNIT_Y
-        );
-    }
-
-
-    private void createInteractionSystem() {
-
-        new InteractionSystem(
-                cam,
-                inputManager,
-                rootNode,
-                tree,
-                inventory
-        );
     }
 
 
@@ -377,14 +540,24 @@ public class Main extends SimpleApplication {
 
 
     @Override
-    public void simpleUpdate(float tpf) {
+    public void simpleUpdate(
+            float tpf
+    ) {
 
-        if (player != null) {
-            player.update(tpf);
+        if (
+                player != null
+        ) {
+
+            player.update(
+                    tpf
+            );
         }
 
 
-        if (inventoryHud != null) {
+        if (
+                inventoryHud != null
+        ) {
+
             inventoryHud.update();
         }
     }

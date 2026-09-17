@@ -2,7 +2,8 @@ package org.example.inventory;
 
 public enum ItemType {
 
-    WOOD("Holz");
+    WOOD("Holz"),
+    STONE("Stein");
 
     private final String displayName;
 

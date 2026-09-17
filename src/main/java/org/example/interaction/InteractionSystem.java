@@ -11,36 +11,54 @@ import com.jme3.renderer.Camera;
 import com.jme3.scene.Geometry;
 import com.jme3.scene.Node;
 import org.example.inventory.Inventory;
-import org.example.inventory.ItemType;
-import org.example.world.Tree;
+import org.example.world.HarvestableResource;
+
+import java.util.List;
 
 public class InteractionSystem implements ActionListener {
 
     private final Camera camera;
+
     private final Node rootNode;
-    private final Tree tree;
+
+    private final List<HarvestableResource> resources;
+
     private final Inventory inventory;
 
-    private final float interactionDistance = 4f;
+
+    private final float interactionDistance =
+            4f;
 
 
     public InteractionSystem(
             Camera camera,
             InputManager inputManager,
             Node rootNode,
-            Tree tree,
+            List<HarvestableResource> resources,
             Inventory inventory
     ) {
 
-        this.camera = camera;
-        this.rootNode = rootNode;
-        this.tree = tree;
-        this.inventory = inventory;
+        this.camera =
+                camera;
+
+
+        this.rootNode =
+                rootNode;
+
+
+        this.resources =
+                resources;
+
+
+        this.inventory =
+                inventory;
 
 
         inputManager.addMapping(
                 "Interact",
-                new KeyTrigger(KeyInput.KEY_E)
+                new KeyTrigger(
+                        KeyInput.KEY_E
+                )
         );
 
 
@@ -58,7 +76,12 @@ public class InteractionSystem implements ActionListener {
             float tpf
     ) {
 
-        if (name.equals("Interact") && isPressed) {
+        if (
+                name.equals("Interact")
+                        &&
+                        isPressed
+        ) {
+
             interact();
         }
     }
@@ -66,10 +89,11 @@ public class InteractionSystem implements ActionListener {
 
     private void interact() {
 
-        Ray ray = new Ray(
-                camera.getLocation(),
-                camera.getDirection()
-        );
+        Ray ray =
+                new Ray(
+                        camera.getLocation(),
+                        camera.getDirection()
+                );
 
 
         CollisionResults results =
@@ -82,51 +106,81 @@ public class InteractionSystem implements ActionListener {
         );
 
 
-        for (int i = 0; i < results.size(); i++) {
+        for (
+                int i = 0;
+                i < results.size();
+                i++
+        ) {
 
-            CollisionResult result =
+            CollisionResult collision =
                     results.getCollision(i);
 
 
-            if (result.getDistance() > interactionDistance) {
+            if (
+                    collision.getDistance()
+                            >
+                            interactionDistance
+            ) {
+
                 break;
             }
 
 
             Geometry geometry =
-                    result.getGeometry();
+                    collision.getGeometry();
 
 
-            if (
-                    !tree.isHarvested()
-                            &&
-                            tree.owns(geometry)
+            for (
+                    HarvestableResource resource
+                    :
+                    resources
             ) {
 
-                tree.harvest();
+                if (
+                        resource.isHarvested()
+                ) {
+
+                    continue;
+                }
 
 
-                inventory.addItem(
-                        ItemType.WOOD,
-                        1
-                );
+                if (
+                        resource.owns(
+                                geometry
+                        )
+                ) {
+
+                    resource.harvest();
 
 
-                System.out.println(
-                        "Baum abgebaut!"
-                );
+                    inventory.addItem(
+                            resource.getItemType(),
+                            resource.getYield()
+                    );
 
 
-                System.out.println(
-                        "Holz im Inventar: "
-                                +
-                                inventory.getAmount(
-                                        ItemType.WOOD
-                                )
-                );
+                    System.out.println(
+                            resource
+                                    .getItemType()
+                                    .getDisplayName()
+                                    +
+                                    " gesammelt: "
+                                    +
+                                    resource.getYield()
+                    );
 
 
-                return;
+                    System.out.println(
+                            "Gesamt: "
+                                    +
+                                    inventory.getAmount(
+                                            resource.getItemType()
+                                    )
+                    );
+
+
+                    return;
+                }
             }
         }
     }

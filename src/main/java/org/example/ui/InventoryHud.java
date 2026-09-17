@@ -17,7 +17,9 @@ import org.example.inventory.ItemType;
 public class InventoryHud {
 
     private final Inventory inventory;
+
     private final BitmapText itemText;
+
 
     public InventoryHud(
             AssetManager assetManager,
@@ -26,19 +28,27 @@ public class InventoryHud {
             Inventory inventory
     ) {
 
-        this.inventory = inventory;
+        this.inventory =
+                inventory;
 
-        float width = 180f;
-        float height = 55f;
+
+        float width =
+                280f;
+
+
+        float height =
+                60f;
+
 
         float x =
                 camera.getWidth() / 2f
-                        - width / 2f;
+                        -
+                        width / 2f;
 
-        float y = 20f;
 
+        float y =
+                20f;
 
-        // Hintergrund
 
         Geometry background =
                 new Geometry(
@@ -97,8 +107,6 @@ public class InventoryHud {
         );
 
 
-        // Schrift laden
-
         BitmapFont font =
                 assetManager.loadFont(
                         "Interface/Fonts/Default.fnt"
@@ -106,7 +114,9 @@ public class InventoryHud {
 
 
         itemText =
-                new BitmapText(font);
+                new BitmapText(
+                        font
+                );
 
 
         itemText.setColor(
@@ -115,13 +125,13 @@ public class InventoryHud {
 
 
         itemText.setSize(
-                22f
+                21f
         );
 
 
         itemText.setLocalTranslation(
-                x + 20f,
-                y + 36f,
+                x + 18f,
+                y + 38f,
                 1f
         );
 
@@ -143,8 +153,20 @@ public class InventoryHud {
                 );
 
 
+        int stone =
+                inventory.getAmount(
+                        ItemType.STONE
+                );
+
+
         itemText.setText(
-                "1   Holz: " + wood
+                "1 Holz: "
+                        +
+                        wood
+                        +
+                        "     2 Stein: "
+                        +
+                        stone
         );
     }
 }

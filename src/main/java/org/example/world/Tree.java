@@ -10,8 +10,9 @@ import com.jme3.scene.Geometry;
 import com.jme3.scene.Node;
 import com.jme3.scene.shape.Box;
 import com.jme3.scene.shape.Sphere;
+import org.example.inventory.ItemType;
 
-public class Tree {
+public class Tree implements HarvestableResource {
 
     private final Node treeNode;
 
@@ -19,6 +20,7 @@ public class Tree {
     private final Geometry leaves;
 
     private final PhysicsSpace physicsSpace;
+
     private final RigidBodyControl trunkPhysics;
 
     private boolean harvested = false;
@@ -35,43 +37,53 @@ public class Tree {
         treeNode = new Node("Tree");
 
 
-        // ================================
-        // BAUMSTAMM
-        // ================================
+        // ==========================
+        // STAMM
+        // ==========================
 
-        Box trunkMesh = new Box(
-                0.35f,
-                1.5f,
-                0.35f
-        );
-
-        trunk = new Geometry(
-                "TreeTrunk",
-                trunkMesh
-        );
+        Box trunkMesh =
+                new Box(
+                        0.35f,
+                        1.5f,
+                        0.35f
+                );
 
 
-        Material trunkMaterial = new Material(
-                assetManager,
-                "Common/MatDefs/Light/Lighting.j3md"
-        );
+        trunk =
+                new Geometry(
+                        "TreeTrunk",
+                        trunkMesh
+                );
+
+
+        Material trunkMaterial =
+                new Material(
+                        assetManager,
+                        "Common/MatDefs/Light/Lighting.j3md"
+                );
+
 
         trunkMaterial.setBoolean(
                 "UseMaterialColors",
                 true
         );
 
+
         trunkMaterial.setColor(
                 "Diffuse",
                 ColorRGBA.Brown
         );
+
 
         trunkMaterial.setColor(
                 "Ambient",
                 ColorRGBA.Brown
         );
 
-        trunk.setMaterial(trunkMaterial);
+
+        trunk.setMaterial(
+                trunkMaterial
+        );
 
 
         trunk.setLocalTranslation(
@@ -81,34 +93,42 @@ public class Tree {
         );
 
 
-        treeNode.attachChild(trunk);
-
-
-        // ================================
-        // BAUMKRONE
-        // ================================
-
-        Sphere leavesMesh = new Sphere(
-                16,
-                16,
-                1.3f
-        );
-
-        leaves = new Geometry(
-                "TreeLeaves",
-                leavesMesh
+        treeNode.attachChild(
+                trunk
         );
 
 
-        Material leavesMaterial = new Material(
-                assetManager,
-                "Common/MatDefs/Light/Lighting.j3md"
-        );
+        // ==========================
+        // BLÄTTER
+        // ==========================
+
+        Sphere leavesMesh =
+                new Sphere(
+                        16,
+                        16,
+                        1.3f
+                );
+
+
+        leaves =
+                new Geometry(
+                        "TreeLeaves",
+                        leavesMesh
+                );
+
+
+        Material leavesMaterial =
+                new Material(
+                        assetManager,
+                        "Common/MatDefs/Light/Lighting.j3md"
+                );
+
 
         leavesMaterial.setBoolean(
                 "UseMaterialColors",
                 true
         );
+
 
         leavesMaterial.setColor(
                 "Diffuse",
@@ -120,6 +140,7 @@ public class Tree {
                 )
         );
 
+
         leavesMaterial.setColor(
                 "Ambient",
                 new ColorRGBA(
@@ -130,7 +151,10 @@ public class Tree {
                 )
         );
 
-        leaves.setMaterial(leavesMaterial);
+
+        leaves.setMaterial(
+                leavesMaterial
+        );
 
 
         leaves.setLocalTranslation(
@@ -140,48 +164,86 @@ public class Tree {
         );
 
 
-        treeNode.attachChild(leaves);
+        treeNode.attachChild(
+                leaves
+        );
 
 
-        // ================================
+        // ==========================
         // KOLLISION
-        // ================================
+        // ==========================
 
-        trunkPhysics = new RigidBodyControl(0f);
+        trunkPhysics =
+                new RigidBodyControl(
+                        0f
+                );
 
-        trunk.addControl(trunkPhysics);
 
-        physicsSpace.add(trunkPhysics);
+        trunk.addControl(
+                trunkPhysics
+        );
+
+
+        physicsSpace.add(
+                trunkPhysics
+        );
     }
 
 
+    @Override
     public Node getNode() {
+
         return treeNode;
     }
 
 
-    public boolean owns(Geometry geometry) {
+    @Override
+    public boolean owns(
+            Geometry geometry
+    ) {
 
         return geometry == trunk
                 || geometry == leaves;
     }
 
 
+    @Override
     public void harvest() {
 
         if (harvested) {
             return;
         }
 
+
         harvested = true;
 
-        physicsSpace.remove(trunkPhysics);
+
+        physicsSpace.remove(
+                trunkPhysics
+        );
+
 
         treeNode.removeFromParent();
     }
 
 
+    @Override
     public boolean isHarvested() {
+
         return harvested;
+    }
+
+
+    @Override
+    public ItemType getItemType() {
+
+        return ItemType.WOOD;
+    }
+
+
+    @Override
+    public int getYield() {
+
+        return 1;
     }
 }
