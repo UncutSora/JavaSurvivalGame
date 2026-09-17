@@ -161,7 +161,7 @@ public class BuildingSystem implements ActionListener {
     private final Geometry roofPreview;
     private final Material roofPreviewMaterial;
 
-    private final Geometry stairsPreview;
+    private final Node stairsPreview;
     private final Material stairsPreviewMaterial;
 
 
@@ -186,7 +186,7 @@ public class BuildingSystem implements ActionListener {
     private final List<Geometry> placedRoofs =
             new ArrayList<>();
 
-    private final List<Geometry> placedStairs =
+    private final List<Node> placedStairs =
             new ArrayList<>();
 
     private final List<Quaternion> doorClosedRotations =
@@ -461,12 +461,10 @@ public class BuildingSystem implements ActionListener {
 
         stairsPreviewMaterial = createPreviewMaterial();
 
-        stairsPreview = new Geometry(
+        stairsPreview = createStairsVisual(
                 "StairsPreview",
-                new Box(1.20f, 0.12f, 2.12f)
+                stairsPreviewMaterial
         );
-
-        stairsPreview.setMaterial(stairsPreviewMaterial);
         stairsPreview.setQueueBucket(RenderQueue.Bucket.Transparent);
         stairsPreview.setCullHint(Spatial.CullHint.Always);
         rootNode.attachChild(stairsPreview);
@@ -1534,7 +1532,7 @@ public class BuildingSystem implements ActionListener {
     ) {
 
         for (
-                Geometry stairs
+                Node stairs
                 :
                 placedStairs
         ) {
@@ -3057,43 +3055,104 @@ public class BuildingSystem implements ActionListener {
             Quaternion rotation
     ) {
 
-        Geometry stairs =
-                new Geometry(
-                        "Stairs_"
-                                +
-                                nextStairsId,
-                        new Box(
-                                1.20f,
-                                0.12f,
-                                2.35f
-                        )
+        Node stairs =
+                createStairsVisual(
+                        "Stairs_" + nextStairsId,
+                        createWoodMaterial()
                 );
 
-        stairs.setMaterial(
-                createWoodMaterial()
-        );
+        stairs.setLocalTranslation(position);
+        stairs.setLocalRotation(rotation);
+        rootNode.attachChild(stairs);
 
-        stairs.setLocalTranslation(
-                position
-        );
+        // Unsichtbare, glatte Rampe fuer die Physik.
+        // Die sichtbaren Stufen selbst bekommen bewusst keine einzelnen Collider.
+        Geometry collisionRamp =
+                new Geometry(
+                        "StairsCollision_" + nextStairsId,
+                        new Box(1.20f, 0.12f, 2.35f)
+                );
 
-        stairs.setLocalRotation(
-                rotation
+        Material invisibleMaterial =
+                new Material(
+                        assetManager,
+                        "Common/MatDefs/Misc/Unshaded.j3md"
+                );
+        invisibleMaterial.setColor(
+                "Color",
+                new ColorRGBA(0f, 0f, 0f, 0f)
         );
+        invisibleMaterial.getAdditionalRenderState()
+                .setBlendMode(RenderState.BlendMode.Alpha);
+        invisibleMaterial.getAdditionalRenderState()
+                .setDepthWrite(false);
 
-        rootNode.attachChild(
-                stairs
-        );
+        collisionRamp.setMaterial(invisibleMaterial);
+        collisionRamp.setQueueBucket(RenderQueue.Bucket.Transparent);
+        collisionRamp.setCullHint(Spatial.CullHint.Always);
+        stairs.attachChild(collisionRamp);
 
-        addPhysics(
-                stairs
-        );
+        addPhysics(collisionRamp);
 
-        placedStairs.add(
-                stairs
-        );
-
+        placedStairs.add(stairs);
         nextStairsId++;
+    }
+
+
+    private Node createStairsVisual(
+            String name,
+            Material material
+    ) {
+
+        Node stairsNode = new Node(name);
+
+        final int stepCount = 10;
+        final float halfWidth = 1.20f;
+        final float totalRun = 3.0f;
+        final float totalRise = 3.0f;
+        final float stepDepth = totalRun / stepCount;
+        final float stepHeight = totalRise / stepCount;
+
+        for (int i = 0; i < stepCount; i++) {
+
+            float z =
+                    -totalRun / 2f
+                            + stepDepth / 2f
+                            + i * stepDepth;
+
+            float y =
+                    -totalRise / 2f
+                            + stepHeight / 2f
+                            + i * stepHeight;
+
+            Geometry step =
+                    new Geometry(
+                            name + "_Step_" + i,
+                            new Box(
+                                    halfWidth,
+                                    stepHeight / 2f,
+                                    stepDepth / 2f
+                            )
+                    );
+
+            step.setMaterial(material);
+
+            Quaternion counterSlope = new Quaternion();
+            counterSlope.fromAngles(
+                    (float) Math.toRadians(45f),
+                    0f,
+                    0f
+            );
+
+            Vector3f localPosition =
+                    counterSlope.mult(new Vector3f(0f, y, z));
+
+            step.setLocalTranslation(localPosition);
+            step.setLocalRotation(counterSlope);
+            stairsNode.attachChild(step);
+        }
+
+        return stairsNode;
     }
 
 
@@ -3857,8 +3916,8 @@ public class BuildingSystem implements ActionListener {
             removeGeometryWithPhysics(roof);
         }
 
-        for (Geometry stairs : placedStairs) {
-            removeGeometryWithPhysics(stairs);
+        for (Node stairs : placedStairs) {
+            removeStairsWithPhysics(stairs);
         }
 
         placedFoundations.clear();
@@ -4117,14 +4176,14 @@ public class BuildingSystem implements ActionListener {
                 return;
             }
 
-            int stairsIndex = findGeometryIndex(placedStairs, hit);
+            int stairsIndex = findStairsIndex(hit);
             if (stairsIndex >= 0) {
                 if (!inventory.canAddItem(ItemType.WOOD, STAIRS_WOOD_COST)) {
                     System.out.println("Nicht genug Platz im Inventar.");
                     return;
                 }
-                Geometry stairs = placedStairs.remove(stairsIndex);
-                removeGeometryWithPhysics(stairs);
+                Node stairs = placedStairs.remove(stairsIndex);
+                removeStairsWithPhysics(stairs);
                 inventory.addItem(ItemType.WOOD, STAIRS_WOOD_COST);
                 System.out.println("Treppe abgerissen. +" + STAIRS_WOOD_COST + " Holz.");
                 return;
@@ -4167,6 +4226,45 @@ public class BuildingSystem implements ActionListener {
                 inventory.addItem(ItemType.WOOD, FOUNDATION_WOOD_COST);
                 System.out.println("Fundament abgerissen. +" + FOUNDATION_WOOD_COST + " Holz.");
                 return;
+            }
+        }
+    }
+
+
+    private int findStairsIndex(Spatial hit) {
+        for (int i = 0; i < placedStairs.size(); i++) {
+            Node stairs = placedStairs.get(i);
+            Spatial current = hit;
+
+            while (current != null) {
+                if (current == stairs) {
+                    return i;
+                }
+                current = current.getParent();
+            }
+        }
+        return -1;
+    }
+
+
+    private void removeStairsWithPhysics(Node stairs) {
+        removePhysicsRecursively(stairs);
+        stairs.removeFromParent();
+    }
+
+
+    private void removePhysicsRecursively(Spatial spatial) {
+        RigidBodyControl physics =
+                spatial.getControl(RigidBodyControl.class);
+
+        if (physics != null) {
+            physicsSpace.remove(physics);
+        }
+
+        if (spatial instanceof Node) {
+            Node node = (Node) spatial;
+            for (Spatial child : node.getChildren()) {
+                removePhysicsRecursively(child);
             }
         }
     }
