@@ -14,10 +14,12 @@ import com.jme3.scene.shape.Quad;
 import com.jme3.system.AppSettings;
 
 import org.example.crafting.CraftingSystem;
+import org.example.hotbar.HotbarSystem;
 import org.example.interaction.InteractionSystem;
 import org.example.inventory.Inventory;
 import org.example.player.Player;
 import org.example.ui.InventoryHud;
+import org.example.ui.ToolView;
 import org.example.world.HarvestableResource;
 import org.example.world.Rock;
 import org.example.world.Tree;
@@ -35,18 +37,28 @@ public class Main extends SimpleApplication {
 
     private InventoryHud inventoryHud;
 
-    private final List<HarvestableResource> resources =
+    private HotbarSystem hotbarSystem;
+
+    private ToolView toolView;
+
+
+    private final List<HarvestableResource>
+            resources =
             new ArrayList<>();
 
 
-    public static void main(String[] args) {
+    public static void main(
+            String[] args
+    ) {
 
         Main game =
                 new Main();
 
 
         AppSettings settings =
-                new AppSettings(true);
+                new AppSettings(
+                        true
+                );
 
 
         settings.setTitle(
@@ -88,6 +100,12 @@ public class Main extends SimpleApplication {
         createPlayer();
 
         createInventory();
+
+        createHotbarSystem();
+
+        createInventoryHud();
+
+        createToolView();
 
         createCraftingSystem();
 
@@ -138,14 +156,40 @@ public class Main extends SimpleApplication {
 
         inventory =
                 new Inventory();
+    }
 
+
+    private void createHotbarSystem() {
+
+        hotbarSystem =
+                new HotbarSystem(
+                        inputManager
+                );
+    }
+
+
+    private void createInventoryHud() {
 
         inventoryHud =
                 new InventoryHud(
                         assetManager,
                         guiNode,
                         cam,
-                        inventory
+                        inventory,
+                        hotbarSystem
+                );
+    }
+
+
+    private void createToolView() {
+
+        toolView =
+                new ToolView(
+                        assetManager,
+                        guiNode,
+                        cam,
+                        inventory,
+                        hotbarSystem
                 );
     }
 
@@ -166,7 +210,9 @@ public class Main extends SimpleApplication {
                 inputManager,
                 rootNode,
                 resources,
-                inventory
+                inventory,
+                hotbarSystem,
+                toolView
         );
     }
 
@@ -180,7 +226,8 @@ public class Main extends SimpleApplication {
         addResource(
                 new Tree(
                         assetManager,
-                        bulletAppState.getPhysicsSpace(),
+                        bulletAppState
+                                .getPhysicsSpace(),
                         new Vector3f(
                                 0,
                                 0,
@@ -193,7 +240,8 @@ public class Main extends SimpleApplication {
         addResource(
                 new Tree(
                         assetManager,
-                        bulletAppState.getPhysicsSpace(),
+                        bulletAppState
+                                .getPhysicsSpace(),
                         new Vector3f(
                                 5,
                                 0,
@@ -206,7 +254,8 @@ public class Main extends SimpleApplication {
         addResource(
                 new Tree(
                         assetManager,
-                        bulletAppState.getPhysicsSpace(),
+                        bulletAppState
+                                .getPhysicsSpace(),
                         new Vector3f(
                                 -5,
                                 0,
@@ -219,7 +268,8 @@ public class Main extends SimpleApplication {
         addResource(
                 new Tree(
                         assetManager,
-                        bulletAppState.getPhysicsSpace(),
+                        bulletAppState
+                                .getPhysicsSpace(),
                         new Vector3f(
                                 7,
                                 0,
@@ -232,7 +282,8 @@ public class Main extends SimpleApplication {
         addResource(
                 new Tree(
                         assetManager,
-                        bulletAppState.getPhysicsSpace(),
+                        bulletAppState
+                                .getPhysicsSpace(),
                         new Vector3f(
                                 -7,
                                 0,
@@ -249,7 +300,8 @@ public class Main extends SimpleApplication {
         addResource(
                 new Rock(
                         assetManager,
-                        bulletAppState.getPhysicsSpace(),
+                        bulletAppState
+                                .getPhysicsSpace(),
                         new Vector3f(
                                 3,
                                 0,
@@ -262,7 +314,8 @@ public class Main extends SimpleApplication {
         addResource(
                 new Rock(
                         assetManager,
-                        bulletAppState.getPhysicsSpace(),
+                        bulletAppState
+                                .getPhysicsSpace(),
                         new Vector3f(
                                 -3,
                                 0,
@@ -275,7 +328,8 @@ public class Main extends SimpleApplication {
         addResource(
                 new Rock(
                         assetManager,
-                        bulletAppState.getPhysicsSpace(),
+                        bulletAppState
+                                .getPhysicsSpace(),
                         new Vector3f(
                                 4,
                                 0,
@@ -288,7 +342,8 @@ public class Main extends SimpleApplication {
         addResource(
                 new Rock(
                         assetManager,
-                        bulletAppState.getPhysicsSpace(),
+                        bulletAppState
+                                .getPhysicsSpace(),
                         new Vector3f(
                                 -4,
                                 0,
@@ -320,7 +375,8 @@ public class Main extends SimpleApplication {
                 new Player(
                         cam,
                         inputManager,
-                        bulletAppState.getPhysicsSpace()
+                        bulletAppState
+                                .getPhysicsSpace()
                 );
 
 
@@ -540,7 +596,9 @@ public class Main extends SimpleApplication {
             float tpf
     ) {
 
-        if (player != null) {
+        if (
+                player != null
+        ) {
 
             player.update(
                     tpf
@@ -548,9 +606,21 @@ public class Main extends SimpleApplication {
         }
 
 
-        if (inventoryHud != null) {
+        if (
+                inventoryHud != null
+        ) {
 
             inventoryHud.update();
+        }
+
+
+        if (
+                toolView != null
+        ) {
+
+            toolView.update(
+                    tpf
+            );
         }
     }
 }

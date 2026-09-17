@@ -20,8 +20,11 @@ public class Tree implements HarvestableResource {
     private final Geometry leaves;
 
     private final PhysicsSpace physicsSpace;
-
     private final RigidBodyControl trunkPhysics;
+
+    private final int maxHealth = 100;
+
+    private int health = maxHealth;
 
     private boolean harvested = false;
 
@@ -99,7 +102,7 @@ public class Tree implements HarvestableResource {
 
 
         // ==========================
-        // BLÄTTER
+        // BAUMKRONE
         // ==========================
 
         Sphere leavesMesh =
@@ -170,7 +173,7 @@ public class Tree implements HarvestableResource {
 
 
         // ==========================
-        // KOLLISION
+        // PHYSIK
         // ==========================
 
         trunkPhysics =
@@ -208,22 +211,38 @@ public class Tree implements HarvestableResource {
 
 
     @Override
-    public void harvest() {
+    public boolean takeDamage(
+            int damage
+    ) {
 
-        if (harvested) {
-            return;
+        if (harvested || damage <= 0) {
+            return false;
         }
 
 
-        harvested = true;
+        health -= damage;
 
 
-        physicsSpace.remove(
-                trunkPhysics
-        );
+        if (health <= 0) {
+
+            health = 0;
+
+            harvested = true;
 
 
-        treeNode.removeFromParent();
+            physicsSpace.remove(
+                    trunkPhysics
+            );
+
+
+            treeNode.removeFromParent();
+
+
+            return true;
+        }
+
+
+        return false;
     }
 
 
@@ -231,6 +250,20 @@ public class Tree implements HarvestableResource {
     public boolean isHarvested() {
 
         return harvested;
+    }
+
+
+    @Override
+    public int getHealth() {
+
+        return health;
+    }
+
+
+    @Override
+    public int getMaxHealth() {
+
+        return maxHealth;
     }
 
 

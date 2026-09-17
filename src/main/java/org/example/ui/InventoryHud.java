@@ -11,12 +11,15 @@ import com.jme3.renderer.queue.RenderQueue;
 import com.jme3.scene.Geometry;
 import com.jme3.scene.Node;
 import com.jme3.scene.shape.Quad;
+import org.example.hotbar.HotbarSystem;
 import org.example.inventory.Inventory;
 import org.example.inventory.ItemType;
 
 public class InventoryHud {
 
     private final Inventory inventory;
+
+    private final HotbarSystem hotbarSystem;
 
     private final BitmapText itemText;
 
@@ -25,18 +28,24 @@ public class InventoryHud {
             AssetManager assetManager,
             Node guiNode,
             Camera camera,
-            Inventory inventory
+            Inventory inventory,
+            HotbarSystem hotbarSystem
     ) {
 
         this.inventory =
                 inventory;
 
 
+        this.hotbarSystem =
+                hotbarSystem;
+
+
         float width =
-                430f;
+                620f;
+
 
         float height =
-                60f;
+                70f;
 
 
         float x =
@@ -124,13 +133,13 @@ public class InventoryHud {
 
 
         itemText.setSize(
-                20f
+                19f
         );
 
 
         itemText.setLocalTranslation(
                 x + 18f,
-                y + 38f,
+                y + 45f,
                 1f
         );
 
@@ -158,26 +167,92 @@ public class InventoryHud {
                 );
 
 
-        int stoneAxes =
+        int axes =
                 inventory.getAmount(
                         ItemType.STONE_AXE
                 );
 
 
+        int selected =
+                hotbarSystem
+                        .getSelectedSlot();
+
+
         itemText.setText(
-                "Holz: "
+
+                formatSlot(
+                        1,
+                        "Holz",
+                        wood,
+                        selected
+                )
+
                         +
-                        wood
+
+                        "     "
+
                         +
-                        "     Stein: "
+
+                        formatSlot(
+                                2,
+                                "Stein",
+                                stone,
+                                selected
+                        )
+
                         +
-                        stone
+
+                        "     "
+
                         +
-                        "     Steinaxt: "
+
+                        formatSlot(
+                                3,
+                                "Steinaxt",
+                                axes,
+                                selected
+                        )
+
                         +
-                        stoneAxes
-                        +
-                        "     [C] Craft"
+
+                        "\n[C] Steinaxt craften"
         );
+    }
+
+
+    private String formatSlot(
+            int slot,
+            String name,
+            int amount,
+            int selected
+    ) {
+
+        if (slot == selected) {
+
+            return "> "
+                    +
+                    slot
+                    +
+                    " "
+                    +
+                    name
+                    +
+                    ": "
+                    +
+                    amount
+                    +
+                    " <";
+        }
+
+
+        return slot
+                +
+                " "
+                +
+                name
+                +
+                ": "
+                +
+                amount;
     }
 }

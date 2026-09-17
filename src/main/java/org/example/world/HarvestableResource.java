@@ -10,9 +10,13 @@ public interface HarvestableResource {
 
     boolean owns(Geometry geometry);
 
-    void harvest();
+    boolean takeDamage(int damage);
 
     boolean isHarvested();
+
+    int getHealth();
+
+    int getMaxHealth();
 
     ItemType getItemType();
 

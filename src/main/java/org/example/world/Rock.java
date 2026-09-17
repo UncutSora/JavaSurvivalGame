@@ -21,6 +21,10 @@ public class Rock implements HarvestableResource {
 
     private final RigidBodyControl rockPhysics;
 
+    private final int maxHealth = 60;
+
+    private int health = maxHealth;
+
     private boolean harvested = false;
 
 
@@ -148,22 +152,38 @@ public class Rock implements HarvestableResource {
 
 
     @Override
-    public void harvest() {
+    public boolean takeDamage(
+            int damage
+    ) {
 
-        if (harvested) {
-            return;
+        if (harvested || damage <= 0) {
+            return false;
         }
 
 
-        harvested = true;
+        health -= damage;
 
 
-        physicsSpace.remove(
-                rockPhysics
-        );
+        if (health <= 0) {
+
+            health = 0;
+
+            harvested = true;
 
 
-        rockNode.removeFromParent();
+            physicsSpace.remove(
+                    rockPhysics
+            );
+
+
+            rockNode.removeFromParent();
+
+
+            return true;
+        }
+
+
+        return false;
     }
 
 
@@ -171,6 +191,20 @@ public class Rock implements HarvestableResource {
     public boolean isHarvested() {
 
         return harvested;
+    }
+
+
+    @Override
+    public int getHealth() {
+
+        return health;
+    }
+
+
+    @Override
+    public int getMaxHealth() {
+
+        return maxHealth;
     }
 
 
