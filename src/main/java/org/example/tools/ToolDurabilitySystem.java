@@ -8,7 +8,9 @@ public class ToolDurabilitySystem {
     private static final int STONE_AXE_MAX_DURABILITY =
             20;
 
+
     private final Inventory inventory;
+
 
     private int stoneAxeDurability =
             0;
@@ -20,6 +22,7 @@ public class ToolDurabilitySystem {
 
         this.inventory =
                 inventory;
+
 
         syncWithInventory();
     }
@@ -39,25 +42,21 @@ public class ToolDurabilitySystem {
                 );
 
 
-        /*
-         * Keine Axt vorhanden.
-         */
-
-        if (axeCount <= 0) {
+        if (
+                axeCount <= 0
+        ) {
 
             stoneAxeDurability =
                     0;
+
 
             return;
         }
 
 
-        /*
-         * Eine Axt wurde neu gecraftet
-         * und besitzt noch keine Haltbarkeit.
-         */
-
-        if (stoneAxeDurability <= 0) {
+        if (
+                stoneAxeDurability <= 0
+        ) {
 
             stoneAxeDurability =
                     STONE_AXE_MAX_DURABILITY;
@@ -78,7 +77,10 @@ public class ToolDurabilitySystem {
 
     public boolean useStoneAxe() {
 
-        if (!hasUsableStoneAxe()) {
+        if (
+                !hasUsableStoneAxe()
+        ) {
+
             return false;
         }
 
@@ -86,31 +88,19 @@ public class ToolDurabilitySystem {
         stoneAxeDurability--;
 
 
-        /*
-         * Haltbarkeit ist noch vorhanden.
-         */
-
-        if (stoneAxeDurability > 0) {
+        if (
+                stoneAxeDurability > 0
+        ) {
 
             return false;
         }
 
-
-        /*
-         * Die aktuelle Axt ist kaputt.
-         */
 
         inventory.removeItem(
                 ItemType.STONE_AXE,
                 1
         );
 
-
-        /*
-         * Falls später mehrere Äxte
-         * im Inventar liegen, wird
-         * automatisch die nächste benutzt.
-         */
 
         if (
                 inventory.hasItem(
@@ -134,6 +124,40 @@ public class ToolDurabilitySystem {
     }
 
 
+    // ==========================
+    // SAVE / LOAD
+    // ==========================
+
+    public void loadStoneAxeDurability(
+            int durability
+    ) {
+
+        if (
+                !inventory.hasItem(
+                        ItemType.STONE_AXE,
+                        1
+                )
+        ) {
+
+            stoneAxeDurability =
+                    0;
+
+
+            return;
+        }
+
+
+        stoneAxeDurability =
+                Math.max(
+                        1,
+                        Math.min(
+                                STONE_AXE_MAX_DURABILITY,
+                                durability
+                        )
+                );
+    }
+
+
     public int getStoneAxeDurability() {
 
         return stoneAxeDurability;
@@ -149,9 +173,7 @@ public class ToolDurabilitySystem {
     public float getStoneAxeDurabilityPercent() {
 
         if (
-                STONE_AXE_MAX_DURABILITY
-                        <=
-                        0
+                STONE_AXE_MAX_DURABILITY <= 0
         ) {
 
             return 0f;

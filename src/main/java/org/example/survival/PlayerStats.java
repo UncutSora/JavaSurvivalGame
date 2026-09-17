@@ -17,20 +17,12 @@ public class PlayerStats {
             100f;
 
 
-    /*
-     * Verbrauch pro Sekunde.
-     */
-
     private static final float HUNGER_DRAIN =
             0.35f;
 
     private static final float THIRST_DRAIN =
             0.55f;
 
-
-    /*
-     * Ausdauer.
-     */
 
     private static final float STAMINA_SPRINT_DRAIN =
             22f;
@@ -39,19 +31,9 @@ public class PlayerStats {
             16f;
 
 
-    /*
-     * Nach vollständiger Erschöpfung
-     * muss sich die Ausdauer erst wieder
-     * bis hierhin regenerieren.
-     */
-
     private static final float EXHAUSTION_RECOVERY =
             25f;
 
-
-    /*
-     * Schaden bei Hunger / Durst = 0.
-     */
 
     private static final float STARVATION_DAMAGE =
             2f;
@@ -93,11 +75,6 @@ public class PlayerStats {
             float tpf
     ) {
 
-        /*
-         * Verhindert extreme Sprünge,
-         * falls das Spiel kurz hängt.
-         */
-
         float delta =
                 Math.min(
                         tpf,
@@ -105,7 +82,9 @@ public class PlayerStats {
                 );
 
 
-        if (health <= 0f) {
+        if (
+                health <= 0f
+        ) {
 
             health =
                     0f;
@@ -193,7 +172,9 @@ public class PlayerStats {
         // ERSCHÖPFUNG
         // ==========================
 
-        if (stamina <= 0f) {
+        if (
+                stamina <= 0f
+        ) {
 
             sprintExhausted =
                     true;
@@ -221,10 +202,12 @@ public class PlayerStats {
 
 
         // ==========================
-        // HUNGER-SCHADEN
+        // HUNGERSCHADEN
         // ==========================
 
-        if (hunger <= 0f) {
+        if (
+                hunger <= 0f
+        ) {
 
             health -=
                     STARVATION_DAMAGE
@@ -234,10 +217,12 @@ public class PlayerStats {
 
 
         // ==========================
-        // DURST-SCHADEN
+        // DURSTSCHADEN
         // ==========================
 
-        if (thirst <= 0f) {
+        if (
+                thirst <= 0f
+        ) {
 
             health -=
                     DEHYDRATION_DAMAGE
@@ -256,7 +241,75 @@ public class PlayerStats {
 
 
     // ==========================
-    // SPÄTER FÜR ESSEN / TRINKEN
+    // SAVE / LOAD
+    // ==========================
+
+    public void loadState(
+            float health,
+            float hunger,
+            float thirst,
+            float stamina,
+            boolean sprintExhausted
+    ) {
+
+        this.health =
+                clamp(
+                        health,
+                        0f,
+                        MAX_HEALTH
+                );
+
+
+        this.hunger =
+                clamp(
+                        hunger,
+                        0f,
+                        MAX_HUNGER
+                );
+
+
+        this.thirst =
+                clamp(
+                        thirst,
+                        0f,
+                        MAX_THIRST
+                );
+
+
+        this.stamina =
+                clamp(
+                        stamina,
+                        0f,
+                        MAX_STAMINA
+                );
+
+
+        this.sprintExhausted =
+                sprintExhausted;
+
+
+        if (
+                this.health <= 0f
+        ) {
+
+            player.setCanSprint(
+                    false
+            );
+
+            return;
+        }
+
+
+        player.setCanSprint(
+                !this.sprintExhausted
+                        &&
+                        this.stamina > 0f
+        );
+    }
+
+
+    // ==========================
+    // ESSEN / TRINKEN
     // ==========================
 
     public void addHunger(

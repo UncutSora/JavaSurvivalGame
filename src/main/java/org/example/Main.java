@@ -18,6 +18,7 @@ import org.example.hotbar.HotbarSystem;
 import org.example.interaction.InteractionSystem;
 import org.example.inventory.Inventory;
 import org.example.player.Player;
+import org.example.save.SaveGameSystem;
 import org.example.survival.ConsumableSystem;
 import org.example.survival.PlayerStats;
 import org.example.tools.ToolDurabilitySystem;
@@ -57,6 +58,8 @@ public class Main extends SimpleApplication {
     private ToolDurabilitySystem toolDurabilitySystem;
 
     private ConsumableSystem consumableSystem;
+
+    private SaveGameSystem saveGameSystem;
 
 
     private final List<HarvestableResource> resources =
@@ -134,6 +137,8 @@ public class Main extends SimpleApplication {
         createInventoryMenuSystem();
 
         createConsumableSystem();
+
+        createSaveGameSystem();
 
         createInteractionSystem();
 
@@ -310,6 +315,19 @@ public class Main extends SimpleApplication {
     }
 
 
+    private void createSaveGameSystem() {
+
+        saveGameSystem =
+                new SaveGameSystem(
+                        inputManager,
+                        player,
+                        playerStats,
+                        inventory,
+                        toolDurabilitySystem
+                );
+    }
+
+
     private void createInteractionSystem() {
 
         new InteractionSystem(
@@ -463,7 +481,7 @@ public class Main extends SimpleApplication {
 
 
         // ==========================
-        // BEERENSTRÄUCHER
+        // BEEREN
         // ==========================
 
         addResource(
@@ -509,7 +527,7 @@ public class Main extends SimpleApplication {
 
 
         // ==========================
-        // WASSERQUELLE
+        // WASSER
         // ==========================
 
         addResource(
