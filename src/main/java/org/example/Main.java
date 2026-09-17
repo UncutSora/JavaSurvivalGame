@@ -18,8 +18,10 @@ import org.example.hotbar.HotbarSystem;
 import org.example.interaction.InteractionSystem;
 import org.example.inventory.Inventory;
 import org.example.player.Player;
+import org.example.survival.PlayerStats;
 import org.example.tools.ToolDurabilitySystem;
 import org.example.ui.InventoryHud;
+import org.example.ui.SurvivalHud;
 import org.example.ui.ToolView;
 import org.example.world.HarvestableResource;
 import org.example.world.Rock;
@@ -33,6 +35,10 @@ public class Main extends SimpleApplication {
     private BulletAppState bulletAppState;
 
     private Player player;
+
+    private PlayerStats playerStats;
+
+    private SurvivalHud survivalHud;
 
     private Inventory inventory;
 
@@ -103,6 +109,10 @@ public class Main extends SimpleApplication {
 
         createPlayer();
 
+        createPlayerStats();
+
+        createSurvivalHud();
+
         createInventory();
 
         createHotbarSystem();
@@ -155,6 +165,49 @@ public class Main extends SimpleApplication {
         stateManager.attach(
                 bulletAppState
         );
+    }
+
+
+    private void createPlayer() {
+
+        player =
+                new Player(
+                        cam,
+                        inputManager,
+                        bulletAppState
+                                .getPhysicsSpace()
+                );
+
+
+        cam.lookAt(
+                new Vector3f(
+                        0,
+                        1.5f,
+                        0
+                ),
+                Vector3f.UNIT_Y
+        );
+    }
+
+
+    private void createPlayerStats() {
+
+        playerStats =
+                new PlayerStats(
+                        player
+                );
+    }
+
+
+    private void createSurvivalHud() {
+
+        survivalHud =
+                new SurvivalHud(
+                        assetManager,
+                        guiNode,
+                        cam,
+                        playerStats
+                );
     }
 
 
@@ -386,28 +439,6 @@ public class Main extends SimpleApplication {
     }
 
 
-    private void createPlayer() {
-
-        player =
-                new Player(
-                        cam,
-                        inputManager,
-                        bulletAppState
-                                .getPhysicsSpace()
-                );
-
-
-        cam.lookAt(
-                new Vector3f(
-                        0,
-                        1.5f,
-                        0
-                ),
-                Vector3f.UNIT_Y
-        );
-    }
-
-
     private void createGround() {
 
         Box groundBox =
@@ -624,10 +655,28 @@ public class Main extends SimpleApplication {
 
 
         if (
+                playerStats != null
+        ) {
+
+            playerStats.update(
+                    tpf
+            );
+        }
+
+
+        if (
                 toolDurabilitySystem != null
         ) {
 
             toolDurabilitySystem.update();
+        }
+
+
+        if (
+                survivalHud != null
+        ) {
+
+            survivalHud.update();
         }
 
 
