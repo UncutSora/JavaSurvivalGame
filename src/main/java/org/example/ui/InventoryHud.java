@@ -33,8 +33,7 @@ public class InventoryHud {
 
 
         float width =
-                280f;
-
+                430f;
 
         float height =
                 60f;
@@ -125,7 +124,7 @@ public class InventoryHud {
 
 
         itemText.setSize(
-                21f
+                20f
         );
 
 
@@ -159,14 +158,26 @@ public class InventoryHud {
                 );
 
 
+        int stoneAxes =
+                inventory.getAmount(
+                        ItemType.STONE_AXE
+                );
+
+
         itemText.setText(
-                "1 Holz: "
+                "Holz: "
                         +
                         wood
                         +
-                        "     2 Stein: "
+                        "     Stein: "
                         +
                         stone
+                        +
+                        "     Steinaxt: "
+                        +
+                        stoneAxes
+                        +
+                        "     [C] Craft"
         );
     }
 }
