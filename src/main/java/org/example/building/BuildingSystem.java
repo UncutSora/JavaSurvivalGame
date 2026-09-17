@@ -55,6 +55,9 @@ public class BuildingSystem implements ActionListener {
     private static final String INTERACT_DOOR =
             "InteractDoor";
 
+    private static final String SELECT_CEILING =
+            "SelectCeiling";
+
     private static final String TOGGLE_DEMOLISH =
             "ToggleDemolishMode";
 
@@ -70,6 +73,9 @@ public class BuildingSystem implements ActionListener {
 
     public static final int DOOR_WOOD_COST =
             3;
+
+    public static final int CEILING_WOOD_COST =
+            4;
 
 
     private static final float BUILD_DISTANCE =
@@ -96,7 +102,8 @@ public class BuildingSystem implements ActionListener {
         FOUNDATION,
         WALL,
         DOOR_FRAME,
-        DOOR
+        DOOR,
+        CEILING
     }
 
 
@@ -131,6 +138,9 @@ public class BuildingSystem implements ActionListener {
 
     private final Material doorPreviewMaterial;
 
+    private final Geometry ceilingPreview;
+    private final Material ceilingPreviewMaterial;
+
 
     private final BitmapText buildText;
 
@@ -145,6 +155,9 @@ public class BuildingSystem implements ActionListener {
             new ArrayList<>();
 
     private final List<Geometry> placedDoors =
+            new ArrayList<>();
+
+    private final List<Geometry> placedCeilings =
             new ArrayList<>();
 
     private final List<Quaternion> doorClosedRotations =
@@ -181,6 +194,9 @@ public class BuildingSystem implements ActionListener {
             1;
 
     private int nextDoorId =
+            1;
+
+    private int nextCeilingId =
             1;
 
     private long lastDoorAnimationTimeNanos =
@@ -365,6 +381,23 @@ public class BuildingSystem implements ActionListener {
 
 
         // ==========================
+        // DECKEN-VORSCHAU
+        // ==========================
+
+        ceilingPreviewMaterial = createPreviewMaterial();
+
+        ceilingPreview = new Geometry(
+                "CeilingPreview",
+                new Box(1.5f, 0.12f, 1.5f)
+        );
+
+        ceilingPreview.setMaterial(ceilingPreviewMaterial);
+        ceilingPreview.setQueueBucket(RenderQueue.Bucket.Transparent);
+        ceilingPreview.setCullHint(Spatial.CullHint.Always);
+        rootNode.attachChild(ceilingPreview);
+
+
+        // ==========================
         // HUD
         // ==========================
 
@@ -458,6 +491,13 @@ public class BuildingSystem implements ActionListener {
                 )
         );
 
+        inputManager.addMapping(
+                SELECT_CEILING,
+                new KeyTrigger(
+                        KeyInput.KEY_5
+                )
+        );
+
 
         inputManager.addMapping(
                 TOGGLE_DEMOLISH,
@@ -482,6 +522,7 @@ public class BuildingSystem implements ActionListener {
                 SELECT_WALL,
                 SELECT_DOOR_FRAME,
                 SELECT_DOOR,
+                SELECT_CEILING,
                 INTERACT_DOOR,
                 TOGGLE_DEMOLISH,
                 PLACE_BUILDING
@@ -672,6 +713,15 @@ public class BuildingSystem implements ActionListener {
 
 
         if (
+                name.equals(SELECT_CEILING)
+                        &&
+                        isPressed
+        ) {
+            selectedBuildType = BuildType.CEILING;
+            return;
+        }
+
+        if (
                 name.equals(
                         PLACE_BUILDING
                 )
@@ -737,6 +787,12 @@ public class BuildingSystem implements ActionListener {
                 updateDoorPreview();
 
                 break;
+
+            case CEILING:
+
+                updateCeilingPreview();
+
+                break;
         }
 
 
@@ -757,6 +813,11 @@ public class BuildingSystem implements ActionListener {
 
 
         doorPreview.setCullHint(
+                Spatial.CullHint.Always
+        );
+
+
+        ceilingPreview.setCullHint(
                 Spatial.CullHint.Always
         );
 
@@ -825,6 +886,11 @@ public class BuildingSystem implements ActionListener {
         );
 
 
+        ceilingPreview.setCullHint(
+                Spatial.CullHint.Always
+        );
+
+
         EdgeTransform edge =
                 calculateCurrentEdgeTransform();
 
@@ -888,6 +954,11 @@ public class BuildingSystem implements ActionListener {
 
 
         doorPreview.setCullHint(
+                Spatial.CullHint.Always
+        );
+
+
+        ceilingPreview.setCullHint(
                 Spatial.CullHint.Always
         );
 
@@ -1008,6 +1079,51 @@ public class BuildingSystem implements ActionListener {
                 doorPreviewMaterial,
                 valid
         );
+    }
+
+
+    private void updateCeilingPreview() {
+
+        foundationPreview.setCullHint(Spatial.CullHint.Always);
+        wallPreview.setCullHint(Spatial.CullHint.Always);
+        doorFramePreview.setCullHint(Spatial.CullHint.Always);
+        doorPreview.setCullHint(Spatial.CullHint.Always);
+
+        Geometry foundation = getNearestFoundationToBuildTarget();
+
+        if (foundation == null) {
+            ceilingPreview.setCullHint(Spatial.CullHint.Always);
+            return;
+        }
+
+        Vector3f position = foundation.getLocalTranslation().clone();
+        position.y = 3.12f;
+
+        ceilingPreview.setLocalTranslation(position);
+        ceilingPreview.setLocalRotation(Quaternion.IDENTITY);
+        ceilingPreview.setCullHint(Spatial.CullHint.Inherit);
+
+        boolean valid =
+                inventory.hasItem(ItemType.WOOD, CEILING_WOOD_COST)
+                        && !ceilingExistsAt(position.x, position.y, position.z);
+
+        setPreviewColor(ceilingPreviewMaterial, valid);
+    }
+
+
+    private boolean ceilingExistsAt(float x, float y, float z) {
+
+        for (Geometry ceiling : placedCeilings) {
+            Vector3f position = ceiling.getLocalTranslation();
+
+            if (Math.abs(position.x - x) < 0.1f
+                    && Math.abs(position.y - y) < 0.1f
+                    && Math.abs(position.z - z) < 0.1f) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
 
@@ -1856,7 +1972,7 @@ public class BuildingSystem implements ActionListener {
                 break;
 
 
-            default:
+            case DOOR:
 
                 selectedName =
                         "Tür";
@@ -1865,11 +1981,21 @@ public class BuildingSystem implements ActionListener {
                         DOOR_WOOD_COST;
 
                 break;
+
+            default:
+
+                selectedName =
+                        "Decke";
+
+                cost =
+                        CEILING_WOOD_COST;
+
+                break;
         }
 
 
         buildText.setText(
-                "BAUMODUS | [1] Fundament | [2] Wand | [3] Türrahmen | [4] Tür | "
+                "BAUMODUS | [1] Fundament | [2] Wand | [3] Türrahmen | [4] Tür | [5] Decke | "
                         +
                         selectedName
                         +
@@ -1916,6 +2042,12 @@ public class BuildingSystem implements ActionListener {
             case DOOR:
 
                 placeDoor();
+
+                break;
+
+            case CEILING:
+
+                placeCeiling();
 
                 break;
         }
@@ -2091,6 +2223,44 @@ public class BuildingSystem implements ActionListener {
         System.out.println(
                 "Tür gebaut."
         );
+    }
+
+
+    private void placeCeiling() {
+
+        Geometry foundation = getNearestFoundationToBuildTarget();
+
+        if (foundation == null
+                || !inventory.hasItem(ItemType.WOOD, CEILING_WOOD_COST)) {
+            return;
+        }
+
+        Vector3f position = foundation.getLocalTranslation().clone();
+        position.y = 3.12f;
+
+        if (ceilingExistsAt(position.x, position.y, position.z)) {
+            return;
+        }
+
+        createAndAttachCeiling(position);
+        inventory.removeItem(ItemType.WOOD, CEILING_WOOD_COST);
+        System.out.println("Decke gebaut.");
+    }
+
+
+    private void createAndAttachCeiling(Vector3f position) {
+
+        Geometry ceiling = new Geometry(
+                "Ceiling_" + nextCeilingId,
+                new Box(1.5f, 0.12f, 1.5f)
+        );
+
+        ceiling.setMaterial(createWoodMaterial());
+        ceiling.setLocalTranslation(position);
+        rootNode.attachChild(ceiling);
+        addPhysics(ceiling);
+        placedCeilings.add(ceiling);
+        nextCeilingId++;
     }
 
 
@@ -2551,6 +2721,11 @@ public class BuildingSystem implements ActionListener {
         doorPreview.setCullHint(
                 Spatial.CullHint.Always
         );
+
+
+        ceilingPreview.setCullHint(
+                Spatial.CullHint.Always
+        );
     }
 
 
@@ -2707,6 +2882,16 @@ public class BuildingSystem implements ActionListener {
     }
 
 
+    public int getCeilingCount() {
+        return placedCeilings.size();
+    }
+
+
+    public Vector3f getCeilingPosition(int index) {
+        return placedCeilings.get(index).getLocalTranslation().clone();
+    }
+
+
     public void clearBuildings() {
 
         for (
@@ -2757,6 +2942,10 @@ public class BuildingSystem implements ActionListener {
         }
 
 
+        for (Geometry ceiling : placedCeilings) {
+            removeGeometryWithPhysics(ceiling);
+        }
+
         placedFoundations.clear();
 
         placedWalls.clear();
@@ -2764,6 +2953,8 @@ public class BuildingSystem implements ActionListener {
         placedDoorFrames.clear();
 
         placedDoors.clear();
+
+        placedCeilings.clear();
 
         doorClosedRotations.clear();
 
@@ -2784,6 +2975,9 @@ public class BuildingSystem implements ActionListener {
                 1;
 
         nextDoorId =
+                1;
+
+        nextCeilingId =
                 1;
     }
 
@@ -2840,6 +3034,11 @@ public class BuildingSystem implements ActionListener {
                 framePosition.clone(),
                 open
         );
+    }
+
+
+    public void loadCeiling(Vector3f position) {
+        createAndAttachCeiling(position.clone());
     }
 
 
@@ -2971,6 +3170,19 @@ public class BuildingSystem implements ActionListener {
                 removeGeometryWithPhysics(wall);
                 inventory.addItem(ItemType.WOOD, WALL_WOOD_COST);
                 System.out.println("Wand abgerissen. +" + WALL_WOOD_COST + " Holz.");
+                return;
+            }
+
+            int ceilingIndex = findGeometryIndex(placedCeilings, hit);
+            if (ceilingIndex >= 0) {
+                if (!inventory.canAddItem(ItemType.WOOD, CEILING_WOOD_COST)) {
+                    System.out.println("Nicht genug Platz im Inventar.");
+                    return;
+                }
+                Geometry ceiling = placedCeilings.remove(ceilingIndex);
+                removeGeometryWithPhysics(ceiling);
+                inventory.addItem(ItemType.WOOD, CEILING_WOOD_COST);
+                System.out.println("Decke abgerissen. +" + CEILING_WOOD_COST + " Holz.");
                 return;
             }
 

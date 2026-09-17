@@ -37,7 +37,7 @@ public class SaveGameSystem implements ActionListener {
 
 
     private static final int SAVE_VERSION =
-            8;
+            9;
 
 
     private final Player player;
@@ -226,6 +226,12 @@ public class SaveGameSystem implements ActionListener {
                 );
             }
 
+
+            System.out.println(
+                    "Decken: "
+                            +
+                            buildingSystem.getCeilingCount()
+            );
 
             System.out.println(
                     "================================"
@@ -560,6 +566,10 @@ public class SaveGameSystem implements ActionListener {
         saveDoors(
                 properties
         );
+
+        saveCeilings(
+                properties
+        );
     }
 
 
@@ -882,6 +892,25 @@ public class SaveGameSystem implements ActionListener {
     }
 
 
+    private void saveCeilings(Properties properties) {
+
+        int ceilingCount = buildingSystem.getCeilingCount();
+        properties.setProperty(
+                "building.ceiling.count",
+                Integer.toString(ceilingCount)
+        );
+
+        for (int i = 0; i < ceilingCount; i++) {
+            Vector3f position = buildingSystem.getCeilingPosition(i);
+            String prefix = "building.ceiling." + i + ".";
+
+            properties.setProperty(prefix + "x", Float.toString(position.x));
+            properties.setProperty(prefix + "y", Float.toString(position.y));
+            properties.setProperty(prefix + "z", Float.toString(position.z));
+        }
+    }
+
+
     // =========================================================
     // LADEN
     // =========================================================
@@ -1008,6 +1037,12 @@ public class SaveGameSystem implements ActionListener {
                         buildingSystem.getDoorCount()
         );
 
+
+        System.out.println(
+                "Decken: "
+                        +
+                        buildingSystem.getCeilingCount()
+        );
 
         System.out.println(
                 "================================"
@@ -1347,6 +1382,10 @@ public class SaveGameSystem implements ActionListener {
         loadDoors(
                 properties
         );
+
+        loadCeilings(
+                properties
+        );
     }
 
 
@@ -1665,6 +1704,26 @@ public class SaveGameSystem implements ActionListener {
                     ),
                     open
             );
+        }
+    }
+
+
+    private void loadCeilings(Properties properties) {
+
+        int ceilingCount = readInt(
+                properties,
+                "building.ceiling.count",
+                0
+        );
+
+        for (int i = 0; i < ceilingCount; i++) {
+            String prefix = "building.ceiling." + i + ".";
+
+            float x = readFloat(properties, prefix + "x", 0f);
+            float y = readFloat(properties, prefix + "y", 3.12f);
+            float z = readFloat(properties, prefix + "z", 0f);
+
+            buildingSystem.loadCeiling(new Vector3f(x, y, z));
         }
     }
 
