@@ -390,9 +390,7 @@ public class Main extends SimpleApplication {
 
     private void createResources() {
 
-        // ==========================
         // 25 BÄUME
-        // ==========================
 
         addTree("tree_01", 0f, 0f, 0f);
         addTree("tree_02", 5f, 0f, -3f);
@@ -425,9 +423,7 @@ public class Main extends SimpleApplication {
         addTree("tree_25", -11f, 0f, -18f);
 
 
-        // ==========================
         // 12 STEINE
-        // ==========================
 
         addRock("rock_01", 3f, 0f, 3f);
         addRock("rock_02", -3f, 0f, 2f);
@@ -445,9 +441,7 @@ public class Main extends SimpleApplication {
         addRock("rock_12", -6f, 0f, 18f);
 
 
-        // ==========================
         // 6 BEERENSTRÄUCHER
-        // ==========================
 
         addBerryBush(
                 "berry_01",
@@ -456,14 +450,12 @@ public class Main extends SimpleApplication {
                 -2f
         );
 
-
         addBerryBush(
                 "berry_02",
                 -2f,
                 0f,
                 -3f
         );
-
 
         addBerryBush(
                 "berry_03",
@@ -472,7 +464,6 @@ public class Main extends SimpleApplication {
                 1f
         );
 
-
         addBerryBush(
                 "berry_04",
                 -8f,
@@ -480,14 +471,12 @@ public class Main extends SimpleApplication {
                 7f
         );
 
-
         addBerryBush(
                 "berry_05",
                 12f,
                 0f,
                 12f
         );
-
 
         addBerryBush(
                 "berry_06",
@@ -497,9 +486,7 @@ public class Main extends SimpleApplication {
         );
 
 
-        // ==========================
         // 2 WASSERQUELLEN
-        // ==========================
 
         addWaterSource(
                 "water_01",
@@ -507,7 +494,6 @@ public class Main extends SimpleApplication {
                 0f,
                 -9f
         );
-
 
         addWaterSource(
                 "water_02",
@@ -517,10 +503,6 @@ public class Main extends SimpleApplication {
         );
     }
 
-
-    // ==========================
-    // RESOURCE-HELPER
-    // ==========================
 
     private void addTree(
             String id,
@@ -625,14 +607,6 @@ public class Main extends SimpleApplication {
 
 
     private void createGround() {
-
-        /*
-         * Größerer Boden:
-         *
-         * Box benutzt Halbgrößen.
-         * 35 bedeutet also ungefähr
-         * 70 x 70 Einheiten Spielfläche.
-         */
 
         Box groundBox =
                 new Box(
