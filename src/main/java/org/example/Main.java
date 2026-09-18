@@ -25,6 +25,7 @@ import org.example.time.DayNightSystem;
 import org.example.tools.ToolDurabilitySystem;
 import org.example.ui.InventoryHud;
 import org.example.ui.InventoryMenuSystem;
+import org.example.ui.DeathScreenHud;
 import org.example.ui.SurvivalHud;
 import org.example.ui.TimeHud;
 import org.example.ui.ToolView;
@@ -48,6 +49,8 @@ public class Main extends SimpleApplication {
     private PlayerStats playerStats;
 
     private SurvivalHud survivalHud;
+
+    private DeathScreenHud deathScreenHud;
 
     private Inventory inventory;
 
@@ -215,6 +218,8 @@ public class Main extends SimpleApplication {
 
         createSurvivalHud();
 
+        createDeathScreenHud();
+
         createInventory();
 
         createHotbarSystem();
@@ -353,6 +358,17 @@ public class Main extends SimpleApplication {
     }
 
 
+    private void createDeathScreenHud() {
+
+        deathScreenHud =
+                new DeathScreenHud(
+                        assetManager,
+                        guiNode,
+                        cam
+                );
+    }
+
+
     // =========================================================
     // INVENTAR
     // =========================================================
@@ -480,7 +496,9 @@ public class Main extends SimpleApplication {
                         player,
                         playerStats,
                         buildingSystem,
-                        inventoryMenuSystem
+                        inventoryMenuSystem,
+                        flyCam,
+                        deathScreenHud
                 );
     }
 
@@ -1364,7 +1382,9 @@ public class Main extends SimpleApplication {
                 respawnSystem != null
         ) {
 
-            respawnSystem.update();
+            respawnSystem.update(
+                    tpf
+            );
         }
 
 

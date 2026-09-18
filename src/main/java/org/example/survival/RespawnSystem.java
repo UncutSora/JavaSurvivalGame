@@ -1,5 +1,6 @@
 package org.example.survival;
 
+import com.jme3.input.FlyByCamera;
 import com.jme3.input.InputManager;
 import com.jme3.input.KeyInput;
 import com.jme3.input.controls.ActionListener;
@@ -8,12 +9,16 @@ import com.jme3.math.Vector3f;
 
 import org.example.building.BuildingSystem;
 import org.example.player.Player;
+import org.example.ui.DeathScreenHud;
 import org.example.ui.InventoryMenuSystem;
 
 public class RespawnSystem implements ActionListener {
 
     private static final String SET_RESPAWN_POINT =
             "SetRespawnPoint";
+
+    private static final float RESPAWN_DELAY_SECONDS =
+            3f;
 
     private static final Vector3f DEFAULT_RESPAWN_POSITION =
             new Vector3f(
@@ -31,11 +36,18 @@ public class RespawnSystem implements ActionListener {
 
     private final InventoryMenuSystem inventoryMenuSystem;
 
+    private final FlyByCamera flyCam;
+
+    private final DeathScreenHud deathScreenHud;
+
 
     private Vector3f respawnBedPosition;
 
-    private boolean deathHandled =
+    private boolean deathSequenceActive =
             false;
+
+    private float deathTimer =
+            0f;
 
 
     public RespawnSystem(
@@ -43,7 +55,9 @@ public class RespawnSystem implements ActionListener {
             Player player,
             PlayerStats playerStats,
             BuildingSystem buildingSystem,
-            InventoryMenuSystem inventoryMenuSystem
+            InventoryMenuSystem inventoryMenuSystem,
+            FlyByCamera flyCam,
+            DeathScreenHud deathScreenHud
     ) {
 
         this.player =
@@ -57,6 +71,12 @@ public class RespawnSystem implements ActionListener {
 
         this.inventoryMenuSystem =
                 inventoryMenuSystem;
+
+        this.flyCam =
+                flyCam;
+
+        this.deathScreenHud =
+                deathScreenHud;
 
 
         inputManager.addMapping(
@@ -87,6 +107,16 @@ public class RespawnSystem implements ActionListener {
                         !name.equals(
                                 SET_RESPAWN_POINT
                         )
+        ) {
+
+            return;
+        }
+
+
+        if (
+                deathSequenceActive
+                        ||
+                        playerStats.isDead()
         ) {
 
             return;
@@ -125,7 +155,9 @@ public class RespawnSystem implements ActionListener {
     }
 
 
-    public void update() {
+    public void update(
+            float tpf
+    ) {
 
         validateRespawnBed();
 
@@ -134,27 +166,105 @@ public class RespawnSystem implements ActionListener {
                 !playerStats.isDead()
         ) {
 
-            deathHandled =
-                    false;
+            if (
+                    deathSequenceActive
+            ) {
+
+                cancelDeathSequence();
+            }
 
             return;
         }
 
 
         if (
-                deathHandled
+                !deathSequenceActive
         ) {
 
-            return;
+            startDeathSequence();
         }
 
 
-        deathHandled =
+        deathTimer +=
+                Math.min(
+                        tpf,
+                        0.1f
+                );
+
+
+        float remaining =
+                Math.max(
+                        0f,
+                        RESPAWN_DELAY_SECONDS
+                                -
+                                deathTimer
+                );
+
+
+        int secondsRemaining =
+                (int) Math.ceil(
+                        remaining
+                );
+
+
+        deathScreenHud.show(
+                secondsRemaining,
+                hasRespawnBed()
+        );
+
+
+        if (
+                deathTimer
+                        >=
+                        RESPAWN_DELAY_SECONDS
+        ) {
+
+            respawnPlayer();
+        }
+    }
+
+
+    private void startDeathSequence() {
+
+        deathSequenceActive =
                 true;
 
+        deathTimer =
+                0f;
+
+
+        player.setInputEnabled(
+                false
+        );
+
+        flyCam.setEnabled(
+                false
+        );
+
+        buildingSystem.setActive(
+                false
+        );
+
+
+        deathScreenHud.show(
+                (int) RESPAWN_DELAY_SECONDS,
+                hasRespawnBed()
+        );
+
+
+        System.out.println(
+                "Du bist gestorben. Respawn in 3 Sekunden."
+        );
+    }
+
+
+    private void respawnPlayer() {
 
         Vector3f respawnPosition =
                 getCurrentRespawnPosition();
+
+        boolean usingBed =
+                hasRespawnBed();
 
 
         player.getCharacter()
@@ -166,13 +276,59 @@ public class RespawnSystem implements ActionListener {
         playerStats.respawn();
 
 
+        deathScreenHud.hide();
+
+        deathSequenceActive =
+                false;
+
+        deathTimer =
+                0f;
+
+
+        if (
+                inventoryMenuSystem.isOpen()
+        ) {
+
+            player.setInputEnabled(
+                    false
+            );
+
+            flyCam.setEnabled(
+                    false
+            );
+        }
+
+        else {
+
+            player.setInputEnabled(
+                    true
+            );
+
+            flyCam.setEnabled(
+                    true
+            );
+        }
+
+
         System.out.println(
-                hasRespawnBed()
+                usingBed
                         ?
                         "Du bist an deinem Bett respawnt."
                         :
                         "Du bist am Welt-Spawn respawnt."
         );
+    }
+
+
+    private void cancelDeathSequence() {
+
+        deathScreenHud.hide();
+
+        deathSequenceActive =
+                false;
+
+        deathTimer =
+                0f;
     }
 
 
@@ -233,6 +389,12 @@ public class RespawnSystem implements ActionListener {
                 buildingSystem.hasBedAt(
                         respawnBedPosition
                 );
+    }
+
+
+    public boolean isDeathSequenceActive() {
+
+        return deathSequenceActive;
     }
 
 
