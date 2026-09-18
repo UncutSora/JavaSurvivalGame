@@ -20,6 +20,7 @@ import org.example.player.Player;
 import org.example.save.SaveGameSystem;
 import org.example.survival.ConsumableSystem;
 import org.example.survival.PlayerStats;
+import org.example.survival.RespawnSystem;
 import org.example.time.DayNightSystem;
 import org.example.tools.ToolDurabilitySystem;
 import org.example.ui.InventoryHud;
@@ -69,6 +70,8 @@ public class Main extends SimpleApplication {
     private TimeHud timeHud;
 
     private BuildingSystem buildingSystem;
+
+    private RespawnSystem respawnSystem;
 
 
     private final List<HarvestableResource> resources =
@@ -229,6 +232,8 @@ public class Main extends SimpleApplication {
         createConsumableSystem();
 
         createBuildingSystem();
+
+        createRespawnSystem();
 
         createSaveGameSystem();
 
@@ -467,6 +472,19 @@ public class Main extends SimpleApplication {
     }
 
 
+    private void createRespawnSystem() {
+
+        respawnSystem =
+                new RespawnSystem(
+                        inputManager,
+                        player,
+                        playerStats,
+                        buildingSystem,
+                        inventoryMenuSystem
+                );
+    }
+
+
     // =========================================================
     // SAVE
     // =========================================================
@@ -483,7 +501,8 @@ public class Main extends SimpleApplication {
                         resources,
                         sheep,
                         dayNightSystem,
-                        buildingSystem
+                        buildingSystem,
+                        respawnSystem
                 );
     }
 
@@ -1338,6 +1357,14 @@ public class Main extends SimpleApplication {
             playerStats.update(
                     tpf
             );
+        }
+
+
+        if (
+                respawnSystem != null
+        ) {
+
+            respawnSystem.update();
         }
 
 

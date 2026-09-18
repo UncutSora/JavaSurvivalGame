@@ -434,6 +434,29 @@ public class PlayerStats {
     }
 
 
+    public void respawn() {
+
+        health =
+                MAX_HEALTH;
+
+        hunger =
+                MAX_HUNGER;
+
+        thirst =
+                MAX_THIRST;
+
+        stamina =
+                MAX_STAMINA;
+
+        sprintExhausted =
+                false;
+
+        player.setCanSprint(
+                true
+        );
+    }
+
+
     public boolean isDead() {
 
         return health <= 0f;

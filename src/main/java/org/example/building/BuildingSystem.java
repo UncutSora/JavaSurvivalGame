@@ -67,6 +67,9 @@ public class BuildingSystem implements ActionListener {
     private static final String SELECT_STAIRS =
             "SelectStairs";
 
+    private static final String SELECT_BED =
+            "SelectBed";
+
     private static final String ROTATE_BUILDING =
             "RotateBuilding";
 
@@ -93,6 +96,12 @@ public class BuildingSystem implements ActionListener {
             4;
 
     public static final int STAIRS_WOOD_COST =
+            5;
+
+    public static final int BED_WOOD_COST =
+            6;
+
+    public static final int BED_WOOL_COST =
             5;
 
 
@@ -123,7 +132,8 @@ public class BuildingSystem implements ActionListener {
         DOOR,
         CEILING,
         ROOF,
-        STAIRS
+        STAIRS,
+        BED
     }
 
 
@@ -167,6 +177,9 @@ public class BuildingSystem implements ActionListener {
     private final Node stairsPreview;
     private final Material stairsPreviewMaterial;
 
+    private final Node bedPreview;
+    private final Material bedPreviewMaterial;
+
 
     private final BitmapText buildText;
 
@@ -190,6 +203,9 @@ public class BuildingSystem implements ActionListener {
             new ArrayList<>();
 
     private final List<Node> placedStairs =
+            new ArrayList<>();
+
+    private final List<Node> placedBeds =
             new ArrayList<>();
 
     private final Map<Spatial, Spatial> buildingOutlines =
@@ -240,10 +256,16 @@ public class BuildingSystem implements ActionListener {
     private int nextStairsId =
             1;
 
+    private int nextBedId =
+            1;
+
     private int roofRotationSteps =
             0;
 
     private int stairsRotationSteps =
+            0;
+
+    private int bedRotationSteps =
             0;
 
     private long lastDoorAnimationTimeNanos =
@@ -477,6 +499,22 @@ public class BuildingSystem implements ActionListener {
 
 
         // ==========================
+        // BETT-VORSCHAU
+        // ==========================
+
+        bedPreviewMaterial = createPreviewMaterial();
+
+        bedPreview = createBedVisual(
+                "BedPreview",
+                bedPreviewMaterial
+        );
+
+        bedPreview.setQueueBucket(RenderQueue.Bucket.Transparent);
+        bedPreview.setCullHint(Spatial.CullHint.Always);
+        rootNode.attachChild(bedPreview);
+
+
+        // ==========================
         // HUD
         // ==========================
 
@@ -592,6 +630,13 @@ public class BuildingSystem implements ActionListener {
         );
 
         inputManager.addMapping(
+                SELECT_BED,
+                new KeyTrigger(
+                        KeyInput.KEY_8
+                )
+        );
+
+        inputManager.addMapping(
                 ROTATE_BUILDING,
                 new KeyTrigger(
                         KeyInput.KEY_R
@@ -625,6 +670,7 @@ public class BuildingSystem implements ActionListener {
                 SELECT_CEILING,
                 SELECT_ROOF,
                 SELECT_STAIRS,
+                SELECT_BED,
                 ROTATE_BUILDING,
                 INTERACT_DOOR,
                 TOGGLE_DEMOLISH,
@@ -843,6 +889,15 @@ public class BuildingSystem implements ActionListener {
         }
 
         if (
+                name.equals(SELECT_BED)
+                        &&
+                        isPressed
+        ) {
+            selectedBuildType = BuildType.BED;
+            return;
+        }
+
+        if (
                 name.equals(ROTATE_BUILDING)
                         &&
                         isPressed
@@ -871,6 +926,21 @@ public class BuildingSystem implements ActionListener {
                         "Treppe gedreht: "
                                 +
                                 (stairsRotationSteps * 90)
+                                +
+                                " Grad."
+                );
+
+                return;
+            }
+
+            if (selectedBuildType == BuildType.BED) {
+                bedRotationSteps =
+                        (bedRotationSteps + 1) % 4;
+
+                System.out.println(
+                        "Bett gedreht: "
+                                +
+                                (bedRotationSteps * 90)
                                 +
                                 " Grad."
                 );
@@ -914,6 +984,8 @@ public class BuildingSystem implements ActionListener {
             return;
         }
 
+
+        hidePreviews();
 
         switch (
                 selectedBuildType
@@ -961,6 +1033,12 @@ public class BuildingSystem implements ActionListener {
             case STAIRS:
 
                 updateStairsPreview();
+
+                break;
+
+            case BED:
+
+                updateBedPreview();
 
                 break;
         }
@@ -1471,6 +1549,178 @@ public class BuildingSystem implements ActionListener {
         }
 
         return nearest;
+    }
+
+
+    private void updateBedPreview() {
+
+        Vector3f supportPosition =
+                getNearestBedSupportPosition();
+
+        if (
+                supportPosition == null
+        ) {
+
+            bedPreview.setCullHint(
+                    Spatial.CullHint.Always
+            );
+
+            return;
+        }
+
+        Vector3f position =
+                supportPosition.clone();
+
+        position.y +=
+                0.12f;
+
+        Quaternion rotation =
+                createYawRotation(
+                        bedRotationSteps
+                );
+
+        bedPreview.setLocalTranslation(
+                position
+        );
+
+        bedPreview.setLocalRotation(
+                rotation
+        );
+
+        bedPreview.setCullHint(
+                Spatial.CullHint.Inherit
+        );
+
+        boolean valid =
+                inventory.hasItem(
+                        ItemType.WOOD,
+                        BED_WOOD_COST
+                )
+                        &&
+                        inventory.hasItem(
+                                ItemType.WOOL,
+                                BED_WOOL_COST
+                        )
+                        &&
+                        !bedExistsAt(
+                                position
+                        );
+
+        setPreviewColor(
+                bedPreviewMaterial,
+                valid
+        );
+    }
+
+
+    private Vector3f getNearestBedSupportPosition() {
+
+        Vector3f target =
+                getHorizontalBuildTarget();
+
+        Vector3f nearest =
+                null;
+
+        float nearestDistance =
+                Float.MAX_VALUE;
+
+        for (
+                Geometry foundation
+                :
+                placedFoundations
+        ) {
+
+            Vector3f position =
+                    foundation.getLocalTranslation();
+
+            float dx =
+                    position.x - target.x;
+
+            float dz =
+                    position.z - target.z;
+
+            float distance =
+                    dx * dx + dz * dz;
+
+            if (
+                    distance < nearestDistance
+            ) {
+
+                nearest =
+                        position;
+
+                nearestDistance =
+                        distance;
+            }
+        }
+
+        for (
+                Geometry ceiling
+                :
+                placedCeilings
+        ) {
+
+            Vector3f position =
+                    ceiling.getLocalTranslation();
+
+            float dx =
+                    position.x - target.x;
+
+            float dz =
+                    position.z - target.z;
+
+            float distance =
+                    dx * dx + dz * dz;
+
+            if (
+                    distance < nearestDistance
+            ) {
+
+                nearest =
+                        position;
+
+                nearestDistance =
+                        distance;
+            }
+        }
+
+        if (
+                nearest == null
+                        ||
+                        nearestDistance > 64f
+        ) {
+
+            return null;
+        }
+
+        return nearest.clone();
+    }
+
+
+    private boolean bedExistsAt(
+            Vector3f position
+    ) {
+
+        for (
+                Node bed
+                :
+                placedBeds
+        ) {
+
+            if (
+                    bed.getLocalTranslation()
+                            .distanceSquared(
+                                    position
+                            )
+                            <
+                            0.05f
+            ) {
+
+                return true;
+            }
+        }
+
+        return false;
     }
 
 
@@ -2615,105 +2865,69 @@ public class BuildingSystem implements ActionListener {
                         ItemType.WOOD
                 );
 
+        int wool =
+                inventory.getAmount(
+                        ItemType.WOOL
+                );
 
         String selectedName;
-
-        int cost;
-
+        String costText;
 
         switch (
                 selectedBuildType
         ) {
 
             case FOUNDATION:
-
-                selectedName =
-                        "Fundament";
-
-                cost =
-                        FOUNDATION_WOOD_COST;
-
+                selectedName = "Fundament";
+                costText = FOUNDATION_WOOD_COST + " Holz";
                 break;
-
 
             case WALL:
-
-                selectedName =
-                        "Wand";
-
-                cost =
-                        WALL_WOOD_COST;
-
+                selectedName = "Wand";
+                costText = WALL_WOOD_COST + " Holz";
                 break;
-
 
             case DOOR_FRAME:
-
-                selectedName =
-                        "Türrahmen";
-
-                cost =
-                        DOOR_FRAME_WOOD_COST;
-
+                selectedName = "Türrahmen";
+                costText = DOOR_FRAME_WOOD_COST + " Holz";
                 break;
 
-
             case DOOR:
-
-                selectedName =
-                        "Tür";
-
-                cost =
-                        DOOR_WOOD_COST;
-
+                selectedName = "Tür";
+                costText = DOOR_WOOD_COST + " Holz";
                 break;
 
             case CEILING:
-
-                selectedName =
-                        "Decke";
-
-                cost =
-                        CEILING_WOOD_COST;
-
+                selectedName = "Decke";
+                costText = CEILING_WOOD_COST + " Holz";
                 break;
 
             case ROOF:
+                selectedName = "Schrägdach";
+                costText = ROOF_WOOD_COST + " Holz";
+                break;
 
-                selectedName =
-                        "Schrägdach";
-
-                cost =
-                        ROOF_WOOD_COST;
-
+            case STAIRS:
+                selectedName = "Treppe";
+                costText = STAIRS_WOOD_COST + " Holz";
                 break;
 
             default:
-
-                selectedName =
-                        "Treppe";
-
-                cost =
-                        STAIRS_WOOD_COST;
-
+                selectedName = "Bett";
+                costText = BED_WOOD_COST + " Holz + " + BED_WOOL_COST + " Wolle";
                 break;
         }
 
-
         buildText.setText(
-                "BAUMODUS | [1] Fundament | [2] Wand | [3] Türrahmen | [4] Tür | [5] Decke | [6] Schrägdach | [7] Treppe | "
-                        +
-                        selectedName
-                        +
-                        ": "
-                        +
-                        cost
-                        +
-                        " Holz | Holz: "
-                        +
-                        wood
-                        +
-                        " | Linksklick = Bauen | B = Beenden"
+                "BAUMODUS | [1] Fundament | [2] Wand | [3] Türrahmen | [4] Tür | [5] Decke | [6] Schrägdach | [7] Treppe | [8] Bett | "
+                        + selectedName
+                        + ": "
+                        + costText
+                        + " | Holz: "
+                        + wood
+                        + " | Wolle: "
+                        + wool
+                        + " | R = Drehen | Linksklick = Bauen | B = Beenden"
         );
     }
 
@@ -2766,6 +2980,12 @@ public class BuildingSystem implements ActionListener {
             case STAIRS:
 
                 placeStairs();
+
+                break;
+
+            case BED:
+
+                placeBed();
 
                 break;
         }
@@ -3057,6 +3277,290 @@ public class BuildingSystem implements ActionListener {
         System.out.println(
                 "Treppe gebaut."
         );
+    }
+
+
+    private void placeBed() {
+
+        Vector3f supportPosition =
+                getNearestBedSupportPosition();
+
+        if (
+                supportPosition == null
+                        ||
+                        !inventory.hasItem(
+                                ItemType.WOOD,
+                                BED_WOOD_COST
+                        )
+                        ||
+                        !inventory.hasItem(
+                                ItemType.WOOL,
+                                BED_WOOL_COST
+                        )
+        ) {
+
+            return;
+        }
+
+        Vector3f position =
+                supportPosition.clone();
+
+        position.y +=
+                0.12f;
+
+        if (
+                bedExistsAt(
+                        position
+                )
+        ) {
+
+            return;
+        }
+
+        createAndAttachBed(
+                position,
+                createYawRotation(
+                        bedRotationSteps
+                )
+        );
+
+        inventory.removeItem(
+                ItemType.WOOD,
+                BED_WOOD_COST
+        );
+
+        inventory.removeItem(
+                ItemType.WOOL,
+                BED_WOOL_COST
+        );
+
+        System.out.println(
+                "Bett gebaut. Mit E ansehen, um den Respawnpunkt zu setzen."
+        );
+    }
+
+
+    private void createAndAttachBed(
+            Vector3f position,
+            Quaternion rotation
+    ) {
+
+        Node bed =
+                createBedVisual(
+                        "Bed_" + nextBedId,
+                        null
+                );
+
+        bed.setLocalTranslation(
+                position
+        );
+
+        bed.setLocalRotation(
+                rotation
+        );
+
+        rootNode.attachChild(
+                bed
+        );
+
+        addPhysicsToBed(
+                bed
+        );
+
+        placedBeds.add(
+                bed
+        );
+
+        attachBuildingOutline(
+                bed
+        );
+
+        nextBedId++;
+    }
+
+
+    private Node createBedVisual(
+            String name,
+            Material overrideMaterial
+    ) {
+
+        Node bed =
+                new Node(
+                        name
+                );
+
+        Material woodMaterial =
+                overrideMaterial != null
+                        ?
+                        overrideMaterial
+                        :
+                        createWoodMaterial();
+
+        Material mattressMaterial =
+                overrideMaterial != null
+                        ?
+                        overrideMaterial
+                        :
+                        createColoredMaterial(
+                                new ColorRGBA(
+                                        0.78f,
+                                        0.74f,
+                                        0.64f,
+                                        1f
+                                )
+                        );
+
+        Material pillowMaterial =
+                overrideMaterial != null
+                        ?
+                        overrideMaterial
+                        :
+                        createColoredMaterial(
+                                new ColorRGBA(
+                                        0.93f,
+                                        0.90f,
+                                        0.82f,
+                                        1f
+                                )
+                        );
+
+        Geometry frame =
+                new Geometry(
+                        name + "_Frame",
+                        new Box(
+                                1.0f,
+                                0.12f,
+                                1.4f
+                        )
+                );
+
+        frame.setMaterial(
+                woodMaterial
+        );
+
+        frame.setLocalTranslation(
+                0f,
+                0.16f,
+                0f
+        );
+
+        bed.attachChild(
+                frame
+        );
+
+        Geometry mattress =
+                new Geometry(
+                        name + "_Mattress",
+                        new Box(
+                                0.90f,
+                                0.14f,
+                                1.25f
+                        )
+                );
+
+        mattress.setMaterial(
+                mattressMaterial
+        );
+
+        mattress.setLocalTranslation(
+                0f,
+                0.42f,
+                0f
+        );
+
+        bed.attachChild(
+                mattress
+        );
+
+        Geometry pillow =
+                new Geometry(
+                        name + "_Pillow",
+                        new Box(
+                                0.62f,
+                                0.10f,
+                                0.27f
+                        )
+                );
+
+        pillow.setMaterial(
+                pillowMaterial
+        );
+
+        pillow.setLocalTranslation(
+                0f,
+                0.65f,
+                0.83f
+        );
+
+        bed.attachChild(
+                pillow
+        );
+
+        float legX = 0.82f;
+        float legZ = 1.18f;
+
+        float[][] legPositions =
+                new float[][] {
+                        {-legX, -legZ},
+                        { legX, -legZ},
+                        {-legX,  legZ},
+                        { legX,  legZ}
+                };
+
+        for (
+                int i = 0;
+                i < legPositions.length;
+                i++
+        ) {
+
+            Geometry leg =
+                    new Geometry(
+                            name + "_Leg_" + i,
+                            new Box(
+                                    0.10f,
+                                    0.16f,
+                                    0.10f
+                            )
+                    );
+
+            leg.setMaterial(
+                    woodMaterial
+            );
+
+            leg.setLocalTranslation(
+                    legPositions[i][0],
+                    0.16f,
+                    legPositions[i][1]
+            );
+
+            bed.attachChild(
+                    leg
+            );
+        }
+
+        return bed;
+    }
+
+
+    private void addPhysicsToBed(
+            Node bed
+    ) {
+
+        for (
+                Spatial child
+                :
+                bed.getChildren()
+        ) {
+
+            if (
+                    child instanceof Geometry
+            ) {
+
+                addPhysics(
+                        (Geometry) child
+                );
+            }
+        }
     }
 
 
@@ -3950,6 +4454,35 @@ public class BuildingSystem implements ActionListener {
     }
 
 
+    private Material createColoredMaterial(
+            ColorRGBA color
+    ) {
+
+        Material material =
+                new Material(
+                        assetManager,
+                        "Common/MatDefs/Light/Lighting.j3md"
+                );
+
+        material.setBoolean(
+                "UseMaterialColors",
+                true
+        );
+
+        material.setColor(
+                "Diffuse",
+                color
+        );
+
+        material.setColor(
+                "Ambient",
+                color
+        );
+
+        return material;
+    }
+
+
     private Material createPreviewMaterial() {
 
         Material material =
@@ -4017,6 +4550,10 @@ public class BuildingSystem implements ActionListener {
         );
 
         stairsPreview.setCullHint(
+                Spatial.CullHint.Always
+        );
+
+        bedPreview.setCullHint(
                 Spatial.CullHint.Always
         );
     }
@@ -4215,6 +4752,97 @@ public class BuildingSystem implements ActionListener {
     }
 
 
+    public int getBedCount() {
+
+        return placedBeds.size();
+    }
+
+
+    public Vector3f getBedPosition(
+            int index
+    ) {
+
+        return placedBeds
+                .get(index)
+                .getLocalTranslation()
+                .clone();
+    }
+
+
+    public Quaternion getBedRotation(
+            int index
+    ) {
+
+        return placedBeds
+                .get(index)
+                .getLocalRotation()
+                .clone();
+    }
+
+
+    public boolean hasBedAt(
+            Vector3f position
+    ) {
+
+        return position != null
+                &&
+                bedExistsAt(
+                        position
+                );
+    }
+
+
+    public Vector3f getTargetedBedPosition() {
+
+        Ray ray =
+                new Ray(
+                        camera.getLocation(),
+                        camera.getDirection()
+                );
+
+        CollisionResults results =
+                new CollisionResults();
+
+        rootNode.collideWith(
+                ray,
+                results
+        );
+
+        for (
+                int i = 0;
+                i < results.size();
+                i++
+        ) {
+
+            if (
+                    results.getCollision(i).getDistance()
+                            >
+                            DOOR_INTERACTION_DISTANCE
+            ) {
+
+                break;
+            }
+
+            int bedIndex =
+                    findBedIndex(
+                            results.getCollision(i).getGeometry()
+                    );
+
+            if (
+                    bedIndex >= 0
+            ) {
+
+                return placedBeds
+                        .get(bedIndex)
+                        .getLocalTranslation()
+                        .clone();
+            }
+        }
+
+        return null;
+    }
+
+
     public void clearBuildings() {
 
         for (
@@ -4277,6 +4905,10 @@ public class BuildingSystem implements ActionListener {
             removeStairsWithPhysics(stairs);
         }
 
+        for (Node bed : placedBeds) {
+            removeBedWithPhysics(bed);
+        }
+
         placedFoundations.clear();
 
         placedWalls.clear();
@@ -4290,6 +4922,8 @@ public class BuildingSystem implements ActionListener {
         placedRoofs.clear();
 
         placedStairs.clear();
+
+        placedBeds.clear();
 
         for (
                 Spatial outline
@@ -4335,6 +4969,9 @@ public class BuildingSystem implements ActionListener {
                 1;
 
         nextStairsId =
+                1;
+
+        nextBedId =
                 1;
     }
 
@@ -4412,6 +5049,18 @@ public class BuildingSystem implements ActionListener {
             Quaternion rotation
     ) {
         createAndAttachStairs(
+                position.clone(),
+                rotation.clone()
+        );
+    }
+
+
+    public void loadBed(
+            Vector3f position,
+            Quaternion rotation
+    ) {
+
+        createAndAttachBed(
                 position.clone(),
                 rotation.clone()
         );
@@ -4557,6 +5206,44 @@ public class BuildingSystem implements ActionListener {
                 return;
             }
 
+            int bedIndex = findBedIndex(hit);
+            if (bedIndex >= 0) {
+
+                if (!inventory.canAddItem(ItemType.WOOD, BED_WOOD_COST)
+                        || !inventory.canAddItem(ItemType.WOOL, BED_WOOL_COST)) {
+                    System.out.println("Nicht genug Platz im Inventar.");
+                    return;
+                }
+
+                boolean woodAdded =
+                        inventory.addItem(ItemType.WOOD, BED_WOOD_COST);
+
+                boolean woolAdded =
+                        inventory.addItem(ItemType.WOOL, BED_WOOL_COST);
+
+                if (!woodAdded || !woolAdded) {
+                    if (woodAdded) {
+                        inventory.removeItem(ItemType.WOOD, BED_WOOD_COST);
+                    }
+                    if (woolAdded) {
+                        inventory.removeItem(ItemType.WOOL, BED_WOOL_COST);
+                    }
+                    System.out.println("Nicht genug Platz im Inventar.");
+                    return;
+                }
+
+                Node bed = placedBeds.remove(bedIndex);
+                removeBedWithPhysics(bed);
+                System.out.println(
+                        "Bett abgerissen. +"
+                                + BED_WOOD_COST
+                                + " Holz, +"
+                                + BED_WOOL_COST
+                                + " Wolle."
+                );
+                return;
+            }
+
             int stairsIndex = findStairsIndex(hit);
             if (stairsIndex >= 0) {
                 if (!inventory.canAddItem(ItemType.WOOD, STAIRS_WOOD_COST)) {
@@ -4609,6 +5296,58 @@ public class BuildingSystem implements ActionListener {
                 return;
             }
         }
+    }
+
+
+    private int findBedIndex(
+            Spatial hit
+    ) {
+
+        for (
+                int i = 0;
+                i < placedBeds.size();
+                i++
+        ) {
+
+            Node bed =
+                    placedBeds.get(i);
+
+            Spatial current =
+                    hit;
+
+            while (
+                    current != null
+            ) {
+
+                if (
+                        current == bed
+                ) {
+
+                    return i;
+                }
+
+                current =
+                        current.getParent();
+            }
+        }
+
+        return -1;
+    }
+
+
+    private void removeBedWithPhysics(
+            Node bed
+    ) {
+
+        removeBuildingOutline(
+                bed
+        );
+
+        removePhysicsRecursively(
+                bed
+        );
+
+        bed.removeFromParent();
     }
 
 

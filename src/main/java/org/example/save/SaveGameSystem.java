@@ -13,6 +13,7 @@ import org.example.inventory.InventorySlot;
 import org.example.inventory.ItemType;
 import org.example.player.Player;
 import org.example.survival.PlayerStats;
+import org.example.survival.RespawnSystem;
 import org.example.time.DayNightSystem;
 import org.example.tools.ToolDurabilitySystem;
 import org.example.world.HarvestableResource;
@@ -38,7 +39,7 @@ public class SaveGameSystem implements ActionListener {
 
 
     private static final int SAVE_VERSION =
-            12;
+            13;
 
 
     private final Player player;
@@ -57,6 +58,8 @@ public class SaveGameSystem implements ActionListener {
 
     private final BuildingSystem buildingSystem;
 
+    private final RespawnSystem respawnSystem;
+
 
     private final Path saveFile =
             Path.of(
@@ -74,7 +77,8 @@ public class SaveGameSystem implements ActionListener {
             List<HarvestableResource> resources,
             List<Sheep> sheep,
             DayNightSystem dayNightSystem,
-            BuildingSystem buildingSystem
+            BuildingSystem buildingSystem,
+            RespawnSystem respawnSystem
     ) {
 
         this.player =
@@ -100,6 +104,9 @@ public class SaveGameSystem implements ActionListener {
 
         this.buildingSystem =
                 buildingSystem;
+
+        this.respawnSystem =
+                respawnSystem;
 
 
         inputManager.addMapping(
@@ -214,6 +221,11 @@ public class SaveGameSystem implements ActionListener {
 
 
         saveBuildings(
+                properties
+        );
+
+
+        saveRespawnPoint(
                 properties
         );
 
@@ -656,6 +668,10 @@ public class SaveGameSystem implements ActionListener {
         saveStairs(
                 properties
         );
+
+        saveBeds(
+                properties
+        );
     }
 
 
@@ -1094,6 +1110,99 @@ public class SaveGameSystem implements ActionListener {
     }
 
 
+    private void saveBeds(
+            Properties properties
+    ) {
+
+        int bedCount =
+                buildingSystem.getBedCount();
+
+        properties.setProperty(
+                "building.bed.count",
+                Integer.toString(
+                        bedCount
+                )
+        );
+
+        for (
+                int i = 0;
+                i < bedCount;
+                i++
+        ) {
+
+            Vector3f position =
+                    buildingSystem.getBedPosition(
+                            i
+                    );
+
+            Quaternion rotation =
+                    buildingSystem.getBedRotation(
+                            i
+                    );
+
+            String prefix =
+                    "building.bed."
+                            + i
+                            + ".";
+
+            properties.setProperty(prefix + "x", Float.toString(position.x));
+            properties.setProperty(prefix + "y", Float.toString(position.y));
+            properties.setProperty(prefix + "z", Float.toString(position.z));
+            properties.setProperty(prefix + "rotX", Float.toString(rotation.getX()));
+            properties.setProperty(prefix + "rotY", Float.toString(rotation.getY()));
+            properties.setProperty(prefix + "rotZ", Float.toString(rotation.getZ()));
+            properties.setProperty(prefix + "rotW", Float.toString(rotation.getW()));
+        }
+    }
+
+
+    private void saveRespawnPoint(
+            Properties properties
+    ) {
+
+        boolean active =
+                respawnSystem.hasRespawnBed();
+
+        properties.setProperty(
+                "respawn.bed.active",
+                Boolean.toString(
+                        active
+                )
+        );
+
+        if (
+                !active
+        ) {
+
+            return;
+        }
+
+        Vector3f position =
+                respawnSystem.getRespawnBedPosition();
+
+        properties.setProperty(
+                "respawn.bed.x",
+                Float.toString(
+                        position.x
+                )
+        );
+
+        properties.setProperty(
+                "respawn.bed.y",
+                Float.toString(
+                        position.y
+                )
+        );
+
+        properties.setProperty(
+                "respawn.bed.z",
+                Float.toString(
+                        position.z
+                )
+        );
+    }
+
+
     // =========================================================
     // LADEN
     // =========================================================
@@ -1184,6 +1293,11 @@ public class SaveGameSystem implements ActionListener {
 
 
         loadBuildings(
+                properties
+        );
+
+
+        loadRespawnPoint(
                 properties
         );
 
@@ -1659,6 +1773,10 @@ public class SaveGameSystem implements ActionListener {
         loadStairs(
                 properties
         );
+
+        loadBeds(
+                properties
+        );
     }
 
 
@@ -2113,6 +2231,104 @@ public class SaveGameSystem implements ActionListener {
                     )
             );
         }
+    }
+
+
+    private void loadBeds(
+            Properties properties
+    ) {
+
+        int bedCount =
+                readInt(
+                        properties,
+                        "building.bed.count",
+                        0
+                );
+
+        for (
+                int i = 0;
+                i < bedCount;
+                i++
+        ) {
+
+            String prefix =
+                    "building.bed."
+                            + i
+                            + ".";
+
+            float x = readFloat(properties, prefix + "x", 0f);
+            float y = readFloat(properties, prefix + "y", 0.24f);
+            float z = readFloat(properties, prefix + "z", 0f);
+            float rotX = readFloat(properties, prefix + "rotX", 0f);
+            float rotY = readFloat(properties, prefix + "rotY", 0f);
+            float rotZ = readFloat(properties, prefix + "rotZ", 0f);
+            float rotW = readFloat(properties, prefix + "rotW", 1f);
+
+            buildingSystem.loadBed(
+                    new Vector3f(
+                            x,
+                            y,
+                            z
+                    ),
+                    new Quaternion(
+                            rotX,
+                            rotY,
+                            rotZ,
+                            rotW
+                    )
+            );
+        }
+    }
+
+
+    private void loadRespawnPoint(
+            Properties properties
+    ) {
+
+        boolean active =
+                Boolean.parseBoolean(
+                        properties.getProperty(
+                                "respawn.bed.active",
+                                "false"
+                        )
+                );
+
+        if (
+                !active
+        ) {
+
+            respawnSystem.clearRespawnBed();
+            return;
+        }
+
+        float x =
+                readFloat(
+                        properties,
+                        "respawn.bed.x",
+                        0f
+                );
+
+        float y =
+                readFloat(
+                        properties,
+                        "respawn.bed.y",
+                        0.24f
+                );
+
+        float z =
+                readFloat(
+                        properties,
+                        "respawn.bed.z",
+                        0f
+                );
+
+        respawnSystem.loadRespawnBedPosition(
+                new Vector3f(
+                        x,
+                        y,
+                        z
+                )
+        );
     }
 
 
