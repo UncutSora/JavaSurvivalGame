@@ -198,6 +198,10 @@ public class InteractionSystem implements ActionListener {
                     collision.getGeometry();
 
 
+            // =====================================================
+            // SCHAFE
+            // =====================================================
+
             for (
                     Sheep currentSheep
                     :
@@ -285,6 +289,7 @@ public class InteractionSystem implements ActionListener {
                             getCurrentGameMinute()
                     );
 
+
                     int meatAmount =
                             3;
 
@@ -366,6 +371,10 @@ public class InteractionSystem implements ActionListener {
                 return;
             }
 
+
+            // =====================================================
+            // RESSOURCEN
+            // =====================================================
 
             for (
                     HarvestableResource resource
@@ -472,34 +481,9 @@ public class InteractionSystem implements ActionListener {
                         collected
                 ) {
 
-                    boolean added =
-                            inventory.addItem(
-                                    resource.getItemType(),
-                                    resource.getYield()
-                            );
-
-
-                    if (
-                            added
-                    ) {
-
-                        System.out.println(
-                                resource
-                                        .getItemType()
-                                        .getDisplayName()
-                                        +
-                                        " gesammelt: +"
-                                        +
-                                        resource.getYield()
-                        );
-                    }
-
-                    else {
-
-                        System.out.println(
-                                "Inventar voll!"
-                        );
-                    }
+                    collectResource(
+                            resource
+                    );
                 }
 
                 else {
@@ -522,6 +506,141 @@ public class InteractionSystem implements ActionListener {
     }
 
 
+    // =============================================================
+    // RESSOURCEN-DROP
+    // =============================================================
+
+    private void collectResource(
+            HarvestableResource resource
+    ) {
+
+        /*
+         * Bäume sind aktuell Ressourcen vom Typ WOOD.
+         *
+         * Neuer Baum-Ertrag:
+         *
+         * 2x Holz
+         * 1x Setzling
+         */
+
+        if (
+                resource.getItemType()
+                        ==
+                        ItemType.WOOD
+        ) {
+
+            collectTree();
+
+            return;
+        }
+
+
+        /*
+         * Alle anderen Ressourcen behalten
+         * exakt ihr bisheriges Verhalten.
+         */
+
+        boolean added =
+                inventory.addItem(
+                        resource.getItemType(),
+                        resource.getYield()
+                );
+
+
+        if (
+                added
+        ) {
+
+            System.out.println(
+                    resource
+                            .getItemType()
+                            .getDisplayName()
+                            +
+                            " gesammelt: +"
+                            +
+                            resource.getYield()
+            );
+        }
+
+        else {
+
+            System.out.println(
+                    "Inventar voll!"
+            );
+        }
+    }
+
+
+    // =============================================================
+    // BAUM-DROP
+    // =============================================================
+
+    private void collectTree() {
+
+        final int woodAmount =
+                2;
+
+        final int saplingAmount =
+                1;
+
+
+        boolean woodAdded =
+                inventory.addItem(
+                        ItemType.WOOD,
+                        woodAmount
+                );
+
+
+        boolean saplingAdded =
+                inventory.addItem(
+                        ItemType.SAPLING,
+                        saplingAmount
+                );
+
+
+        if (
+                woodAdded
+        ) {
+
+            System.out.println(
+                    "Holz gesammelt: +"
+                            +
+                            woodAmount
+            );
+        }
+
+        else {
+
+            System.out.println(
+                    "Inventar voll - Holz konnte nicht aufgenommen werden."
+            );
+        }
+
+
+        if (
+                saplingAdded
+        ) {
+
+            System.out.println(
+                    "Setzling gesammelt: +"
+                            +
+                            saplingAmount
+            );
+        }
+
+        else {
+
+            System.out.println(
+                    "Inventar voll - Setzling konnte nicht aufgenommen werden."
+            );
+        }
+    }
+
+
+    // =============================================================
+    // SPIELZEIT
+    // =============================================================
+
     private float getCurrentGameMinute() {
 
         return dayNightSystem.getDay()
@@ -533,6 +652,10 @@ public class InteractionSystem implements ActionListener {
                 dayNightSystem.getMinuteOfDay();
     }
 
+
+    // =============================================================
+    // AXT
+    // =============================================================
 
     private boolean isStoneAxeEquipped() {
 
@@ -561,6 +684,10 @@ public class InteractionSystem implements ActionListener {
                 type == ItemType.STONE;
     }
 
+
+    // =============================================================
+    // SCHADEN
+    // =============================================================
 
     private int calculateDamage(
             HarvestableResource resource,

@@ -35,6 +35,11 @@ public enum ItemType {
     WOOL(
             "Wolle",
             30
+    ),
+
+    SAPLING(
+            "Setzling",
+            20
     );
 
 
