@@ -18,6 +18,9 @@ public interface HarvestableResource {
     );
 
 
+    void detachFromWorld();
+
+
     boolean owns(
             Geometry geometry
     );

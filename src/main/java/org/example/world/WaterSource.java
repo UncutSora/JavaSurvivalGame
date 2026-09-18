@@ -145,6 +145,13 @@ public class WaterSource implements HarvestableResource {
 
 
     @Override
+    public void detachFromWorld() {
+
+        waterNode.removeFromParent();
+    }
+
+
+    @Override
     public boolean owns(
             Geometry geometry
     ) {

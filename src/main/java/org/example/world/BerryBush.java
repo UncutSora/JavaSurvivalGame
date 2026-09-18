@@ -347,7 +347,8 @@ public class BerryBush implements HarvestableResource {
     }
 
 
-    private void removeFromWorld() {
+    @Override
+    public void detachFromWorld() {
 
         if (
                 physicsActive
@@ -411,7 +412,7 @@ public class BerryBush implements HarvestableResource {
                     true;
 
 
-            removeFromWorld();
+            detachFromWorld();
 
 
             return true;
@@ -487,7 +488,7 @@ public class BerryBush implements HarvestableResource {
                     0;
 
 
-            removeFromWorld();
+            detachFromWorld();
 
 
             return;

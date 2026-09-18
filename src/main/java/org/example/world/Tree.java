@@ -283,7 +283,8 @@ public class Tree implements HarvestableResource {
     }
 
 
-    private void removeFromWorld() {
+    @Override
+    public void detachFromWorld() {
 
         if (physicsActive) {
 
@@ -343,7 +344,7 @@ public class Tree implements HarvestableResource {
                     true;
 
 
-            removeFromWorld();
+            detachFromWorld();
 
 
             return true;
@@ -417,7 +418,7 @@ public class Tree implements HarvestableResource {
                     0;
 
 
-            removeFromWorld();
+            detachFromWorld();
 
 
             return;

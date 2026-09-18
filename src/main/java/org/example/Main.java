@@ -30,6 +30,7 @@ import org.example.ui.SurvivalHud;
 import org.example.ui.TimeHud;
 import org.example.ui.ToolView;
 import org.example.world.BerryBush;
+import org.example.world.ChunkManager;
 import org.example.world.HarvestableResource;
 import org.example.world.Rock;
 import org.example.world.Sheep;
@@ -74,6 +75,8 @@ public class Main extends SimpleApplication {
 
     private BuildingSystem buildingSystem;
 
+    private ChunkManager chunkManager;
+
     private RespawnSystem respawnSystem;
 
 
@@ -89,7 +92,7 @@ public class Main extends SimpleApplication {
     // =========================================================
 
     private static final float WORLD_SIZE =
-            1000f;
+            2000f;
 
 
     private static final float WORLD_HALF_SIZE =
@@ -210,6 +213,8 @@ public class Main extends SimpleApplication {
 
         createDayNightSystem();
 
+        createChunkManager();
+
         createResources();
 
         createPlayer();
@@ -247,6 +252,10 @@ public class Main extends SimpleApplication {
         createTimeHud();
 
         createCrosshair();
+
+        chunkManager.update(
+                player.getPosition()
+        );
 
 
         flyCam.setMoveSpeed(
@@ -549,6 +558,21 @@ public class Main extends SimpleApplication {
 
 
     // =========================================================
+    // CHUNK LOADING
+    // =========================================================
+
+    private void createChunkManager() {
+
+        chunkManager =
+                new ChunkManager(
+                        rootNode,
+                        50f,
+                        2
+                );
+    }
+
+
+    // =========================================================
     // WELTGENERIERUNG
     // =========================================================
 
@@ -689,7 +713,8 @@ public class Main extends SimpleApplication {
 
 
             addResource(
-                    tree
+                    tree,
+                    position
             );
         }
     }
@@ -730,7 +755,8 @@ public class Main extends SimpleApplication {
 
 
             addResource(
-                    rock
+                    rock,
+                    position
             );
         }
     }
@@ -771,7 +797,8 @@ public class Main extends SimpleApplication {
 
 
             addResource(
-                    berryBush
+                    berryBush,
+                    position
             );
         }
     }
@@ -810,7 +837,8 @@ public class Main extends SimpleApplication {
 
 
             addResource(
-                    waterSource
+                    waterSource,
+                    position
             );
         }
     }
@@ -1134,7 +1162,8 @@ public class Main extends SimpleApplication {
     // =========================================================
 
     private void addResource(
-            HarvestableResource resource
+            HarvestableResource resource,
+            Vector3f position
     ) {
 
         resources.add(
@@ -1142,8 +1171,9 @@ public class Main extends SimpleApplication {
         );
 
 
-        resource.attachToWorld(
-                rootNode
+        chunkManager.register(
+                resource,
+                position
         );
     }
 
@@ -1365,6 +1395,16 @@ public class Main extends SimpleApplication {
             player.update(
                     tpf
             );
+
+
+            if (
+                    chunkManager != null
+            ) {
+
+                chunkManager.update(
+                        player.getPosition()
+                );
+            }
         }
 
 

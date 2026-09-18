@@ -18,6 +18,15 @@ public class Player implements ActionListener {
     private static final float SPRINT_SPEED =
             0.20f;
 
+    private static final float CAMERA_HEIGHT =
+            0.65f;
+
+    private static final float CAMERA_VERTICAL_DEADZONE =
+            0.035f;
+
+    private static final float CAMERA_VERTICAL_SMOOTH_SPEED =
+            12f;
+
 
     private final CharacterControl character;
 
@@ -46,6 +55,11 @@ public class Player implements ActionListener {
 
     private boolean inputEnabled =
             true;
+
+    private boolean cameraHeightInitialized =
+            false;
+
+    private float smoothedCameraY;
 
 
     public Player(
@@ -260,7 +274,7 @@ public class Player implements ActionListener {
             );
 
 
-            updateCamera();
+            updateCamera(tpf);
 
             return;
         }
@@ -375,22 +389,74 @@ public class Player implements ActionListener {
         );
 
 
-        updateCamera();
+        updateCamera(tpf);
     }
 
 
-    private void updateCamera() {
+    private void updateCamera(
+            float tpf
+    ) {
 
         Vector3f playerPosition =
                 character
                         .getPhysicsLocation();
 
 
+        float targetCameraY =
+                playerPosition.y
+                        +
+                        CAMERA_HEIGHT;
+
+
+        if (
+                !cameraHeightInitialized
+        ) {
+
+            smoothedCameraY =
+                    targetCameraY;
+
+            cameraHeightInitialized =
+                    true;
+        }
+
+        else {
+
+            float verticalDifference =
+                    targetCameraY
+                            -
+                            smoothedCameraY;
+
+
+            if (
+                    Math.abs(
+                            verticalDifference
+                    )
+                            >
+                            CAMERA_VERTICAL_DEADZONE
+            ) {
+
+                float smoothing =
+                        Math.min(
+                                1f,
+                                CAMERA_VERTICAL_SMOOTH_SPEED
+                                        *
+                                        tpf
+                        );
+
+
+                smoothedCameraY +=
+                        verticalDifference
+                                *
+                                smoothing;
+            }
+        }
+
+
         camera.setLocation(
-                playerPosition.add(
-                        0f,
-                        0.65f,
-                        0f
+                new Vector3f(
+                        playerPosition.x,
+                        smoothedCameraY,
+                        playerPosition.z
                 )
         );
     }

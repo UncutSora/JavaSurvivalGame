@@ -220,7 +220,8 @@ public class Rock implements HarvestableResource {
     }
 
 
-    private void removeFromWorld() {
+    @Override
+    public void detachFromWorld() {
 
         if (
                 physicsActive
@@ -280,7 +281,7 @@ public class Rock implements HarvestableResource {
                     true;
 
 
-            removeFromWorld();
+            detachFromWorld();
 
 
             return true;
@@ -356,7 +357,7 @@ public class Rock implements HarvestableResource {
                     0;
 
 
-            removeFromWorld();
+            detachFromWorld();
 
 
             return;
